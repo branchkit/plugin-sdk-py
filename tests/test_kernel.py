@@ -15,7 +15,14 @@ from branchkit import commands as cmds
 from branchkit import proxy, ui
 from branchkit.actor import acting_for, get_current_actor
 from branchkit.correlation import get_current_correlation, reset_correlation, set_correlation
-from branchkit.plugin import PluginCore, RecordingDisabledError, RpcCallError, error_kind_of, rpc_error_for
+from branchkit.plugin import (
+    PluginCore,
+    RecordingDisabledError,
+    RpcCallError,
+    error_kind_of,
+    matches_topic,
+    rpc_error_for,
+)
 
 
 class TestCommandBuilder(unittest.TestCase):
@@ -179,6 +186,50 @@ class TestActor(unittest.TestCase):
             self.assertEqual(get_current_actor(), "")
         with acting_for(None):
             self.assertEqual(get_current_actor(), "")
+
+
+class TestPatternListeners(unittest.TestCase):
+    def test_matches_topic(self):
+        for pattern, event, want in [
+            ("scripts.headphones.charged", "scripts.headphones.charged", True),
+            ("scripts.*.*", "scripts.headphones.charged", True),
+            ("scripts.*.charged", "scripts.headphones.charged", True),
+            ("*.headphones.charged", "scripts.headphones.charged", True),
+            # `*` is ONE segment. A pattern that swallowed trailing segments
+            # would route events the actuator's own gate never delivered.
+            ("scripts.*", "scripts.headphones.charged", False),
+            ("scripts.*.*", "scripts.headphones", False),
+            ("scripts.*.*", "browser.tab.opened", False),
+        ]:
+            self.assertEqual(matches_topic(pattern, event), want, f"{pattern} vs {event}")
+
+    def test_on_pattern_registers_in_order(self):
+        core = PluginCore()
+        core.on_pattern("scripts.*.*", lambda t, p: None)
+        core.on_pattern("browser.*.*", lambda t, p: None)
+        self.assertEqual(
+            [pat for pat, _ in core._pattern_listeners], ["scripts.*.*", "browser.*.*"]
+        )
+
+
+class TestPatternDelivery(unittest.IsolatedAsyncioTestCase):
+    async def test_pattern_listener_sees_the_concrete_event_type(self):
+        core = PluginCore()
+        seen = []
+        core.on_pattern("scripts.*.*", lambda t, p: seen.append(t))
+        await core._invoke2(core._pattern_listeners[0][1], "scripts.headphones.charged", {})
+        self.assertEqual(seen, ["scripts.headphones.charged"])
+
+    async def test_async_pattern_listener_is_awaited(self):
+        core = PluginCore()
+        seen = []
+
+        async def handler(event_type, params):
+            seen.append((event_type, params))
+
+        core.on_pattern("scripts.*.*", handler)
+        await core._invoke2(handler, "scripts.notes.saved", {"k": 1})
+        self.assertEqual(seen, [("scripts.notes.saved", {"k": 1})])
 
 
 class TestDualHandlerDispatch(unittest.IsolatedAsyncioTestCase):

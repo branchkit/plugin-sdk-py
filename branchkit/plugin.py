@@ -25,6 +25,20 @@ from .actor import get_current_actor
 from .correlation import get_current_correlation, reset_correlation, set_correlation
 from .log import log
 
+
+def matches_topic(pattern: str, event_type: str) -> bool:
+    """Does `event_type` match `pattern`, where `*` is exactly one
+    dot-separated segment? Mirrors the actuator's `event_bus::matches_topic`,
+    which is what actually gates delivery — the two must agree or a plugin's
+    own routing disagrees with what it receives."""
+    if pattern == event_type:
+        return True
+    pat = pattern.split(".")
+    evt = event_type.split(".")
+    if len(pat) != len(evt):
+        return False
+    return all(p == "*" or p == e for p, e in zip(pat, evt))
+
 # Mirrors the Go SDK's `oversizedFrameBytes` — keep the SDKs in step so the
 # tripwire fires at the same size whichever SDK a plugin uses.
 _OVERSIZED_FRAME_BYTES = 1024 * 1024
@@ -82,6 +96,10 @@ class PluginCore:
         self._plugin_id: str = os.environ.get("BRANCHKIT_PLUGIN_ID", "unknown")
         self._handlers: dict[str, Callable] = {}
         self._listeners: dict[str, list[Callable]] = {}
+        # on_pattern registrations, in registration order. A list rather than
+        # a dict: the key is a pattern, so lookup is a scan either way, and
+        # order is what makes delivery deterministic.
+        self._pattern_listeners: list[tuple[str, Callable]] = []
         self._pending: dict[int, asyncio.Future] = {}
         self._action_handlers: dict[str, Callable] | None = None
         self._next_id = 1
@@ -189,6 +207,29 @@ class PluginCore:
                 return f
             return deco
         self._listeners.setdefault(method, []).append(fn)
+        return fn
+
+    def on_pattern(self, pattern: str, fn: Callable | None = None):
+        """Register a listener for every notification whose method matches
+        `pattern`, where `*` stands for exactly one dot-separated segment —
+        the same language `consumes.events` uses in the manifest.
+
+        Needed whenever a plugin subscribes to a namespace instead of a name:
+        `on` keys listeners by exact method, so a manifest subscription like
+        `scripts.*.*` or `browser.tab.*` had events delivered to the process
+        and then silently dropped by the SDK. That shape is the norm for host
+        plugins, whose hosted things name their events at runtime.
+
+        The callback takes `(event_type, params)` — a pattern listener by
+        definition does not know which event arrived. The manifest still
+        bounds delivery: a pattern here can only ever see events the plugin's
+        `consumes.events` already admits."""
+        if fn is None:
+            def deco(f):
+                self.on_pattern(pattern, f)
+                return f
+            return deco
+        self._pattern_listeners.append((pattern, fn))
         return fn
 
     def on_ready(self, fn: Callable | None = None):
@@ -389,6 +430,15 @@ class PluginCore:
         if msg_id is None and method:
             self._notify_queue.put_nowait((method, msg.get("params"), msg.get("correlation_id")))
 
+    async def _invoke2(self, fn: Callable, event_type: str, params: Any) -> Any:
+        """`_invoke` for the two-argument pattern-listener shape."""
+        if inspect.iscoroutinefunction(fn):
+            return await fn(event_type, params)
+        result = await asyncio.to_thread(fn, event_type, params)
+        if inspect.isawaitable(result):
+            return await result
+        return result
+
     async def _invoke(self, fn: Callable, params: Any) -> Any:
         """Dual-handler dispatch: `async def` runs on the loop; plain `def`
         is offloaded to a thread so a blocking body cannot freeze every
@@ -440,8 +490,9 @@ class PluginCore:
             return
         while True:
             method, params, correlation_id = await self._notify_queue.get()
-            listeners = self._listeners.get(method)
-            if not listeners:
+            listeners = self._listeners.get(method) or []
+            patterned = [fn for pat, fn in self._pattern_listeners if matches_topic(pat, method)]
+            if not listeners and not patterned:
                 continue
             token = set_correlation(correlation_id)
             try:
@@ -450,6 +501,15 @@ class PluginCore:
                         await self._invoke(fn, params)
                     except Exception as e:
                         log(self._plugin_id, f"listener error for {method}: {e}")
+                # Exact listeners first, then pattern ones — a plugin with
+                # both registered for the same event sees the specific handler
+                # run before the catch-all, which is the order that reads
+                # correctly.
+                for fn in patterned:
+                    try:
+                        await self._invoke2(fn, method, params)
+                    except Exception as e:
+                        log(self._plugin_id, f"pattern listener error for {method}: {e}")
             finally:
                 reset_correlation(token)
 
