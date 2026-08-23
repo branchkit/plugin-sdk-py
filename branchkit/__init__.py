@@ -32,6 +32,7 @@ from .plugin import (
     plugin_data_dir,
     plugin_dir,
 )
+from .actor import acting_for, get_current_actor
 from .collection import CollectionMixin, list_opts, scope_collection, scope_group
 from .collection_log import CollectionLogMixin, log_list_opts
 from .debug import DebugMixin

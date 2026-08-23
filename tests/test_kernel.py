@@ -13,6 +13,7 @@ import unittest
 import branchkit
 from branchkit import commands as cmds
 from branchkit import proxy, ui
+from branchkit.actor import acting_for, get_current_actor
 from branchkit.correlation import get_current_correlation, reset_correlation, set_correlation
 from branchkit.plugin import PluginCore, RecordingDisabledError, RpcCallError, error_kind_of, rpc_error_for
 
@@ -159,6 +160,27 @@ class TestCorrelation(unittest.TestCase):
         self.assertEqual(get_current_correlation(), "")
 
 
+class TestActor(unittest.TestCase):
+    def test_acting_for_sets_and_restores(self):
+        self.assertEqual(get_current_actor(), "")
+        with acting_for("headphones.py"):
+            self.assertEqual(get_current_actor(), "headphones.py")
+        self.assertEqual(get_current_actor(), "")
+
+    def test_nested_scopes_restore_the_outer_label(self):
+        with acting_for("headphones.py"):
+            with acting_for("notes.py"):
+                self.assertEqual(get_current_actor(), "notes.py")
+            self.assertEqual(get_current_actor(), "headphones.py")
+        self.assertEqual(get_current_actor(), "")
+
+    def test_empty_actor_is_no_label(self):
+        with acting_for(""):
+            self.assertEqual(get_current_actor(), "")
+        with acting_for(None):
+            self.assertEqual(get_current_actor(), "")
+
+
 class TestDualHandlerDispatch(unittest.IsolatedAsyncioTestCase):
     async def test_sync_handler_offloads_and_sees_correlation(self):
         core = PluginCore()
@@ -169,16 +191,19 @@ class TestDualHandlerDispatch(unittest.IsolatedAsyncioTestCase):
 
             seen["thread_is_main"] = threading.current_thread() is threading.main_thread()
             seen["correlation"] = get_current_correlation()
+            seen["actor"] = get_current_actor()
             return {"ok": True}
 
         token = set_correlation("tr_sync")
         try:
-            result = await core._invoke(sync_handler, {})
+            with acting_for("headphones.py"):
+                result = await core._invoke(sync_handler, {})
         finally:
             reset_correlation(token)
         self.assertEqual(result, {"ok": True})
         self.assertFalse(seen["thread_is_main"], "plain-def handler must run off the loop thread")
         self.assertEqual(seen["correlation"], "tr_sync", "contextvars must propagate into the thread")
+        self.assertEqual(seen["actor"], "headphones.py", "the actor label rides the same contextvars")
 
     async def test_async_handler_runs_on_loop(self):
         core = PluginCore()

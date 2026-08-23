@@ -143,6 +143,7 @@ CollectionPutEntry = TypedDict("CollectionPutEntry", {
 CollectionRecord = TypedDict("CollectionRecord", {
     "group": NotRequired[str],
     "id": str,
+    "on_behalf_of": NotRequired[str],
     "payload": NotRequired[Any],
     "revision": int,
     "timestamp_ms": int,
@@ -426,6 +427,7 @@ ListeningPort = TypedDict("ListeningPort", {
 
 LogEntry = TypedDict("LogEntry", {
     "id": str,
+    "on_behalf_of": NotRequired[str],
     "payload": NotRequired[Any],
     "timestamp_ms": int,
     "writer": str,

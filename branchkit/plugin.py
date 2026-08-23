@@ -21,6 +21,7 @@ from typing import Any, Callable
 from .closed_vocab_gen import ERROR_KIND_RECORDING_DISABLED
 from .contracts_gen import API_VERSION as _COMPILED_API_VERSION
 from .contracts_gen import HOOK_ON_ACTION
+from .actor import get_current_actor
 from .correlation import get_current_correlation, reset_correlation, set_correlation
 from .log import log
 
@@ -222,6 +223,9 @@ class PluginCore:
         corr = get_current_correlation()
         if corr:
             msg["correlation_id"] = corr
+        actor = get_current_actor()
+        if actor:
+            msg["on_behalf_of"] = actor
         self._write(msg)
         try:
             return await asyncio.wait_for(fut, 10.0 if timeout is None else timeout)
@@ -249,6 +253,9 @@ class PluginCore:
         corr = get_current_correlation()
         if corr:
             msg["correlation_id"] = corr
+        actor = get_current_actor()
+        if actor:
+            msg["on_behalf_of"] = actor
         self._write(msg)
 
     def current_correlation(self) -> str:
@@ -256,6 +263,12 @@ class PluginCore:
         currently being handled, or "" if none is in flight. Outbound calls
         inherit it automatically."""
         return get_current_correlation()
+
+    def current_actor(self) -> str:
+        """The actor label outbound calls currently carry, or "" if none.
+        Hosts read it to tag their own logs with the name the platform
+        records."""
+        return get_current_actor()
 
     # --- Lifecycle ---
 
