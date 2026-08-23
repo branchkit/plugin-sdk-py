@@ -549,6 +549,14 @@ PrinterInfo = TypedDict("PrinterInfo", {
     "state": str,
 })
 
+PrivilegeStatusEntry = TypedDict("PrivilegeStatusEntry", {
+    "denied": bool,
+    "granted": bool,
+    "pending": bool,
+    "privilege": str,
+    "required": bool,
+})
+
 ProcessInfo = TypedDict("ProcessInfo", {
     "cpu_percent": NotRequired[float],
     "memory_bytes": NotRequired[int],
@@ -4279,6 +4287,27 @@ PrivacySetRecordingResponse = TypedDict("PrivacySetRecordingResponse", {
     "ok": bool,
 })
 
+PrivilegesListResponse = TypedDict("PrivilegesListResponse", {
+    "privileges": list["PrivilegeStatusEntry"],
+})
+
+PrivilegesRelinquishRequest = TypedDict("PrivilegesRelinquishRequest", {
+    "privilege": str,
+})
+
+PrivilegesRelinquishResponse = TypedDict("PrivilegesRelinquishResponse", {
+    "status": str,
+})
+
+PrivilegesRequestRequest = TypedDict("PrivilegesRequestRequest", {
+    "privilege": str,
+    "reason": NotRequired[str],
+})
+
+PrivilegesRequestResponse = TypedDict("PrivilegesRequestResponse", {
+    "status": str,
+})
+
 RecognitionBiasApplyRequest = TypedDict("RecognitionBiasApplyRequest", {
     "force": NotRequired[bool],
     "strength": float,
@@ -4707,6 +4736,12 @@ PowerChangedEventParams = TypedDict("PowerChangedEventParams", {
     "source": str,
     "time_to_empty": NotRequired[int],
     "time_to_full": NotRequired[int],
+})
+
+# Payload of the `_platform.privilege.granted` event.
+PrivilegeGrantedEventParams = TypedDict("PrivilegeGrantedEventParams", {
+    "plugin_id": str,
+    "privilege": str,
 })
 
 # Payload of the `_platform.selection.picked` event.

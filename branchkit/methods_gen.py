@@ -590,6 +590,9 @@ from .contracts_gen import (
     METHOD_PLUGIN_DEBUG,
     METHOD_PRIVACY_GET_RECORDING,
     METHOD_PRIVACY_SET_RECORDING,
+    METHOD_PRIVILEGES_LIST,
+    METHOD_PRIVILEGES_RELINQUISH,
+    METHOD_PRIVILEGES_REQUEST,
     METHOD_RECOGNITION_BIAS_APPLY,
     METHOD_RECOGNITION_REDECODE,
     METHOD_SELECTION_PICK,
@@ -952,6 +955,9 @@ if TYPE_CHECKING:
         PluginDataExportResponse,
         PrinterInfo,
         PrivacyGetRecordingResponse,
+        PrivilegeStatusEntry,
+        PrivilegesRelinquishResponse,
+        PrivilegesRequestResponse,
         ProcessInfo,
         RecognitionBiasApplyResponse,
         RecognitionRedecodeResponse,
@@ -4260,6 +4266,26 @@ class MethodsMixin:
             "name": name,
         }
         await self.call(METHOD_PRIVACY_SET_RECORDING, params)
+
+    async def privileges_list(self) -> list[PrivilegeStatusEntry]:
+        result = await self.call(METHOD_PRIVILEGES_LIST)
+        return (result or {}).get("privileges") or []
+
+    async def privileges_relinquish(self, privilege: str) -> PrivilegesRelinquishResponse:
+        params: dict[str, Any] = {
+            "privilege": privilege,
+        }
+        result = await self.call(METHOD_PRIVILEGES_RELINQUISH, params)
+        return result
+
+    async def privileges_request(self, privilege: str, reason: str | None = None) -> PrivilegesRequestResponse:
+        params: dict[str, Any] = {
+            "privilege": privilege,
+        }
+        if reason is not None:
+            params["reason"] = reason
+        result = await self.call(METHOD_PRIVILEGES_REQUEST, params)
+        return result
 
     async def recognition_bias_apply(self, strength: float, force: bool | None = None) -> RecognitionBiasApplyResponse:
         params: dict[str, Any] = {
