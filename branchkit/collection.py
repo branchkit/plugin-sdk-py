@@ -104,7 +104,9 @@ class CollectionMixin:
         return await self._list_exhaustive(name, compacted=True)
 
     async def _list_exhaustive(self, name: str, compacted: bool) -> list[dict]:
-        """At most two round trips, not a cursor walk: `total` comes back with
+        """Reads a collection completely, re-reading while it grows.
+
+        Normally two round trips, not a cursor walk: `total` comes back with
         the first page, so the second read is bounded exactly. Cursor paging
         would be wrong anyway on contribution-keyed storage, where `cursor` is
         a no-op.
@@ -126,11 +128,29 @@ class CollectionMixin:
                 opts["compacted"] = True
             return await self.list_page(name, opts)
 
-        records, total = await page(first_page)
-        if len(records) >= total:
-            return records
-        records, _ = await page(total)
-        return records
+        # Re-reads until the page covers `total`, because `total` is
+        # observed on the read that returns it and the collection can grow
+        # between reads. Taking the first `total` on faith would hand back a
+        # short result reported as complete - the same "mirror declares
+        # itself Ready over a truncated read" this helper exists to prevent,
+        # just with a narrower window: one write landing mid-refresh is
+        # enough.
+        #
+        # Bounded rather than unbounded: a collection written faster than it
+        # can be read is not a condition to spin on, and a caller waiting on
+        # a mirror refresh should get an answer. Practically it settles on
+        # the second read.
+        max_passes = 5
+        limit = first_page
+        for _ in range(max_passes):
+            records, total = await page(limit)
+            if len(records) >= total:
+                return records
+            limit = total
+        raise RuntimeError(
+            f"collection {name!r} kept growing across {max_passes} exhaustive "
+            "reads; read it with an explicit limit and page with cursor instead"
+        )
 
     async def list_compacted(self, name: str, opts: dict | None = None) -> list[dict]:
         """The compacted-changelog projection of a keyed log — one folded

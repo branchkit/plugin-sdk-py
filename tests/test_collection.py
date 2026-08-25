@@ -46,6 +46,48 @@ class TestListAll(unittest.TestCase):
         asyncio.run(p.list_all("things"))
         self.assertEqual(len(p.calls), 1)
 
+    def test_re_reads_when_the_collection_grows_mid_read(self):
+        """`total` is observed on the read that returns it, so a write landing
+        between the probe and the second read leaves the second read short.
+        Returning it would report a truncated set as complete."""
+
+        class Growing(FakePlugin):
+            def __init__(self):
+                super().__init__(total=1500)
+                self.totals = [1500, 1600, 1600]
+
+            async def collection_list(self, name, opts=None):
+                opts = opts or {}
+                self.calls.append(opts)
+                total = self.totals[min(len(self.calls) - 1, len(self.totals) - 1)]
+                n = min(opts["limit"], total)
+                return {
+                    "records": [{"id": "k", "payload": {}} for _ in range(n)],
+                    "total": total,
+                }
+
+        p = Growing()
+        self.assertEqual(len(asyncio.run(p.list_all("things"))), 1600)
+
+    def test_gives_up_on_an_endlessly_growing_collection(self):
+        """A collection written faster than it can be read is not something to
+        spin on. Say so rather than returning a short read as though whole."""
+
+        class Endless(FakePlugin):
+            async def collection_list(self, name, opts=None):
+                opts = opts or {}
+                self.calls.append(opts)
+                n = min(opts["limit"], self.total)
+                self.total += 100
+                return {
+                    "records": [{"id": "k", "payload": {}} for _ in range(n)],
+                    "total": self.total,
+                }
+
+        p = Endless(total=1500)
+        with self.assertRaises(RuntimeError):
+            asyncio.run(p.list_all("things"))
+
     def test_never_probes_without_a_limit(self):
         """Reading with no limit to discover `total` would fire the
         platform's default-limit diagnostic on every call, burying real
