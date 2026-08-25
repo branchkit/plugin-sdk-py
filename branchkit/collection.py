@@ -70,8 +70,67 @@ class CollectionMixin:
         return rec if isinstance(rec, dict) else None
 
     async def list(self, name: str, opts: dict | None = None) -> list[dict]:
+        """Read ONE PAGE of records.
+
+        Omitting `opts` does NOT mean "every record": the platform applies a
+        default limit when the caller supplies none, so a large collection
+        comes back truncated, and this method discards `total` so it cannot
+        tell you that happened.
+
+        Choose deliberately: some records -> `list` with an explicit `limit`;
+        every record -> `list_all`; a page plus the real count -> `list_page`.
+        """
         res = await self.collection_list(name, opts)
         return (res or {}).get("records") or []
+
+    async def list_all(self, name: str) -> list[dict]:
+        """Read EVERY record, defeating the platform's default list limit.
+
+        Use this when the read has to be exhaustive - clearing a collection,
+        reconciling against it, counting it. `list` returns one page and
+        discards `total`, so a caller using it cannot tell a complete read
+        from a capped one; that is a quiet correctness bug wherever
+        completeness was assumed.
+
+        Prefer `list` with an explicit `limit` when you only need some
+        records: this one is deliberately unbounded.
+        """
+        return await self._list_exhaustive(name, compacted=False)
+
+    async def list_all_compacted(self, name: str) -> list[dict]:
+        """`list_all` over the compacted-changelog projection - every folded
+        record, one per key. A keyed log with more live keys than the cap
+        otherwise folds to a view its reader believes is whole."""
+        return await self._list_exhaustive(name, compacted=True)
+
+    async def _list_exhaustive(self, name: str, compacted: bool) -> list[dict]:
+        """At most two round trips, not a cursor walk: `total` comes back with
+        the first page, so the second read is bounded exactly. Cursor paging
+        would be wrong anyway on contribution-keyed storage, where `cursor` is
+        a no-op.
+
+        The probe passes an EXPLICIT limit rather than omitting one. Reading
+        with no limit to discover `total` would trip the platform's
+        default-limit warning on every call - this helper would manufacture
+        the exact noise that warning exists to surface, burying real
+        occurrences underneath it.
+
+        `total` is the FOLDED count when compacted, so the short-circuit is a
+        real one on both projections rather than a guaranteed miss.
+        """
+        first_page = 1000
+
+        async def page(limit: int) -> tuple[list[dict], int]:
+            opts: dict = {"limit": limit}
+            if compacted:
+                opts["compacted"] = True
+            return await self.list_page(name, opts)
+
+        records, total = await page(first_page)
+        if len(records) >= total:
+            return records
+        records, _ = await page(total)
+        return records
 
     async def list_compacted(self, name: str, opts: dict | None = None) -> list[dict]:
         """The compacted-changelog projection of a keyed log — one folded

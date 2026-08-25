@@ -58,7 +58,11 @@ class CollectionMirror:
         the source saying "I am now empty", so the snapshot empties and
         on_change fires — swallowing it is how derived projections orphan."""
         if self._compacted:
-            recs = await self._plugin.list_compacted(self._name)
+            # Exhaustive: a mirror that silently drops records past the
+            # platform's default list limit is a wrong local cache that
+            # reports itself ready, and every on_change consumer inherits
+            # the error.
+            recs = await self._plugin.list_all_compacted(self._name)
             empty = len(recs) == 0
             data = recs
         else:
