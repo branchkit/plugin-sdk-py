@@ -1027,8 +1027,6 @@ DiscoveryClosedResponse = TypedDict("DiscoveryClosedResponse", {
 
 DispatchRequest = TypedDict("DispatchRequest", {
     "action": Any,
-    "session_id": NotRequired[str],
-    "trace_id": NotRequired[str],
 })
 
 DispatchResponse = TypedDict("DispatchResponse", {

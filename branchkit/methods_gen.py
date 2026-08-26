@@ -1232,14 +1232,10 @@ class MethodsMixin:
     async def discovery_closed(self) -> None:
         await self.call(METHOD_DISCOVERY_CLOSED)
 
-    async def dispatch(self, action: Any, session_id: str | None = None, trace_id: str | None = None) -> DispatchResponse:
+    async def dispatch(self, action: Any) -> DispatchResponse:
         params: dict[str, Any] = {
             "action": action,
         }
-        if session_id is not None:
-            params["session_id"] = session_id
-        if trace_id is not None:
-            params["trace_id"] = trace_id
         result = await self.call(METHOD_DISPATCH, params)
         return result
 
