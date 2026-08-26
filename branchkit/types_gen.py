@@ -4511,6 +4511,21 @@ OnCommandsChangedResponse = TypedDict("OnCommandsChangedResponse", {
     "processed_count": int,
 })
 
+OnTranscriptRequest = TypedDict("OnTranscriptRequest", {
+    "active_tags": NotRequired[list[str]],
+    "confidence": NotRequired[float],
+    "dictation_profile": NotRequired[str],
+    "is_final": NotRequired[bool],
+    "pipeline": str,
+    "text": str,
+    "word_onsets_ms": NotRequired[list[int]],
+    "word_scores": NotRequired[list[float]],
+})
+
+OnTranscriptResponse = TypedDict("OnTranscriptResponse", {
+    "actions": NotRequired[list[Any]],
+})
+
 RenderHUDRequest = TypedDict("RenderHUDRequest", {
     "footer": NotRequired[str],
     "hud_mode": str,
