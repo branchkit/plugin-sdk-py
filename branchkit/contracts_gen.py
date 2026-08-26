@@ -617,7 +617,6 @@ METHOD_VOCABULARY_COMMIT = "vocabulary.commit"  # since 0.1.0
 HOOK_ON_ACTION = "on_action"  # since 0.1.0
 HOOK_ON_COMMANDS_CHANGED = "on_commands_changed"  # since 0.1.0
 HOOK_ON_TRANSCRIPT = "on_transcript"  # since 0.1.0
-HOOK_RENDER_HUD = "render_hud"  # since 0.1.0
 HOOK_RENDER_SETTINGS = "render_settings"  # since 0.1.0
 HOOK_TRIAL_APPLY_FIXTURE = "trial_apply_fixture"  # since 0.1.0
 HOOK_TRIAL_RELEASE_FIXTURE = "trial_release_fixture"  # since 0.1.0

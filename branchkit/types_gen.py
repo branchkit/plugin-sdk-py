@@ -364,26 +364,6 @@ HidElementEntry = TypedDict("HidElementEntry", {
     "usage_page": int,
 })
 
-HudItem = TypedDict("HudItem", {
-    "icon": NotRequired[str],
-    "id": str,
-    "subtitle": NotRequired[str],
-    "tag": NotRequired[str],
-    "title": str,
-})
-
-HudResponse = TypedDict("HudResponse", {
-    "content_html": NotRequired[str],
-    "footer": str,
-    "sections": NotRequired[list["HudSection"]],
-    "title": str,
-})
-
-HudSection = TypedDict("HudSection", {
-    "items": list["HudItem"],
-    "title": str,
-})
-
 InputSource = TypedDict("InputSource", {
     "id": str,
     "is_active": bool,
@@ -4522,13 +4502,6 @@ OnTranscriptRequest = TypedDict("OnTranscriptRequest", {
 
 OnTranscriptResponse = TypedDict("OnTranscriptResponse", {
     "actions": NotRequired[list[Any]],
-})
-
-RenderHUDRequest = TypedDict("RenderHUDRequest", {
-    "footer": NotRequired[str],
-    "hud_mode": str,
-    "sections": NotRequired[list["HudSection"]],
-    "title": NotRequired[str],
 })
 
 RenderSettingsRequest = TypedDict("RenderSettingsRequest", {
