@@ -4604,6 +4604,13 @@ EffectDisplacedEventParams = TypedDict("EffectDisplacedEventParams", {
     "new_owner": str,
 })
 
+# Payload of the `_platform.effect.ownership_changed` event.
+EffectOwnershipChangedEventParams = TypedDict("EffectOwnershipChangedEventParams", {
+    "effect": str,
+    "owner": NotRequired[str],
+    "previous": NotRequired[str],
+})
+
 # Payload of the `_platform.hid.connected` event.
 HidConnectedEventParams = TypedDict("HidConnectedEventParams", {
     "axes": int,
