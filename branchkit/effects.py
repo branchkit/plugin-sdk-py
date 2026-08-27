@@ -15,7 +15,7 @@ def _optional_str(v) -> str | None:
 class EffectsMixin:
     async def assert_effect(self, name: str) -> dict:
         """Declare this plugin is asserting `name` (which must be declared
-        in the manifest's `provides.effects[*].asserts`). Returns
+        in the manifest's `consumes.effects[*].asserts`). Returns
         ``{"granted", "already_held", "displaced", "enforced"}``."""
         res = await self.effects_assert(name)
         return {

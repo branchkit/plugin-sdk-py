@@ -9,7 +9,7 @@ from typing import NotRequired, TypedDict
 INPUT_DIRECTIVE_LIFT_KEYS_ON_DISPATCH = "lift_keys_on_dispatch"
 
 # EFFECT_* are the registered effect names plugins may declare in
-# `provides.effects`. Source of truth:
+# `consumes.effects`. Source of truth:
 # `actuator/src/effects.rs::EffectDef` inventory entries.
 EFFECT_DISABLE_SCREEN_DIM = "disable_screen_dim"
 EFFECT_MUTE_AUDIO_TO_OTHER_APPS = "mute_audio_to_other_apps"
