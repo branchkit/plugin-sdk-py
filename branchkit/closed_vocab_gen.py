@@ -15,10 +15,13 @@ EFFECT_DISABLE_SCREEN_DIM = "disable_screen_dim"
 EFFECT_MUTE_AUDIO_TO_OTHER_APPS = "mute_audio_to_other_apps"
 EFFECT_PAUSE_MICROPHONE_INDICATOR = "pause_microphone_indicator"
 EFFECT_PREVENT_FOCUS_STEAL = "prevent_focus_steal"
+EFFECT_PREVENT_SYSTEM_SLEEP = "prevent_system_sleep"
+EFFECT_SIGNAL_CLIPBOARD_IN_USE = "signal_clipboard_in_use"
 EFFECT_SIGNAL_RECORDING_ACTIVE = "signal_recording_active"
 EFFECT_SUPPRESS_HUDS = "suppress_huds"
 EFFECT_SUPPRESS_KEYBINDS = "suppress_keybinds"
 EFFECT_SUPPRESS_NOTIFICATIONS = "suppress_notifications"
+EFFECT_SUPPRESS_VOICE_COMMANDS = "suppress_voice_commands"
 
 # The full closed-vocabulary sets.
 KNOWN_INPUT_DIRECTIVES = (
@@ -30,10 +33,13 @@ KNOWN_EFFECTS = (
     "mute_audio_to_other_apps",
     "pause_microphone_indicator",
     "prevent_focus_steal",
+    "prevent_system_sleep",
+    "signal_clipboard_in_use",
     "signal_recording_active",
     "suppress_huds",
     "suppress_keybinds",
     "suppress_notifications",
+    "suppress_voice_commands",
 )
 
 # ERROR_KIND_* are the closed-vocabulary `kind` values the actuator puts
