@@ -291,6 +291,7 @@ DisplayRotation = TypedDict("DisplayRotation", {
 
 EnumeratedCommand = TypedDict("EnumeratedCommand", {
     "action": str,
+    "binding": NotRequired[Any],
     "category": NotRequired[str],
     "description": NotRequired[str],
     "dynamic": bool,
