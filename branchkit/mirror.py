@@ -1,6 +1,6 @@
 """Consumed-collection mirror — a local, always-fresh copy of a collection
 this plugin consumes. Python twin of mirror.{go,ts}; see
-notes/DESIGN_COLLECTION_MIRROR.md.
+docs/design/DESIGN_COLLECTION_MIRROR.md.
 
 Freshness model: fetches once at on_ready (the documented earliest safe
 point to read other plugins' collections); refetches on

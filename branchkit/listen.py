@@ -9,7 +9,7 @@ network namespace, where a self-bound 127.0.0.1 is a private dead
 loopback — the inherited host-loopback listener is the only reachable
 surface. CPython serves an inherited fd natively
 (`socket.socket(fileno=...)`), so unlike TS there is no two-runtime
-dance. See the actuator's notes/DESIGN_SANDBOX_LOOPBACK_FDPASS.md."""
+dance. See the actuator's docs/design/DESIGN_SANDBOX_LOOPBACK_FDPASS.md."""
 
 from __future__ import annotations
 

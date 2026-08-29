@@ -1,5 +1,5 @@
 """Capability-mechanism helpers (effects). Python twin of effects.{go,ts}.
-See notes/DESIGN_CAPABILITY_MECHANISM.md."""
+See docs/design/DESIGN_CAPABILITY_MECHANISM.md."""
 
 from __future__ import annotations
 

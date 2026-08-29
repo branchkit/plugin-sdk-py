@@ -316,7 +316,7 @@ ExternalDisk = TypedDict("ExternalDisk", {
 # collection declares at most one role; surfaces (discovery HUD,
 # settings UI, etc.) interpret roles on their own terms.
 # 
-# See `notes/DESIGN_COLLECTION_FIELD_ROLES.md` for the full vocabulary
+# See `docs/design/DESIGN_COLLECTION_FIELD_ROLES.md` for the full vocabulary
 # rationale. Roles `primary`, `secondary`, `group`, `description`,
 # `payload` are consumed by
 # `services::matching_service::expand_collections_to_items`

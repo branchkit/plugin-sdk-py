@@ -199,7 +199,7 @@ class CollectionMixin:
         ``{"put": n, "deleted": n, "skipped": n}``.
 
         Scope is required and never inferred — pass `scope_collection()` or
-        `scope_group(...)`. See notes/DESIGN_COLLECTION_REPLACE.md."""
+        `scope_group(...)`. See docs/design/DESIGN_COLLECTION_REPLACE.md."""
         # Refused locally rather than sent: guessing between "everything I
         # own here" and "the subset under this key space" is how a refresh
         # silently becomes a wipe.

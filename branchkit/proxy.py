@@ -1,5 +1,5 @@
 """Transparent outbound proxy (the actuator's per-host network
-enforcement — notes/DESIGN_SANDBOX_HOST_PROXY.md).
+enforcement — docs/design/DESIGN_SANDBOX_HOST_PROXY.md).
 
 When a plugin declares `"network": {"hosts": [...]}`, platforms without an
 in-kernel per-host primitive run the plugin in a no-network sandbox whose

@@ -108,7 +108,7 @@ class PluginCore:
         self._ready = asyncio.Event()
         self._shutdown_event = asyncio.Event()
         # Inbound notifications drain through one pump so listeners observe
-        # them in wire order. See notes/DESIGN_SDK_EVENT_ORDERING.md.
+        # them in wire order. See docs/design/DESIGN_SDK_EVENT_ORDERING.md.
         self._notify_queue: asyncio.Queue = asyncio.Queue()
         # Stdout writes can come from the loop AND from offloaded sync
         # handlers calling notify(); one lock keeps frames unfragmented.
