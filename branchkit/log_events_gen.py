@@ -14,6 +14,8 @@ LOG_EVENT_CAPTURE_PROGRESS = "capture.progress"
 LOG_EVENT_COMMAND_MATCH_DECISION = "command.match_decision"
 LOG_EVENT_COMMAND_MATCHED = "command.matched"
 LOG_EVENT_COMMAND_NO_MATCH = "command.no_match"
+LOG_EVENT_CONSENT_DECISION = "consent.decision"
+LOG_EVENT_CONSENT_PRIVILEGED_OP = "consent.privileged_op"
 LOG_EVENT_DIAGNOSTIC_MESSAGE = "diagnostic.message"
 LOG_EVENT_DISPATCH_ACTION_DISPATCHED = "dispatch.action_dispatched"
 LOG_EVENT_DISPATCH_ACTION_PANICKED = "dispatch.action_panicked"
@@ -84,6 +86,8 @@ LOG_EVENT_REGISTRY: dict[str, LogEventMeta] = {
     "command.match_decision": {"name": "command.match_decision", "summary": "Diagnostic snapshot of the matcher's tiebreaker choice — which category won, which gates were active, whether a gated Partial was suppressed.", "since": "0.1.0", "source": "dispatch", "severity": "debug", "redaction": "none"},
     "command.matched": {"name": "command.matched", "summary": "Speech recognition produced a match against a registered command.", "since": "0.1.0", "source": "dispatch", "severity": "info", "redaction": "none"},
     "command.no_match": {"name": "command.no_match", "summary": "Speech input did not match any registered command.", "since": "0.1.0", "source": "dispatch", "severity": "debug", "redaction": "none"},
+    "consent.decision": {"name": "consent.decision", "summary": "A privilege-consent decision: granted (always/once), denied, dismissed, or revoked — with the surface that produced it. Audit-eligible.", "since": "0.1.0", "source": "plugins", "severity": "info", "redaction": "none"},
+    "consent.privileged_op": {"name": "consent.privileged_op", "summary": "A plugin invoked (or was refused) an operation gated on a dangerous privilege. Audit-eligible.", "since": "0.1.0", "source": "plugins", "severity": "info", "redaction": "none"},
     "diagnostic.message": {"name": "diagnostic.message", "summary": "Catch-all for ad-hoc operational text that doesn't fit a typed variant.", "since": "0.1.0", "source": "generic", "severity": "debug", "redaction": "none"},
     "dispatch.action_dispatched": {"name": "dispatch.action_dispatched", "summary": "An action entered the dispatch pipeline.", "since": "0.1.0", "source": "dispatch", "severity": "debug", "redaction": "none"},
     "dispatch.action_panicked": {"name": "dispatch.action_panicked", "summary": "A dispatch handler panicked. Process likely degraded; investigate.", "since": "0.1.0", "source": "dispatch", "severity": "error", "redaction": "none"},
