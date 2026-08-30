@@ -89,7 +89,9 @@ KNOWN_ERROR_KINDS = (
 FaultData = TypedDict("FaultData", {
     "kind": str,
     "collection": NotRequired[str],
+    "consent": NotRequired[str],
     "detail": NotRequired[str],
     "id": NotRequired[str],
     "op": NotRequired[str],
+    "privilege": NotRequired[str],
 })

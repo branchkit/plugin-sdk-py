@@ -535,6 +535,7 @@ PrinterInfo = TypedDict("PrinterInfo", {
 PrivilegeStatusEntry = TypedDict("PrivilegeStatusEntry", {
     "denied": bool,
     "granted": bool,
+    "one_shot": bool,
     "pending": bool,
     "privilege": str,
     "required": bool,
