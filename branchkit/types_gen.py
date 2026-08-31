@@ -1292,15 +1292,6 @@ InputTypeTextResponse = TypedDict("InputTypeTextResponse", {
     "ok": bool,
 })
 
-KeyNamesSetRequest = TypedDict("KeyNamesSetRequest", {
-    "names": NotRequired[dict[str, int]],
-})
-
-KeyNamesSetResponse = TypedDict("KeyNamesSetResponse", {
-    "count": int,
-    "ok": bool,
-})
-
 KeybindsRegisterRequest = TypedDict("KeybindsRegisterRequest", {
     "snapshot": Any,
 })

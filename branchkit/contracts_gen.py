@@ -67,7 +67,6 @@ METHOD_INPUT_SELECT_ALL = "input.select_all"  # since 0.1.0
 METHOD_INPUT_SWITCH_INPUT_SOURCE = "input.switch_input_source"  # since 0.1.0
 METHOD_INPUT_TRIPLE_CLICK = "input.triple_click"  # since 0.1.0
 METHOD_INPUT_TYPE_TEXT = "input.type_text"  # since 0.1.0
-METHOD_KEY_NAMES_SET = "key_names.set"  # since 0.1.0
 METHOD_KEYBINDS_REGISTER = "keybinds.register"  # since 0.1.0
 METHOD_MODEL_DELETE = "model.delete"  # since 0.1.0
 METHOD_NATIVE_ACCENT_COLOR = "native.accent_color"  # since 0.1.0

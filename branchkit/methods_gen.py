@@ -69,7 +69,6 @@ from .contracts_gen import (
     METHOD_INPUT_TRIPLE_CLICK,
     METHOD_INPUT_TYPE_TEXT,
     METHOD_KEYBINDS_REGISTER,
-    METHOD_KEY_NAMES_SET,
     METHOD_MODEL_DELETE,
     METHOD_NATIVE_ACCENT_COLOR,
     METHOD_NATIVE_ACCESSIBILITY_DISPLAY_INVERT,
@@ -667,7 +666,6 @@ if TYPE_CHECKING:
         InputClipboardReadResponse,
         InputSource,
         InstalledApp,
-        KeyNamesSetResponse,
         KeybindsRegisterResponse,
         ListOpts,
         ListeningPort,
@@ -1483,14 +1481,6 @@ class MethodsMixin:
             "text": text,
         }
         await self.call(METHOD_INPUT_TYPE_TEXT, params)
-
-    async def key_names_set(self, names: dict[str, int] | None = None) -> KeyNamesSetResponse:
-        params: dict[str, Any] = {
-        }
-        if names is not None:
-            params["names"] = names
-        result = await self.call(METHOD_KEY_NAMES_SET, params)
-        return result
 
     async def keybinds_register(self, snapshot: Any) -> KeybindsRegisterResponse:
         params: dict[str, Any] = {
