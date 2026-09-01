@@ -612,6 +612,7 @@ from .contracts_gen import (
     METHOD_TRIAL_REGISTER_FIXTURE,
     METHOD_TRIAL_RESOLVE_SAMPLES,
     METHOD_VOCABULARY_COMMIT,
+    METHOD_WIRING_DESCRIBE,
 )
 
 if TYPE_CHECKING:
@@ -978,6 +979,7 @@ if TYPE_CHECKING:
         UsbDevice,
         WindowDetail,
         WindowFrame,
+        WiringCollection,
         WorldModel,
     )
 
@@ -4441,3 +4443,7 @@ class MethodsMixin:
 
     async def vocabulary_commit(self) -> None:
         await self.call(METHOD_VOCABULARY_COMMIT)
+
+    async def wiring_describe(self) -> list[WiringCollection]:
+        result = await self.call(METHOD_WIRING_DESCRIBE)
+        return (result or {}).get("collections") or []

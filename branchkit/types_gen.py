@@ -718,6 +718,18 @@ WindowInfo = TypedDict("WindowInfo", {
     "y": int,
 })
 
+WiringCollection = TypedDict("WiringCollection", {
+    "access": str,
+    "deny_reason": NotRequired[str],
+    "fields": list[str],
+    "introducer": str,
+    "merge": str,
+    "name": str,
+    "readable": bool,
+    "writable": bool,
+    "writers": str,
+})
+
 WorldModel = TypedDict("WorldModel", {
     "active_app": NotRequired[str],
     "active_window_id": NotRequired[str],
@@ -4455,6 +4467,10 @@ TrialResolveSamplesResponse = TypedDict("TrialResolveSamplesResponse", {
 
 VocabularyCommitResponse = TypedDict("VocabularyCommitResponse", {
     "ok": bool,
+})
+
+WiringDescribeResponse = TypedDict("WiringDescribeResponse", {
+    "collections": list["WiringCollection"],
 })
 
 # ===== Actuator → Plugin request/response types =====

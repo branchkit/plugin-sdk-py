@@ -611,6 +611,7 @@ METHOD_TRIAL_ENTER_CONTEXT = "trial.enter_context"  # since 0.1.0
 METHOD_TRIAL_REGISTER_FIXTURE = "trial.register_fixture"  # since 0.1.0
 METHOD_TRIAL_RESOLVE_SAMPLES = "trial.resolve_samples"  # since 0.1.0
 METHOD_VOCABULARY_COMMIT = "vocabulary.commit"  # since 0.1.0
+METHOD_WIRING_DESCRIBE = "wiring.describe"  # since 0.1.0
 
 # RPC method names: actuator → plugin (use with plugin.handle()).
 HOOK_ON_ACTION = "on_action"  # since 0.1.0
