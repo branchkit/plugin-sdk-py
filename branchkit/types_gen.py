@@ -1237,6 +1237,23 @@ InputMouseButtonResponse = TypedDict("InputMouseButtonResponse", {
     "ok": bool,
 })
 
+InputParseKeyEventRequest = TypedDict("InputParseKeyEventRequest", {
+    "alt": NotRequired[bool],
+    "code": NotRequired[str],
+    "ctrl": NotRequired[bool],
+    "key": NotRequired[str],
+    "meta": NotRequired[bool],
+    "shift": NotRequired[bool],
+})
+
+InputParseKeyEventResponse = TypedDict("InputParseKeyEventResponse", {
+    "combo": str,
+    "has_modifiers": bool,
+    "is_bare_modifier": bool,
+    "is_escape": bool,
+    "key_name": str,
+})
+
 InputPressKeyRequest = TypedDict("InputPressKeyRequest", {
     "code": NotRequired[int],
     "modifiers": NotRequired[list[str]],

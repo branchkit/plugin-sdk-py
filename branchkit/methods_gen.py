@@ -60,6 +60,7 @@ from .contracts_gen import (
     METHOD_INPUT_DRAG,
     METHOD_INPUT_LIST_INPUT_SOURCES,
     METHOD_INPUT_MOUSE_BUTTON,
+    METHOD_INPUT_PARSE_KEY_EVENT,
     METHOD_INPUT_PRESS_KEY,
     METHOD_INPUT_RAW_KEY,
     METHOD_INPUT_RIGHT_CLICK,
@@ -665,6 +666,7 @@ if TYPE_CHECKING:
         HidElementEntry,
         InputClipboardReadFormatResponse,
         InputClipboardReadResponse,
+        InputParseKeyEventResponse,
         InputSource,
         InstalledApp,
         KeybindsRegisterResponse,
@@ -1421,6 +1423,24 @@ class MethodsMixin:
         if button is not None:
             params["button"] = button
         await self.call(METHOD_INPUT_MOUSE_BUTTON, params)
+
+    async def input_parse_key_event(self, alt: bool | None = None, code: str | None = None, ctrl: bool | None = None, key: str | None = None, meta: bool | None = None, shift: bool | None = None) -> InputParseKeyEventResponse:
+        params: dict[str, Any] = {
+        }
+        if alt is not None:
+            params["alt"] = alt
+        if code is not None:
+            params["code"] = code
+        if ctrl is not None:
+            params["ctrl"] = ctrl
+        if key is not None:
+            params["key"] = key
+        if meta is not None:
+            params["meta"] = meta
+        if shift is not None:
+            params["shift"] = shift
+        result = await self.call(METHOD_INPUT_PARSE_KEY_EVENT, params)
+        return result
 
     async def input_press_key(self, code: int | None = None, modifiers: list[str] | None = None, name: str | None = None) -> None:
         params: dict[str, Any] = {

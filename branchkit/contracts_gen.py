@@ -59,6 +59,7 @@ METHOD_INPUT_DOUBLE_CLICK = "input.double_click"  # since 0.1.0
 METHOD_INPUT_DRAG = "input.drag"  # since 0.1.0
 METHOD_INPUT_LIST_INPUT_SOURCES = "input.list_input_sources"  # since 0.1.0
 METHOD_INPUT_MOUSE_BUTTON = "input.mouse_button"  # since 0.1.0
+METHOD_INPUT_PARSE_KEY_EVENT = "input.parse_key_event"  # since 0.1.0
 METHOD_INPUT_PRESS_KEY = "input.press_key"  # since 0.1.0
 METHOD_INPUT_RAW_KEY = "input.raw_key"  # since 0.1.0
 METHOD_INPUT_RIGHT_CLICK = "input.right_click"  # since 0.1.0
