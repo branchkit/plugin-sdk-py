@@ -42,7 +42,8 @@ class TestCommandBuilder(unittest.TestCase):
             .build()
         )
         self.assertEqual(spec["pattern"], ["open", ["tab", "window"], "<t:ts>", "<n:text>"])
-        self.assertEqual(spec["action"], {"type": "browser.open", "force": True})
+        # One params dialect: the payload nests under "params", never flat.
+        self.assertEqual(spec["action"], {"type": "browser.open", "params": {"force": True}})
         self.assertEqual(spec["requires_tags"], ["a"])
         self.assertTrue(spec["cancels_bridge"])
         self.assertEqual(spec["discovery"], "exclusive")

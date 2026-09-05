@@ -69,9 +69,10 @@ class CommandBuilder:
 
     def action(self, type: str, params: dict | None = None) -> "CommandBuilder":
         """Set the action fired on match. `type` is the action's type (a
-        built-in like "key" or a dotted plugin action); `params` are merged
-        into the action object."""
-        self._spec["action"] = {"type": type, **(params or {})}
+        built-in like "key" or a dotted plugin action); `params` nest under
+        the action object's `params` key — one dialect, see
+        DESIGN_ONE_PARAMS_DIALECT.md."""
+        self._spec["action"] = {"type": type, "params": params} if params else {"type": type}
         return self
 
     def requires_tags(self, *tags: str) -> "CommandBuilder":
