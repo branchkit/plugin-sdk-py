@@ -4212,6 +4212,7 @@ PipelinesInjectRequest = TypedDict("PipelinesInjectRequest", {
     "data": NotRequired[Any],
     "event_type": str,
     "name": str,
+    "stage": str,
 })
 
 PipelinesInjectResponse = TypedDict("PipelinesInjectResponse", {

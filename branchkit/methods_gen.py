@@ -4198,10 +4198,11 @@ class MethodsMixin:
         result = await self.call(METHOD_PIPELINES_GRAMMAR, params)
         return result
 
-    async def pipelines_inject(self, event_type: str, name: str, data: Any | None = None) -> PipelinesInjectResponse:
+    async def pipelines_inject(self, event_type: str, name: str, stage: str, data: Any | None = None) -> PipelinesInjectResponse:
         params: dict[str, Any] = {
             "event_type": event_type,
             "name": name,
+            "stage": stage,
         }
         if data is not None:
             params["data"] = data
