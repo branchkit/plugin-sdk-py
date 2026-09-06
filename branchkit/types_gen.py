@@ -242,6 +242,7 @@ DirectoryEntry = TypedDict("DirectoryEntry", {
 
 DiscoverItem = TypedDict("DiscoverItem", {
     "id": str,
+    "speakable": bool,
     "subtitle": NotRequired[str],
     "tag": str,
     "title": str,
