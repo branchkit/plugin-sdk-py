@@ -103,9 +103,12 @@ class CommandBuilder:
         return self
 
     def discovery(self, mode: str) -> "CommandBuilder":
-        """Declare the command's prefix-discovery affordance ("prefix" or
-        "exclusive"). Valid only on a literal-prefix + single-tail-capture
-        pattern. See docs/design/DESIGN_DISCOVERABLE_PREFIX.md."""
+        """Declare the command's prefix-discovery affordance ("prefix",
+        "exclusive", or "select" — select points at entries via
+        platform-assigned alphabet codewords instead of their names). Valid
+        only on a literal-prefix + single-tail-capture pattern. See
+        docs/design/DESIGN_DISCOVERABLE_PREFIX.md and
+        DESIGN_SELECTION_PRIMITIVE.md."""
         self._spec["discovery"] = mode
         return self
 
