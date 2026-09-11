@@ -4322,6 +4322,23 @@ RecognitionBiasApplyResponse = TypedDict("RecognitionBiasApplyResponse", {
     "previous_provenance": str,
 })
 
+RecognitionBiasGetResponse = TypedDict("RecognitionBiasGetResponse", {
+    "enabled": bool,
+    "provenance": str,
+    "strength": float,
+})
+
+RecognitionBiasSetRequest = TypedDict("RecognitionBiasSetRequest", {
+    "enabled": NotRequired[bool],
+    "strength": NotRequired[float],
+})
+
+RecognitionBiasSetResponse = TypedDict("RecognitionBiasSetResponse", {
+    "enabled": bool,
+    "provenance": str,
+    "strength": float,
+})
+
 RecognitionRedecodeRequest = TypedDict("RecognitionRedecodeRequest", {
     "items": list["RedecodeItem"],
     "max_active": NotRequired[int],

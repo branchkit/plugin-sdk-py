@@ -594,6 +594,8 @@ from .contracts_gen import (
     METHOD_PRIVILEGES_RELINQUISH,
     METHOD_PRIVILEGES_REQUEST,
     METHOD_RECOGNITION_BIAS_APPLY,
+    METHOD_RECOGNITION_BIAS_GET,
+    METHOD_RECOGNITION_BIAS_SET,
     METHOD_RECOGNITION_REDECODE,
     METHOD_SELECTION_PICK,
     METHOD_SELECTION_SET,
@@ -961,6 +963,8 @@ if TYPE_CHECKING:
         PrivilegesRequestResponse,
         ProcessInfo,
         RecognitionBiasApplyResponse,
+        RecognitionBiasGetResponse,
+        RecognitionBiasSetResponse,
         RecognitionRedecodeResponse,
         RedecodeItem,
         ReminderItem,
@@ -4303,6 +4307,20 @@ class MethodsMixin:
         if force is not None:
             params["force"] = force
         result = await self.call(METHOD_RECOGNITION_BIAS_APPLY, params)
+        return result
+
+    async def recognition_bias_get(self) -> RecognitionBiasGetResponse:
+        result = await self.call(METHOD_RECOGNITION_BIAS_GET)
+        return result
+
+    async def recognition_bias_set(self, enabled: bool | None = None, strength: float | None = None) -> RecognitionBiasSetResponse:
+        params: dict[str, Any] = {
+        }
+        if enabled is not None:
+            params["enabled"] = enabled
+        if strength is not None:
+            params["strength"] = strength
+        result = await self.call(METHOD_RECOGNITION_BIAS_SET, params)
         return result
 
     async def recognition_redecode(self, items: list["RedecodeItem"], model: str, stage: str, max_active: int | None = None) -> RecognitionRedecodeResponse:
