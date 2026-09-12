@@ -4274,6 +4274,15 @@ PluginDebugResponse = TypedDict("PluginDebugResponse", {
     "ok": bool,
 })
 
+PluginReportHealthRequest = TypedDict("PluginReportHealthRequest", {
+    "degraded": bool,
+    "reason": NotRequired[str],
+})
+
+PluginReportHealthResponse = TypedDict("PluginReportHealthResponse", {
+    "ok": bool,
+})
+
 PrivacyGetRecordingRequest = TypedDict("PrivacyGetRecordingRequest", {
     "name": str,
 })

@@ -587,6 +587,7 @@ METHOD_PIPELINES_STOP = "pipelines.stop"  # since 0.1.0
 METHOD_PIPELINES_WARM = "pipelines.warm"  # since 0.1.0
 METHOD_PLUGIN_DATA_EXPORT = "plugin.data.export"  # since 0.1.0
 METHOD_PLUGIN_DEBUG = "plugin.debug"  # since 0.1.0
+METHOD_PLUGIN_REPORT_HEALTH = "plugin.report_health"  # since 0.1.0
 METHOD_PRIVACY_GET_RECORDING = "privacy.get_recording"  # stable, since 0.1.0
 METHOD_PRIVACY_SET_RECORDING = "privacy.set_recording"  # stable, since 0.1.0
 METHOD_PRIVILEGES_LIST = "privileges.list"  # since 0.1.0

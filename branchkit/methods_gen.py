@@ -588,6 +588,7 @@ from .contracts_gen import (
     METHOD_PIPELINES_WARM,
     METHOD_PLUGIN_DATA_EXPORT,
     METHOD_PLUGIN_DEBUG,
+    METHOD_PLUGIN_REPORT_HEALTH,
     METHOD_PRIVACY_GET_RECORDING,
     METHOD_PRIVACY_SET_RECORDING,
     METHOD_PRIVILEGES_LIST,
@@ -4265,6 +4266,14 @@ class MethodsMixin:
         if tag is not None:
             params["tag"] = tag
         await self.call(METHOD_PLUGIN_DEBUG, params)
+
+    async def plugin_report_health(self, degraded: bool, reason: str | None = None) -> None:
+        params: dict[str, Any] = {
+            "degraded": degraded,
+        }
+        if reason is not None:
+            params["reason"] = reason
+        await self.call(METHOD_PLUGIN_REPORT_HEALTH, params)
 
     async def privacy_get_recording(self, name: str) -> PrivacyGetRecordingResponse:
         params: dict[str, Any] = {
