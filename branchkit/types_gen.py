@@ -4766,6 +4766,7 @@ PipelineWarmedEventParams = TypedDict("PipelineWarmedEventParams", {
 PluginDegradedEventParams = TypedDict("PluginDegradedEventParams", {
     "consecutive_timeouts": int,
     "plugin_id": str,
+    "reason": NotRequired[str],
 })
 
 # Payload of the `_platform.plugin.disabled` event.
