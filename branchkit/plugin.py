@@ -20,7 +20,8 @@ from typing import Any, Callable
 
 from .closed_vocab_gen import ERROR_KIND_RECORDING_DISABLED
 from .contracts_gen import API_VERSION as _COMPILED_API_VERSION
-from .contracts_gen import HOOK_ON_ACTION
+from .contracts_gen import HOOK_ON_ACTION, HOOK_RENDER_SETTINGS
+
 from .actor import get_current_actor
 from .correlation import get_current_correlation, reset_correlation, set_correlation
 from .log import log
@@ -102,6 +103,13 @@ class PluginCore:
         self._pattern_listeners: list[tuple[str, Callable]] = []
         self._pending: dict[int, asyncio.Future] = {}
         self._action_handlers: dict[str, Callable] | None = None
+        # Non-None once settings_tab has installed the SDK's own
+        # render_settings handler; _settings_mirrors are refreshed by that
+        # handler before every render (settings.py).
+        self._settings_tabs: dict[str, Callable] | None = None
+        self._settings_css = ""
+        self._settings_mirrors: list = []
+
         self._next_id = 1
         self._closed = False
         self._loop: asyncio.AbstractEventLoop | None = None
@@ -139,7 +147,10 @@ class PluginCore:
         (`plugin.handle("m", fn)`) or as a decorator (`@plugin.handle("m")`).
 
         `handle("on_action", ...)` and `handle_action(...)` are mutually
-        exclusive — both install a handler for the same RPC method."""
+        exclusive — both install a handler for the same RPC method. The
+        same holds for `handle("render_settings", ...)` and
+        `settings_tab(...)`."""
+
         if fn is None:
             def deco(f):
                 self.handle(method, f)
@@ -149,8 +160,13 @@ class PluginCore:
             raise RuntimeError(
                 'plugin-sdk-py: cannot mix handle("on_action", ...) and handle_action(...) — pick one'
             )
+        if method == HOOK_RENDER_SETTINGS and self._settings_tabs is not None:
+            raise RuntimeError(
+                'plugin-sdk-py: cannot mix handle("render_settings", ...) and settings_tab(...) — pick one'
+            )
         self._handlers[method] = fn
         return fn
+
 
     def handle_action(self, action: str, fn: Callable | None = None):
         """Register a handler for a single dispatched action type. The SDK
