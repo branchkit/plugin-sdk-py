@@ -138,8 +138,11 @@ def confirm_button(
     confirm_click = f"{method_post(method, payload_str)}; {sig} = false"
     if then:
         confirm_click += f"; {then}"
-    danger_style = f"{style or ''}color:#c44;border-color:#c44;"
-    confirm = _button(confirm_text, confirm_click, class_, danger_style)
+    # The confirm click is the destructive one; `danger` is the platform
+    # stylesheet's variant class (button.danger), never an inline colour.
+    danger_class = f"{class_ or ''} danger".strip()
+    confirm = _button(confirm_text, confirm_click, danger_class, style)
+
     cancel = _button("Cancel", f"{sig} = false", class_, style)
     return (
         f'<span data-signals:c_{sig_key}__ifmissing="false">'
@@ -147,3 +150,11 @@ def confirm_button(
         f'<span data-show="{sig}" style="display:none;">{confirm}{cancel}</span>'
         f"</span>"
     )
+
+
+def js(v: Any) -> str:
+    """Marshal one value to a JavaScript literal for a Datastar expression —
+    a string becomes a quoted string, a bool ``true``, a number itself. The
+    value-position twin of ``args``: a user string spliced into
+    ``$sig = '...'`` must not be able to end the quote."""
+    return json.dumps(v)

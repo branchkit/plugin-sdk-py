@@ -151,6 +151,15 @@ class TestUi(unittest.TestCase):
         html = ui.confirm_button("Delete", "del_item", payload={"id": "x"})
         self.assertIn("__ifmissing", html)
         self.assertIn("Really delete?", html)
+        self.assertIn('class="danger"', html)
+        self.assertNotIn("#c44", html)
+        self.assertIn('class="sc-btn danger"', ui.confirm_button("Delete", "d", class_="sc-btn"))
+
+    def test_js_marshals_values(self):
+        self.assertEqual(ui.js("it's"), '"it\'s"')
+        self.assertEqual(ui.js(True), "true")
+        self.assertEqual(ui.js(3), "3")
+
 
 
 class TestListOpts(unittest.TestCase):

@@ -59,6 +59,7 @@ from .settings_route import method_post, method_url
 from .ui import (
     Expr,
     args,
+    js,
     confirm_button,
     expr,
     input_value,
