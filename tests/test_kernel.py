@@ -309,3 +309,17 @@ class TestListenerHelpers(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestDetachedPlugin(unittest.IsolatedAsyncioTestCase):
+    """The no-platform contract tests build hosts on: calls raise at once,
+    notify and run are inert, a settings mirror can be constructed."""
+
+    async def test_detached_contract(self):
+        p = branchkit.Plugin(detached=True)
+        with self.assertRaises(branchkit.DetachedError):
+            await p.call("collection.get", {"name": "x"})
+        p.notify("events.emit", {"x": 1})  # goes nowhere, raises nothing
+        m = p.settings("plugin.test.config")
+        self.assertFalse(m.ready)
+        await asyncio.wait_for(p.run(), 1.0)

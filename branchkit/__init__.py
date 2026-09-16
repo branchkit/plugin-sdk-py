@@ -23,6 +23,7 @@ from . import proxy as _proxy
 _proxy.install_proxy_from_env()
 
 from .plugin import (
+    DetachedError,
     PluginCore,
     RecordingDisabledError,
     RpcCallError,

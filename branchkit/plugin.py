@@ -89,12 +89,28 @@ def error_kind_of(e: object) -> str | None:
     return e.kind if isinstance(e, RpcCallError) else None
 
 
+class DetachedError(RuntimeError):
+    """Raised by every call on a detached plugin (Plugin(detached=True))."""
+
+    def __init__(self, method: str) -> None:
+        super().__init__(f"detached plugin: no platform behind {method!r}")
+
+
 class PluginCore:
+
     """Transport + dispatch. The public `Plugin` class (see `__init__.py`)
     layers the generated method wrappers and the façade mixins on top."""
 
-    def __init__(self) -> None:
-        self._plugin_id: str = os.environ.get("BRANCHKIT_PLUGIN_ID", "unknown")
+    def __init__(self, *, detached: bool = False) -> None:
+        # detached: a plugin with no platform behind it, for tests. It never
+        # touches stdin or stdout: every call raises DetachedError at once,
+        # notifications go nowhere, mirrors never fetch, run() returns
+        # immediately. A host built on it exercises the plugin's own logic
+        # without a live actuator; swap a seam or a mirror for the platform
+        # behaviour a test needs.
+        self._detached = detached
+        self._plugin_id: str = "detached" if detached else os.environ.get("BRANCHKIT_PLUGIN_ID", "unknown")
+
         self._handlers: dict[str, Callable] = {}
         self._listeners: dict[str, list[Callable]] = {}
         # on_pattern registrations, in registration order. A list rather than
@@ -265,10 +281,13 @@ class PluginCore:
         """Send a request to the actuator and wait for the response.
         Default timeout 10s (T1); override per call (T3). Raises
         RpcCallError for wire errors, TimeoutError on expiry."""
+        if self._detached:
+            raise DetachedError(method)
         if self._closed:
             raise RuntimeError("plugin shutting down")
         loop = asyncio.get_running_loop()
         call_id = self._next_id
+
         self._next_id += 1
         fut: asyncio.Future = loop.create_future()
         self._pending[call_id] = fut
@@ -334,7 +353,11 @@ class PluginCore:
         and block until shutdown. Incoming requests are held until run()
         is called (L4)."""
         self._loop = asyncio.get_running_loop()
+        if self._detached:
+            self._ready.set()
+            return
         log(self._plugin_id, "started (JSON-RPC over stdio)")
+
 
         # Graceful SIGTERM/SIGINT (L3).
         for sig in (signal.SIGTERM, signal.SIGINT):
@@ -375,8 +398,9 @@ class PluginCore:
     # --- Internal ---
 
     def _write(self, msg: dict) -> None:
-        if self._closed:
+        if self._closed or self._detached:
             return
+
         line = json.dumps(msg, separators=(",", ":")) + "\n"
         with self._write_lock:
             try:
