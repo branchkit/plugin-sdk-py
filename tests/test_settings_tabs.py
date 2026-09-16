@@ -60,15 +60,16 @@ class TestSettingsTabs(unittest.IsolatedAsyncioTestCase):
         with self.assertRaisesRegex(ValueError, "cannot draw"):
             await self.render(p, "broken")
 
-    def test_settings_tab_and_handle_are_exclusive(self):
+    # The tab API is the only way in: a hand-written render_settings handler
+    # raises at registration whether or not a tab was registered first.
+    def test_handle_rejects_render_settings(self):
         a = fake_plugin({})
-        a.settings_tab("x", lambda req: "")
-        with self.assertRaisesRegex(RuntimeError, "pick one"):
+        with self.assertRaisesRegex(RuntimeError, "settings_tab"):
             a.handle("render_settings", lambda params: {})
         b = fake_plugin({})
-        b.handle("render_settings", lambda params: {})
-        with self.assertRaisesRegex(RuntimeError, "pick one"):
-            b.settings_tab("x", lambda req: "")
+        b.settings_tab("x", lambda req: "")
+        with self.assertRaisesRegex(RuntimeError, "settings_tab"):
+            b.handle("render_settings", lambda params: {})
 
 
 if __name__ == "__main__":

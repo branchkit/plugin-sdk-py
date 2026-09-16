@@ -163,9 +163,12 @@ class PluginCore:
         (`plugin.handle("m", fn)`) or as a decorator (`@plugin.handle("m")`).
 
         `handle("on_action", ...)` and `handle_action(...)` are mutually
-        exclusive — both install a handler for the same RPC method. The
-        same holds for `handle("render_settings", ...)` and
-        `settings_tab(...)`."""
+        exclusive — both install a handler for the same RPC method.
+
+        `render_settings` is not registrable here at all: the SDK owns that
+        hook and installs it through `settings_tab`, one renderer per
+        manifest tab. `handle` raises on it so a plugin cannot bypass the
+        dispatch."""
 
         if fn is None:
             def deco(f):
@@ -176,9 +179,9 @@ class PluginCore:
             raise RuntimeError(
                 'plugin-sdk-py: cannot mix handle("on_action", ...) and handle_action(...) — pick one'
             )
-        if method == HOOK_RENDER_SETTINGS and self._settings_tabs is not None:
+        if method == HOOK_RENDER_SETTINGS:
             raise RuntimeError(
-                'plugin-sdk-py: cannot mix handle("render_settings", ...) and settings_tab(...) — pick one'
+                "plugin-sdk-py: render_settings is the SDK's hook — register each tab with settings_tab(key, fn)"
             )
         self._handlers[method] = fn
         return fn

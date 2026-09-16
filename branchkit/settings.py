@@ -117,18 +117,15 @@ class SettingsMixin:
         and answers 204: a method that changed something returns nothing
         and lets the re-render that follows draw it.
 
-        `settings_tab` and `handle("render_settings", ...)` are mutually
-        exclusive — both install a handler for the same RPC method."""
+        This is the only way to install a render_settings handler:
+        `handle("render_settings", ...)` raises, so every tab goes through
+        this dispatch."""
         if fn is None:
             def deco(f):
                 self.settings_tab(key, f)
                 return f
             return deco
         if self._settings_tabs is None:
-            if HOOK_RENDER_SETTINGS in self._handlers:
-                raise RuntimeError(
-                    'plugin-sdk-py: cannot mix handle("render_settings", ...) and settings_tab(...) — pick one'
-                )
             self._settings_tabs = {}
             self._handlers[HOOK_RENDER_SETTINGS] = self._render_settings_tab
         self._settings_tabs[key] = fn
