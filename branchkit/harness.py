@@ -260,6 +260,16 @@ class Harness:
             pass
         self._proc.kill()
         self._proc.wait(timeout=5)
+        # The reader thread owns stdout until EOF, which the exit above just
+        # delivered. Let it finish, then close the pipe — left open it surfaces
+        # as `ResourceWarning: unclosed file` in every plugin's unittest run.
+        if self._reader is not threading.current_thread():
+            self._reader.join(timeout=5)
+        try:
+            if self._proc.stdout:
+                self._proc.stdout.close()
+        except OSError:
+            pass
 
 
 def harness_binary_available() -> bool:
