@@ -7,8 +7,10 @@ only egress is an actuator-run HTTP CONNECT proxy enforcing the declared
 hostname allowlist. The actuator advertises the endpoint in
 BRANCHKIT_PROXY:
 
-    unix:///path/to/endpoint.sock  — UNIX socket (Linux; bind-mounted into
-                                     the sandbox at the same path)
+    unix:///path/to/endpoint.sock  — UNIX socket (Linux, bind-mounted into
+                                     the sandbox at the same path; and
+                                     macOS, whose Seatbelt has no per-host
+                                     primitive either)
     http://127.0.0.1:<port>        — localhost TCP (Windows)
 
 The SDK installs a `urllib.request` opener at import time, so a plugin
@@ -16,9 +18,8 @@ author writes ordinary `urllib.request.urlopen()` calls (and everything
 built on them — UpstreamClient included) and the platform routes and
 enforces. TLS tunnels opaquely (CONNECT, then a normal client-side
 handshake). The target hostname travels BY NAME — inside the sandbox
-there is no DNS. When BRANCHKIT_PROXY is unset (macOS in-kernel
-enforcement, unsandboxed dev), nothing is installed and requests go
-direct."""
+there is no DNS. When BRANCHKIT_PROXY is unset (no `hosts` policy, or an
+unsandboxed dev run), nothing is installed and requests go direct."""
 
 from __future__ import annotations
 
