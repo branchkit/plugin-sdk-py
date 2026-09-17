@@ -41,6 +41,7 @@ LOG_EVENT_PLUGIN_DIAGNOSTIC = "plugin.diagnostic"
 LOG_EVENT_PLUGIN_EXITED = "plugin.exited"
 LOG_EVENT_PLUGIN_LIFECYCLE_OP = "plugin.lifecycle_op"
 LOG_EVENT_PLUGIN_LOADED = "plugin.loaded"
+LOG_EVENT_PLUGIN_NETWORK_CONNECT = "plugin.network_connect"
 LOG_EVENT_PLUGIN_READY = "plugin.ready"
 LOG_EVENT_PLUGIN_RECOVERED = "plugin.recovered"
 LOG_EVENT_PLUGIN_RPC_FAILED = "plugin.rpc_failed"
@@ -113,6 +114,7 @@ LOG_EVENT_REGISTRY: dict[str, LogEventMeta] = {
     "plugin.exited": {"name": "plugin.exited", "summary": "A managed plugin process exited (clean or crashed).", "since": "0.1.0", "source": "plugins", "severity": "info", "redaction": "none"},
     "plugin.lifecycle_op": {"name": "plugin.lifecycle_op", "summary": "A plugin lifecycle operation (install, uninstall, update, reload, hot-reload, enable, disable).", "since": "0.1.0", "source": "plugins", "severity": "info", "redaction": "none"},
     "plugin.loaded": {"name": "plugin.loaded", "summary": "A plugin manifest was discovered and parsed.", "since": "0.1.0", "source": "plugins", "severity": "info", "redaction": "none"},
+    "plugin.network_connect": {"name": "plugin.network_connect", "summary": "A plugin attempted an outbound connection through its filtering proxy: allowed, denied (host not declared), or failed. Hostname and byte counts only. Audit-eligible.", "since": "0.1.0", "source": "plugins", "severity": "info", "redaction": "none"},
     "plugin.ready": {"name": "plugin.ready", "summary": "A managed plugin completed its RPC handshake.", "since": "0.1.0", "source": "plugins", "severity": "info", "redaction": "none"},
     "plugin.recovered": {"name": "plugin.recovered", "summary": "A previously-degraded plugin recovered and is responding again.", "since": "0.1.0", "source": "plugins", "severity": "info", "redaction": "none"},
     "plugin.rpc_failed": {"name": "plugin.rpc_failed", "summary": "A plugin RPC method returned an error or failed to respond.", "since": "0.1.0", "source": "plugins", "severity": "warn", "redaction": "none"},
