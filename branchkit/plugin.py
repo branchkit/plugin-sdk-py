@@ -211,6 +211,31 @@ class PluginCore:
         self._action_handlers[action] = fn
         return fn
 
+    def handle_command(self, method: str, fn: Callable | None = None):
+        """Register a command: a method a settings control posts to. A
+        command changes state and returns nothing — the platform's method
+        proxy answers the post with 204 and re-renders the tab through its
+        stream, and refuses any result with 422 and the
+        settings-method-result diagnostic. Whatever `fn` returns is dropped
+        here; the response carries ``"result": null``. Usable directly or
+        as a decorator (``@plugin.handle_command("set_volume")``); plain
+        ``def`` or ``async def``, as with ``handle``.
+
+        Use ``handle`` for a method whose result another caller reads — a
+        platform hook, or another plugin — never for a settings control."""
+        if fn is None:
+            def deco(f):
+                self.handle_command(method, f)
+                return f
+            return deco
+
+        async def command(params):
+            await self._invoke(fn, params if params is not None else {})
+            return None
+
+        self.handle(method, command)
+        return fn
+
     # The design-doc registration idiom (`@plugin.action("…")`) — an alias
     # of handle_action, which keeps the Go/TS name greppable too.
     action = handle_action

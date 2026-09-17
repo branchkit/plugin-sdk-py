@@ -2,6 +2,7 @@
 registered stylesheet on every response, an error for a key nobody
 registered, and every settings mirror refreshed before the tab draws."""
 
+import asyncio
 import unittest
 
 import branchkit
@@ -70,6 +71,21 @@ class TestSettingsTabs(unittest.IsolatedAsyncioTestCase):
         b.settings_tab("x", lambda req: "")
         with self.assertRaisesRegex(RuntimeError, "settings_tab"):
             b.handle("render_settings", lambda params: {})
+
+    # A command answers with no result however its handler is written — the
+    # proxy refuses anything else with 422; this is the SDK's half.
+    def test_handle_command_drops_the_return_value(self):
+        p = fake_plugin({})
+        seen = {}
+
+        @p.handle_command("set_volume")
+        def set_volume(req):
+            seen["volume"] = req["volume"]
+            return {"leak": True}
+
+        fn = p._handlers["set_volume"]
+        self.assertIsNone(asyncio.run(fn({"volume": 3})))
+        self.assertEqual(seen, {"volume": 3})
 
 
 if __name__ == "__main__":
