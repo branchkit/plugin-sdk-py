@@ -6,6 +6,7 @@ API_VERSION = "0.1.0"
 
 # RPC method names: plugin → actuator (use with plugin.call()).
 METHOD_ACTIONS_LIST = "actions.list"  # since 0.1.0
+METHOD_ARTIFACT_DELETE = "artifact.delete"  # since 0.1.0
 METHOD_COLLECTION_APPEND = "collection.append"  # stable, since 0.1.0
 METHOD_COLLECTION_APPEND_KEYED = "collection.append_keyed"  # since 0.1.0
 METHOD_COLLECTION_COUNT = "collection.count"  # stable, since 0.1.0
@@ -69,7 +70,6 @@ METHOD_INPUT_SWITCH_INPUT_SOURCE = "input.switch_input_source"  # since 0.1.0
 METHOD_INPUT_TRIPLE_CLICK = "input.triple_click"  # since 0.1.0
 METHOD_INPUT_TYPE_TEXT = "input.type_text"  # since 0.1.0
 METHOD_KEYBINDS_REGISTER = "keybinds.register"  # since 0.1.0
-METHOD_MODEL_DELETE = "model.delete"  # since 0.1.0
 METHOD_NATIVE_ACCENT_COLOR = "native.accent_color"  # since 0.1.0
 METHOD_NATIVE_ACCESSIBILITY_DISPLAY_INVERT = "native.accessibility_display_invert"  # since 0.1.0
 METHOD_NATIVE_ACCESSIBILITY_ENABLED = "native.accessibility_enabled"  # since 0.1.0

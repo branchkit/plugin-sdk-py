@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING, Any
 
 from .contracts_gen import (
     METHOD_ACTIONS_LIST,
+    METHOD_ARTIFACT_DELETE,
     METHOD_COLLECTIONS_CREATE_USER,
     METHOD_COLLECTIONS_LIST,
     METHOD_COLLECTIONS_OWNED,
@@ -70,7 +71,6 @@ from .contracts_gen import (
     METHOD_INPUT_TRIPLE_CLICK,
     METHOD_INPUT_TYPE_TEXT,
     METHOD_KEYBINDS_REGISTER,
-    METHOD_MODEL_DELETE,
     METHOD_NATIVE_ACCENT_COLOR,
     METHOD_NATIVE_ACCESSIBILITY_DISPLAY_INVERT,
     METHOD_NATIVE_ACCESSIBILITY_ENABLED,
@@ -1002,6 +1002,12 @@ class MethodsMixin:
         result = await self.call(METHOD_ACTIONS_LIST)
         return result
 
+    async def artifact_delete(self, ref: str) -> None:
+        params: dict[str, Any] = {
+            "ref": ref,
+        }
+        await self.call(METHOD_ARTIFACT_DELETE, params)
+
     async def collection_append(self, name: str, payload: Any) -> LogEntry | None:
         params: dict[str, Any] = {
             "name": name,
@@ -1515,12 +1521,6 @@ class MethodsMixin:
         }
         result = await self.call(METHOD_KEYBINDS_REGISTER, params)
         return result
-
-    async def model_delete(self, ref: str) -> None:
-        params: dict[str, Any] = {
-            "ref": ref,
-        }
-        await self.call(METHOD_MODEL_DELETE, params)
 
     async def native_accent_color(self) -> NativeAccentColorResponse:
         result = await self.call(METHOD_NATIVE_ACCENT_COLOR)

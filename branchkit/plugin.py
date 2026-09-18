@@ -642,8 +642,14 @@ def plugin_data_dir() -> str:
     return os.environ.get("BRANCHKIT_PLUGIN_DATA", "")
 
 
+def artifacts_dir() -> str:
+    """The plugin's artifact namespace (BRANCHKIT_ARTIFACTS_DIR) — where the CLI
+    provisions the artifacts this plugin declares in `provides.artifacts`
+    (named bundles of large run-time files). READ-ONLY; "" when unset. Was
+    `models_dir` (kept as a deprecated alias); see DESIGN_ARTIFACTS_RENAME.md."""
+    return os.environ.get("BRANCHKIT_ARTIFACTS_DIR") or os.environ.get("BRANCHKIT_MODELS_DIR", "")
+
+
 def models_dir() -> str:
-    """The plugin's model namespace (BRANCHKIT_MODELS_DIR) — where the CLI
-    provisions the models this plugin declares in `provides.models`.
-    READ-ONLY; "" when unset."""
-    return os.environ.get("BRANCHKIT_MODELS_DIR", "")
+    """Deprecated: use :func:`artifacts_dir`. Removed one release later."""
+    return artifacts_dir()

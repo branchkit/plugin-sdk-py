@@ -745,6 +745,14 @@ ActionsListResponse = TypedDict("ActionsListResponse", {
     "actions": dict[str, "ActionTypeSchema"],
 })
 
+ArtifactDeleteRequest = TypedDict("ArtifactDeleteRequest", {
+    "ref": str,
+})
+
+ArtifactDeleteResponse = TypedDict("ArtifactDeleteResponse", {
+    "ok": bool,
+})
+
 CollectionAppendRequest = TypedDict("CollectionAppendRequest", {
     "name": str,
     "payload": Any,
@@ -1328,14 +1336,6 @@ KeybindsRegisterRequest = TypedDict("KeybindsRegisterRequest", {
 
 KeybindsRegisterResponse = TypedDict("KeybindsRegisterResponse", {
     "count": int,
-    "ok": bool,
-})
-
-ModelDeleteRequest = TypedDict("ModelDeleteRequest", {
-    "ref": str,
-})
-
-ModelDeleteResponse = TypedDict("ModelDeleteResponse", {
     "ok": bool,
 })
 

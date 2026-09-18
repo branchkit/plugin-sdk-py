@@ -29,6 +29,7 @@ from .plugin import (
     RpcCallError,
     api_version,
     error_kind_of,
+    artifacts_dir,
     models_dir,
     plugin_data_dir,
     plugin_dir,
