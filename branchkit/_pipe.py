@@ -20,18 +20,25 @@ import io
 
 
 class _Unclosable(io.RawIOBase):
-    """A raw stream over a shared pipe file that never closes it.
+    """A raw stream over a shared pipe file that outlives the makefile wrappers.
 
     ``http.server`` makes a read file and a write file from one connection and
-    closes each; the underlying duplex pipe must outlive both, so these
-    forward to the shared :class:`io.FileIO` and no-op on close. Reads and
-    writes are independent directions of the duplex pipe, so a BufferedReader
-    over one and a BufferedWriter over another (both wrapping the same file)
-    do not fight over a position — a pipe has none.
+    closes each; the underlying duplex pipe must outlive both. Reads and writes
+    are independent directions of the duplex pipe, so a BufferedReader over one
+    and a BufferedWriter over another (both wrapping the same file) do not fight
+    over a position — a pipe has none.
+
+    Closing a makefile stream does not close the pipe; it drops one reference on
+    the owning :class:`PipeConn`, which (like a real socket) closes the pipe only
+    once every makefile stream is closed AND :meth:`PipeConn.close` was called.
+    That is what lets ``http.client`` close the connection right after the
+    headers (a ``Connection: close`` reply) and still read the body through this
+    stream.
     """
 
-    def __init__(self, f: io.FileIO):
-        self._f = f
+    def __init__(self, pc: "PipeConn"):
+        self._pc = pc
+        self._decref_done = False
 
     def readable(self) -> bool:
         return True
@@ -40,7 +47,7 @@ class _Unclosable(io.RawIOBase):
         return True
 
     def readinto(self, b) -> int:
-        data = self._f.read(len(b))
+        data = self._pc._f.read(len(b))
         if not data:
             return 0
         n = len(data)
@@ -48,11 +55,14 @@ class _Unclosable(io.RawIOBase):
         return n
 
     def write(self, b) -> int:
-        return self._f.write(bytes(b))
+        return self._pc._f.write(bytes(b))
 
     def close(self) -> None:
-        # The shared pipe is owned by PipeConn.close(), not by makefile wrappers.
-        pass
+        # Drop this stream's reference exactly once. close() may be called more
+        # than once (explicit close plus __del__), so guard the decrement.
+        if not self._decref_done:
+            self._decref_done = True
+            self._pc._decref()
 
 
 class PipeConn:
@@ -70,6 +80,10 @@ class PipeConn:
         # open() on Windows accepts a \\.\pipe\ path.
         self._f = open(path, "r+b", buffering=0)
         self._closed = False
+        # Socket-style makefile reference counting (see _Unclosable): close()
+        # defers the real teardown while a makefile stream is still reading.
+        self._io_refs = 0
+        self._close_requested = False
 
     def sendall(self, data) -> None:
         mv = memoryview(data if isinstance(data, (bytes, bytearray)) else bytes(data))
@@ -98,7 +112,8 @@ class PipeConn:
         return ("pipe", 0)
 
     def makefile(self, mode: str = "rb", buffering: int = -1):
-        raw = _Unclosable(self._f)
+        self._io_refs += 1
+        raw = _Unclosable(self)
         if "w" in mode:
             return raw if buffering == 0 else io.BufferedWriter(raw)
         return io.BufferedReader(raw)
@@ -106,7 +121,20 @@ class PipeConn:
     def shutdown(self, _how=0) -> None:
         pass
 
+    def _decref(self) -> None:
+        if self._io_refs > 0:
+            self._io_refs -= 1
+        if self._io_refs <= 0 and self._close_requested:
+            self._real_close()
+
     def close(self) -> None:
+        # Defer the real teardown while a makefile stream is still reading (a
+        # response body). With no live streams, close immediately.
+        self._close_requested = True
+        if self._io_refs <= 0:
+            self._real_close()
+
+    def _real_close(self) -> None:
         if not self._closed:
             self._closed = True
             try:
