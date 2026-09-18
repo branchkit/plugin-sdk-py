@@ -65,8 +65,15 @@ def _relay_env() -> tuple[tuple[str, int], str] | None:
     actuator."""
     raw = os.environ.get("BRANCHKIT_LISTEN_RELAY", "")
     token = os.environ.get("BRANCHKIT_LISTEN_RELAY_TOKEN", "")
+    if not raw or not token:
+        return None
+    if raw.startswith("npipe://"):
+        # Windows: the rendezvous is a named pipe ACL'd to this container
+        # (no loopback exemption). Dialed with _pipe.PipeConn, not a socket.
+        path = raw[len("npipe://"):]
+        return (("npipe", path), token) if path else None
     host, sep, port_s = raw.rpartition(":")
-    if not raw or not token or not sep or not port_s.isdigit():
+    if not sep or not port_s.isdigit():
         return None
     return (host, int(port_s)), token
 
@@ -231,7 +238,11 @@ def _start_relay_pool(server: "_Server", rendezvous: tuple[str, int], token: str
         backoff = 0.2
         while not stop.is_set():
             try:
-                s = socket.create_connection(rendezvous, timeout=5)
+                if rendezvous[0] == "npipe":
+                    from . import _pipe
+                    s = _pipe.PipeConn(rendezvous[1])
+                else:
+                    s = socket.create_connection(rendezvous, timeout=5)
             except OSError:
                 time.sleep(backoff)
                 backoff = min(backoff * 2, 2.0)

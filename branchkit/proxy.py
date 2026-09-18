@@ -11,7 +11,8 @@ BRANCHKIT_PROXY:
                                      the sandbox at the same path; and
                                      macOS, whose Seatbelt has no per-host
                                      primitive either)
-    http://127.0.0.1:<port>        — localhost TCP (Windows)
+    http://127.0.0.1:<port>        — localhost TCP (legacy Windows path)
+    npipe://<pipe name>            — a named pipe ACLd to the container (Windows)
 
 The SDK installs a `urllib.request` opener at import time, so a plugin
 author writes ordinary `urllib.request.urlopen()` calls (and everything
@@ -46,7 +47,13 @@ def parse_proxy_url(v: str) -> tuple:
         if not sep or not port_s.isdigit() or int(port_s) <= 0:
             raise ValueError(f"proxy url {v!r} needs an explicit port")
         return ("tcp", host, int(port_s))
-    raise ValueError(f"unsupported BRANCHKIT_PROXY {v!r} (want unix:// or http://)")
+    if v.startswith("npipe://"):
+        # Windows: a named pipe ACL'd to this container (no loopback exemption).
+        path = v[len("npipe://"):]
+        if not path:
+            raise ValueError(f"empty proxy pipe name in {v!r}")
+        return ("npipe", path)
+    raise ValueError(f"unsupported BRANCHKIT_PROXY {v!r} (want unix://, http:// or npipe://)")
 
 
 def _connect_tunnel(endpoint: tuple, host: str, port: int, timeout) -> socket.socket:
@@ -58,6 +65,9 @@ def _connect_tunnel(endpoint: tuple, host: str, port: int, timeout) -> socket.so
         sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         sock.settimeout(timeout)
         sock.connect(endpoint[1])
+    elif endpoint[0] == "npipe":
+        from . import _pipe
+        sock = _pipe.PipeConn(endpoint[1])
     else:
         sock = socket.create_connection((endpoint[1], endpoint[2]), timeout=timeout)
     try:
@@ -106,7 +116,14 @@ class _TunnelHTTPSConnection(http.client.HTTPSConnection):
         raw = _connect_tunnel(
             self._branchkit_endpoint, self.host, self.port, self.timeout
         )
-        self.sock = self._branchkit_context.wrap_socket(raw, server_hostname=self.host)
+        if self._branchkit_endpoint[0] == "npipe":
+            # ssl.wrap_socket needs a real socket; a pipe is not one, and the
+            # socketpair trick would use loopback the sandbox blocks. TLS runs
+            # over the pipe through a MemoryBIO instead.
+            from . import _pipe
+            self.sock = _pipe.TlsPipe(raw, self.host, self._branchkit_context)
+        else:
+            self.sock = self._branchkit_context.wrap_socket(raw, server_hostname=self.host)
 
 
 class _ProxyHTTPHandler(urllib.request.HTTPHandler):
