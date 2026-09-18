@@ -70,6 +70,7 @@ from .ui import (
     signal_name,
 )
 from .upstream import UpstreamClient, UpstreamResponse
+from .proxy import HostRefusedError, dial
 from .closed_vocab_gen import *  # noqa: F401,F403 — error kinds, directives, effects
 from .contracts_gen import *  # noqa: F401,F403 — method/hook/event/tag constants
 from .log_events_gen import *  # noqa: F401,F403 — observability log-event names

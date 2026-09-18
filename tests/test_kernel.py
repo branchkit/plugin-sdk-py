@@ -7,6 +7,7 @@ dual-handler dispatch contract."""
 import asyncio
 import json
 import os
+import socket
 import tempfile
 import unittest
 
@@ -125,6 +126,156 @@ class TestProxyParsing(unittest.TestCase):
         for bad in ("unix://", "http://127.0.0.1", "socks5://x:1", ""):
             with self.assertRaises(ValueError):
                 proxy.parse_proxy_url(bad)
+
+
+def _mini_proxy(path: str, allowed_host: str):
+    """Test-side CONNECT proxy over AF_UNIX mirroring the actuator's
+    host_proxy: allow -> tunnel, deny -> 403. Serves one connection per
+    accept on a daemon thread; returns the listening socket."""
+    import threading
+
+    srv = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+    srv.bind(path)
+    srv.listen(4)
+
+    def pump(src, dst):
+        try:
+            while True:
+                d = src.recv(4096)
+                if not d:
+                    break
+                dst.sendall(d)
+        except OSError:
+            pass
+        finally:
+            try:
+                dst.shutdown(socket.SHUT_WR)
+            except OSError:
+                pass
+
+    def serve(client):
+        head = b""
+        while b"\r\n\r\n" not in head:
+            chunk = client.recv(4096)
+            if not chunk:
+                client.close()
+                return
+            head += chunk
+        target = head.split(b"\r\n", 1)[0].decode("latin1").split()[1]
+        host, _, port_s = target.rpartition(":")
+        if host != allowed_host:
+            client.sendall(b"HTTP/1.1 403 Forbidden\r\nContent-Length: 0\r\n\r\n")
+            client.close()
+            return
+        up = socket.create_connection((host, int(port_s)))
+        client.sendall(b"HTTP/1.1 200 Connection Established\r\n\r\n")
+        threading.Thread(target=pump, args=(client, up), daemon=True).start()
+        threading.Thread(target=pump, args=(up, client), daemon=True).start()
+
+    def accept_loop():
+        while True:
+            try:
+                client, _ = srv.accept()
+            except OSError:
+                return
+            threading.Thread(target=serve, args=(client,), daemon=True).start()
+
+    threading.Thread(target=accept_loop, daemon=True).start()
+    return srv
+
+
+def _echo_server():
+    """TCP echo on loopback; returns (listening socket, port)."""
+    import threading
+
+    srv = socket.create_server(("127.0.0.1", 0))
+
+    def serve(c):
+        with c:
+            while True:
+                d = c.recv(4096)
+                if not d:
+                    break
+                c.sendall(d)
+
+    def accept_loop():
+        while True:
+            try:
+                c, _ = srv.accept()
+            except OSError:
+                return
+            threading.Thread(target=serve, args=(c,), daemon=True).start()
+
+    threading.Thread(target=accept_loop, daemon=True).start()
+    return srv, srv.getsockname()[1]
+
+
+def _echo_once(conn, msg: bytes) -> bytes:
+    conn.sendall(msg)
+    got = b""
+    while len(got) < len(msg):
+        chunk = conn.recv(len(msg) - len(got))
+        if not chunk:
+            break
+        got += chunk
+    return got
+
+
+@unittest.skipUnless(hasattr(socket, "AF_UNIX"), "needs AF_UNIX for the proxy endpoint")
+class TestDial(unittest.TestCase):
+    """`dial` (raw TCP, G1): through the CONNECT proxy when BRANCHKIT_PROXY
+    is set, typed refusal for an undeclared host, direct when unset."""
+
+    def setUp(self):
+        self._dir = tempfile.mkdtemp(prefix="bkd")
+        self._sock_path = os.path.join(self._dir, "p.sock")
+        self._echo, self._port = _echo_server()
+        self._saved = os.environ.get("BRANCHKIT_PROXY")
+
+    def tearDown(self):
+        self._echo.close()
+        if self._saved is None:
+            os.environ.pop("BRANCHKIT_PROXY", None)
+        else:
+            os.environ["BRANCHKIT_PROXY"] = self._saved
+        import shutil
+
+        shutil.rmtree(self._dir, ignore_errors=True)
+
+    def test_echoes_through_proxy(self):
+        proxy_srv = _mini_proxy(self._sock_path, "127.0.0.1")
+        self.addCleanup(proxy_srv.close)
+        os.environ["BRANCHKIT_PROXY"] = "unix://" + self._sock_path
+        conn = branchkit.dial("127.0.0.1", self._port, timeout=5)
+        with conn:
+            self.assertEqual(_echo_once(conn, b"raw tcp through the tunnel"), b"raw tcp through the tunnel")
+
+    def test_undeclared_host_is_refused_typed_no_direct_fallback(self):
+        # The echo server IS reachable directly, so a bypass would succeed.
+        proxy_srv = _mini_proxy(self._sock_path, "no-such-host.invalid")
+        self.addCleanup(proxy_srv.close)
+        os.environ["BRANCHKIT_PROXY"] = "unix://" + self._sock_path
+        with self.assertRaises(branchkit.HostRefusedError) as cm:
+            branchkit.dial("127.0.0.1", self._port, timeout=5)
+        self.assertEqual((cm.exception.host, cm.exception.port), ("127.0.0.1", self._port))
+        self.assertIn("refused CONNECT", str(cm.exception))
+        self.assertIsInstance(cm.exception, OSError)
+
+    def test_direct_when_unset(self):
+        os.environ.pop("BRANCHKIT_PROXY", None)
+        conn = branchkit.dial("127.0.0.1", self._port, timeout=5)
+        with conn:
+            self.assertEqual(_echo_once(conn, b"direct"), b"direct")
+
+    def test_rejects_bad_arguments_and_malformed_endpoint(self):
+        os.environ.pop("BRANCHKIT_PROXY", None)
+        for host, port in (("", 80), ("127.0.0.1", 0), ("127.0.0.1", 70000)):
+            with self.assertRaises(ValueError):
+                branchkit.dial(host, port)
+        # A malformed endpoint is an error to the caller, never a silent direct dial.
+        os.environ["BRANCHKIT_PROXY"] = "socks5://nope"
+        with self.assertRaises(ValueError):
+            branchkit.dial("127.0.0.1", self._port)
 
 
 class TestSettingsRoute(unittest.TestCase):

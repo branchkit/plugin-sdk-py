@@ -57,6 +57,7 @@ plugin — use `plugin.call_sync(...)` there instead of `await`).
 | Leveled logging | `await plugin.info(tag, data)` (trace/debug/info/warn/error) |
 | Local listener | `branchkit.listen_local(plugin)` (serves inherited fds) |
 | Outbound HTTP | `branchkit.UpstreamClient` / `urllib.request.urlopen` (both proxy-aware) |
+| Raw TCP (MQTT, telnet, a local daemon) | `branchkit.dial(host, port)` — the same proxy, `HostRefusedError` for an undeclared host |
 | Author tests | `branchkit.harness.Harness` |
 
 ## Development

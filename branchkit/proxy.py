@@ -56,6 +56,75 @@ def parse_proxy_url(v: str) -> tuple:
     raise ValueError(f"unsupported BRANCHKIT_PROXY {v!r} (want unix://, http:// or npipe://)")
 
 
+class HostRefusedError(OSError):
+    """The platform proxy's refusal of a connection: the target is not a
+    host the plugin's manifest declares. Raised by `dial()` and by the
+    installed `urllib` opener for the same case. Branch on the class, not
+    on the message::
+
+        try:
+            conn = branchkit.dial("homeassistant.local", 1883)
+        except branchkit.HostRefusedError as e:
+            ...  # the manifest does not declare e.host — tell the user
+
+    A refusal is by-name and happens before any dial, so it is not a
+    reachability failure — a declared host that is down is an ordinary
+    OSError, not this."""
+
+    def __init__(self, host: str, port: int, status_line: str):
+        super().__init__(
+            f"branchkit proxy refused CONNECT {host}:{port}: {status_line} "
+            "(host not in the plugin's declared allowlist)"
+        )
+        self.host = host
+        self.port = port
+        #: The proxy's status line as received, e.g. "HTTP/1.1 403 Forbidden".
+        self.status = status_line
+
+
+def dial(host: str, port: int, timeout: float | None = None):
+    """Open a raw TCP connection to ``host:port`` — for a protocol that is
+    not HTTP: MQTT, a telnet-controlled receiver, a Redis-like local daemon
+    (the actuator's docs/design/DESIGN_PLUGIN_NETWORK_TRANSPORTS.md, G1).
+
+    Inside the sandbox the plugin has no direct egress; the platform's
+    filtering proxy is the only route and it enforces the manifest's
+    declared host allowlist. ``dial`` is that route: when BRANCHKIT_PROXY
+    is set the connection is a CONNECT tunnel through the proxy (unix:// on
+    Linux and macOS, npipe:// on Windows — the same dial the installed
+    ``urllib`` opener uses), and the proxy records every attempt as
+    ``plugin.network_connect``. When BRANCHKIT_PROXY is unset (an
+    unsandboxed dev run) the dial is direct.
+
+    Returns a ``socket.socket``; on Windows, where the proxy is a named
+    pipe, a socket-like object over the pipe (``sendall``, ``recv``,
+    ``makefile``, ``close`` — the same surface ``http.client`` uses). A host
+    the manifest does not declare is refused by the proxy and raises
+    :class:`HostRefusedError`.
+
+    ``timeout`` bounds the connect (the proxy dial and the CONNECT
+    handshake included) and stays set on the socket for later reads and
+    writes; ``None`` means blocking. Blocking either way — from an
+    ``async def`` handler, call it through ``asyncio.to_thread``.
+
+    TLS is the caller's: ``ssl.create_default_context().wrap_socket(conn,
+    server_hostname=host)`` — the proxy tunnels bytes opaquely and never
+    terminates TLS, so the allowlist decides which NAME you may dial, not
+    who answers."""
+    if not host:
+        raise ValueError("dial: empty host")
+    if not isinstance(port, int) or not 1 <= port <= 65535:
+        raise ValueError(f"dial: port {port!r} out of range 1-65535")
+    v = os.environ.get("BRANCHKIT_PROXY")
+    if not v:
+        return socket.create_connection((host, port), timeout=timeout)
+    # Unlike the opener install (which prints and goes direct at import
+    # time, where there is no caller to tell), a raw dial has one: a
+    # malformed endpoint is a ValueError here, not a silent direct dial
+    # that dies in the sandbox anyway.
+    return _connect_tunnel(parse_proxy_url(v), host, port, timeout)
+
+
 def _connect_tunnel(endpoint: tuple, host: str, port: int, timeout) -> socket.socket:
     """Dial the proxy endpoint and complete the CONNECT handshake to
     host:port. Returns a socket that is an opaque tunnel to the target.
@@ -83,11 +152,13 @@ def _connect_tunnel(endpoint: tuple, host: str, port: int, timeout) -> socket.so
                 raise OSError("oversized CONNECT response")
         status_line = head.split(b"\r\n", 1)[0].decode("latin1")
         parts = status_line.split()
+        if len(parts) >= 2 and parts[1] == "403":
+            # The allowlist refusal (host_proxy's RESP_FORBIDDEN) — typed, so
+            # a caller can tell "not declared" from "declared but unreachable"
+            # (a 400, below) without reading prose.
+            raise HostRefusedError(host, port, status_line)
         if len(parts) < 2 or parts[1] != "200":
-            raise OSError(
-                f"branchkit proxy refused CONNECT {host}:{port}: {status_line} "
-                "(host not in the plugin's declared allowlist?)"
-            )
+            raise OSError(f"branchkit proxy could not connect {host}:{port}: {status_line}")
         # Nothing follows the 200 head until we speak, so no residual bytes.
         return sock
     except BaseException:
