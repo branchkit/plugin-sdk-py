@@ -395,8 +395,18 @@ class PluginCore:
                 pass  # non-Unix loop
 
         reader = asyncio.StreamReader(limit=_READ_LIMIT)
-        protocol = asyncio.StreamReaderProtocol(reader)
-        await self._loop.connect_read_pipe(lambda: protocol, sys.stdin.buffer)
+        if sys.platform == "win32":
+            # connect_read_pipe needs an OVERLAPPED handle on Windows, and the
+            # stdin the actuator hands a plugin is a plain inherited pipe: the
+            # attach succeeded and no read ever completed, so a Windows plugin
+            # handshook (writes work) and then never received a call or a
+            # notification — found 2026-09-18, the SDK's first run on Windows.
+            # A blocking reader thread feeding the same StreamReader keeps
+            # every consumer unchanged.
+            self._start_stdin_thread(reader)
+        else:
+            protocol = asyncio.StreamReaderProtocol(reader)
+            await self._loop.connect_read_pipe(lambda: protocol, sys.stdin.buffer)
 
         read_task = asyncio.ensure_future(self._read_loop(reader))
         pump_task = asyncio.ensure_future(self._drain_notifications())
@@ -411,6 +421,29 @@ class PluginCore:
     def _on_signal(self) -> None:
         log(self._plugin_id, "shutting down (signal)")
         self._do_shutdown()
+
+    def _start_stdin_thread(self, reader: asyncio.StreamReader) -> None:
+        """Windows stdin: a daemon thread blocks on the pipe and hands each
+        line to the loop's thread; EOF closes the reader so the read loop
+        exits exactly as it does after connect_read_pipe."""
+        loop = self._loop
+
+        def pump() -> None:
+            stream = sys.stdin.buffer
+            try:
+                while True:
+                    data = stream.readline()
+                    if not data:
+                        break
+                    loop.call_soon_threadsafe(reader.feed_data, data)
+            except (OSError, ValueError):
+                pass
+            try:
+                loop.call_soon_threadsafe(reader.feed_eof)
+            except RuntimeError:
+                pass  # loop already closed
+
+        threading.Thread(target=pump, name="branchkit-stdin", daemon=True).start()
 
     def _do_shutdown(self) -> None:
         if self._closed:
