@@ -132,6 +132,16 @@ class TlsPipe:
         self._outb = ssl.MemoryBIO()
         self._obj = context.wrap_bio(self._inb, self._outb, server_hostname=server_hostname)
         self._closed = False
+        # Socket-style makefile reference counting. ``http.client`` hands the
+        # connection to the response on a ``Connection: close`` reply: right
+        # after the headers it calls ``sock.close()`` and then keeps reading the
+        # body through the ``makefile()`` object, trusting a real socket to stay
+        # open until that file is closed too. We must honour the same contract —
+        # tearing the TLS session down here (``unwrap()``) would poison reads of
+        # the body already buffered in the incoming BIO. So ``close()`` only
+        # requests teardown; it happens once the last makefile stream closes.
+        self._io_refs = 0
+        self._close_requested = False
         self._drive(self._obj.do_handshake)
 
     def _flush(self):
@@ -183,12 +193,27 @@ class TlsPipe:
         return ("pipe-tls", 0)
 
     def makefile(self, mode: str = "rb", buffering: int = -1):
+        self._io_refs += 1
         raw = _TlsRaw(self)
         if "w" in mode:
             return raw if buffering == 0 else io.BufferedWriter(raw)
         return io.BufferedReader(raw)
 
+    def _decref(self) -> None:
+        # A makefile stream closed. Once none remain, honour a deferred close.
+        if self._io_refs > 0:
+            self._io_refs -= 1
+        if self._io_refs <= 0 and self._close_requested:
+            self._real_close()
+
     def close(self) -> None:
+        # Defer the real teardown while a makefile stream is still reading (the
+        # response body). With no live streams, close immediately.
+        self._close_requested = True
+        if self._io_refs <= 0:
+            self._real_close()
+
+    def _real_close(self) -> None:
         if self._closed:
             return
         self._closed = True
@@ -205,6 +230,7 @@ class _TlsRaw(io.RawIOBase):
 
     def __init__(self, tls: "TlsPipe"):
         self._tls = tls
+        self._decref_done = False
 
     def readable(self) -> bool:
         return True
@@ -225,4 +251,9 @@ class _TlsRaw(io.RawIOBase):
         return len(b)
 
     def close(self) -> None:
-        pass
+        # Drop this stream's reference exactly once; the pipe closes when the
+        # last live stream does. close() may be called more than once (explicit
+        # close plus __del__), so guard the decrement.
+        if not self._decref_done:
+            self._decref_done = True
+            self._tls._decref()
