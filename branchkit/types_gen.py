@@ -5988,6 +5988,31 @@ SettingsRulesUpdateResponse = TypedDict("SettingsRulesUpdateResponse", {
     "ok": bool,
 })
 
+SpeechAnnounceRequest = TypedDict("SpeechAnnounceRequest", {
+    "text": str,
+})
+
+SpeechAnnounceResponse = TypedDict("SpeechAnnounceResponse", {
+    "ok": bool,
+})
+
+SpeechSayRequest = TypedDict("SpeechSayRequest", {
+    # `"normal"` queues behind whatever is playing; `"high"` cuts it off
+    # and speaks now. Defaults to normal.
+    # default null
+    "priority": NotRequired[str],
+    # The words. Plain language, no markup; the system voice reads it as is.
+    "text": str,
+})
+
+SpeechSayResponse = TypedDict("SpeechSayResponse", {
+    "ok": bool,
+})
+
+SpeechStopResponse = TypedDict("SpeechStopResponse", {
+    "ok": bool,
+})
+
 SystemLaunchAppRequest = TypedDict("SystemLaunchAppRequest", {
     # Bundle ID of the application to launch (e.g. "com.apple.Safari").
     "bundle_id": str,

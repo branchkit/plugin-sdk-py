@@ -609,6 +609,9 @@ from .contracts_gen import (
     METHOD_SETTINGS_REFRESH,
     METHOD_SETTINGS_RULES_CREATE,
     METHOD_SETTINGS_RULES_UPDATE,
+    METHOD_SPEECH_ANNOUNCE,
+    METHOD_SPEECH_SAY,
+    METHOD_SPEECH_STOP,
     METHOD_SYSTEM_LAUNCH_APP,
     METHOD_SYSTEM_NOTIFY,
     METHOD_SYSTEM_RUN_SHELL,
@@ -5846,6 +5849,32 @@ class MethodsMixin:
             params["newrulesetstags"] = newrulesetstags
         result = await self.call(METHOD_SETTINGS_RULES_UPDATE, params)
         return result
+
+    async def speech_announce(self, text: str) -> None:
+        """Post a VoiceOver announcement (spoken in the person's VoiceOver voice when VoiceOver is running; ignored otherwise)"""
+        params: dict[str, Any] = {
+            "text": text,
+        }
+        await self.call(METHOD_SPEECH_ANNOUNCE, params)
+
+    async def speech_say(self, text: str, priority: str | None = None) -> None:
+        """Speak words through the system voice (a primitive: the platform makes the sound and reports the span for echo suppression; what to say is the caller's policy)
+
+        priority: `"normal"` queues behind whatever is playing; `"high"` cuts it off
+            and speaks now. Defaults to normal.
+            default null
+        text: The words. Plain language, no markup; the system voice reads it as is.
+        """
+        params: dict[str, Any] = {
+            "text": text,
+        }
+        if priority is not None:
+            params["priority"] = priority
+        await self.call(METHOD_SPEECH_SAY, params)
+
+    async def speech_stop(self) -> None:
+        """Stop the system voice now and drop anything queued behind it"""
+        await self.call(METHOD_SPEECH_STOP)
 
     async def system_launch_app(self, bundle_id: str, new_instance: bool | None = None) -> None:
         """Launch an app and post a 'Launching' notification to the HUD
