@@ -1006,16 +1006,23 @@ class MethodsMixin:
         async def call(self, method: str, params: Any = None, timeout: float | None = None) -> Any: ...
 
     async def actions_list(self) -> ActionsListResponse:
+        """Return all action type schemas keyed by fully-qualified name"""
         result = await self.call(METHOD_ACTIONS_LIST)
         return result
 
     async def artifact_delete(self, ref: str) -> None:
+        """Delete an installed model from the caller's own model namespace (ref: <plugin>/<model>)"""
         params: dict[str, Any] = {
             "ref": ref,
         }
         await self.call(METHOD_ARTIFACT_DELETE, params)
 
     async def collection_append(self, name: str, payload: Any) -> LogEntry | None:
+        """Append an entry to a log-kind collection
+
+        name: Collection name. Must be a `kind: "log"` collection.
+        payload: Entry payload — validated against the collection's `fields` schema.
+        """
         params: dict[str, Any] = {
             "name": name,
             "payload": payload,
@@ -1024,6 +1031,16 @@ class MethodsMixin:
         return (result or {}).get("entry")
 
     async def collection_append_keyed(self, key: str, name: str, payload: Any) -> LogEntry | None:
+        """Append a keyed annotation to a keyed log (compacted-changelog shape)
+
+        key: The fold key — stamped into the payload's key field. Appending another
+            record with the same key annotates the first (compacted-changelog
+            shape); a compacted read folds them into one record.
+        name: Collection name. Must be a keyed (`id_strategy: by_field`) `log`
+            collection.
+        payload: Entry payload — validated against the collection's `fields` schema (the
+            key field is supplied via `key`, not here).
+        """
         params: dict[str, Any] = {
             "key": key,
             "name": name,
@@ -1033,6 +1050,7 @@ class MethodsMixin:
         return (result or {}).get("entry")
 
     async def collection_count(self, name: str) -> CollectionCountResponse:
+        """Total record count for a collection"""
         params: dict[str, Any] = {
             "name": name,
         }
@@ -1040,6 +1058,12 @@ class MethodsMixin:
         return result
 
     async def collection_delete_records(self, name: str, ids: list[str] | None = None) -> CollectionDeleteRecordsResponse:
+        """Delete records from a collection by id (bulk).
+
+        ids: Record ids to remove. Always an array; single-record callers wrap
+            one id. SDK helpers (`Delete` vs `DeleteMany`) hide the wrapping.
+            default []
+        """
         params: dict[str, Any] = {
             "name": name,
         }
@@ -1049,6 +1073,7 @@ class MethodsMixin:
         return result
 
     async def collection_fetch(self, id: str, name: str) -> CollectionFetchResponse:
+        """Fetch a single record from a collection by id"""
         params: dict[str, Any] = {
             "id": id,
             "name": name,
@@ -1057,6 +1082,7 @@ class MethodsMixin:
         return result
 
     async def collection_fetch_compacted(self, id: str, name: str) -> CollectionFetchCompactedResponse:
+        """Fetch a keyed log's folded current state for one key (compacted point-read)"""
         params: dict[str, Any] = {
             "id": id,
             "name": name,
@@ -1065,6 +1091,7 @@ class MethodsMixin:
         return result
 
     async def collection_get(self, name: str) -> CollectionGetResponse:
+        """Read collection data with optional merge metadata"""
         params: dict[str, Any] = {
             "name": name,
         }
@@ -1072,6 +1099,10 @@ class MethodsMixin:
         return result
 
     async def collection_list(self, name: str, opts: "ListOpts" | None = None) -> CollectionListResponse:
+        """List records in a collection (paginated)
+
+        opts: default {}
+        """
         params: dict[str, Any] = {
             "name": name,
         }
@@ -1081,6 +1112,10 @@ class MethodsMixin:
         return result
 
     async def collection_patch(self, fields: Any, id: str, name: str) -> None:
+        """Partial update of an existing record
+
+        fields: Object of fields to merge over the existing record.
+        """
         params: dict[str, Any] = {
             "fields": fields,
             "id": id,
@@ -1089,6 +1124,43 @@ class MethodsMixin:
         await self.call(METHOD_COLLECTION_PATCH, params)
 
     async def collection_put(self, name: str, entries: list["CollectionPutEntry"] | None = None, group: str | None = None, label: str | None = None, roles: dict[str, "FieldDisplay"] | None = None) -> CollectionPutResponse:
+        """Upsert records by id (bulk). Auto-registers the target as a record-keyed dynamic collection on first plugin call to an unknown name.
+
+        entries: Records to upsert. Always an array; single-record callers wrap one
+            entry. The wire format is uniform across single and bulk callers;
+            the SDK helpers (`Put` vs `PutMany`) hide the wrapping for the
+            single-record case. See docs/design/DESIGN_BROWSER_HINT_SILENT_EVICTION.md
+            for the rationale.
+            default []
+        group: Writer-chosen group label stamped on EVERY entry in this call — which
+            of the caller's named replace-sets these records belong to. See the
+            record envelope's `group`: last-write placement, meaningful only
+            within a writer. Absent = ungrouped, the common case. Call-level
+            rather than per-entry because a put that mixes groups is a caller
+            composing two writes, not one write with two meanings.
+        label: Optional human-readable label for the collection as a whole — the
+            friendly category name shown on the Discovery HUD's tag badge and in
+            the Settings UI, in place of the raw collection id (`Badge` instead of
+            `browser_hints_arch_strict`). This is the dynamic-collection counterpart
+            to a manifest-declared collection's `schema.label`; a plugin creating a
+            collection at runtime declares its label here. Same persistence
+            semantics as `roles`: last-write-wins, and a put omitting `label`
+            leaves the prior setting in place. See
+            `docs/design/DESIGN_COLLECTION_FIELD_ROLES.md`.
+        roles: Optional per-payload-field display roles. Used by the Settings
+            UI / discovery HUD to know which payload field is the primary
+            label, which is the subtitle, etc. Equivalent to the `roles`
+            argument on `collection.push`. Mostly meaningful for
+            auto-registered dynamic collections — manifest-declared
+            collections get their roles from the schema. On the first
+            `collection.put` to a not-yet-registered name, the roles are
+            stored alongside the auto-registered schema. Subsequent puts
+            with `roles` overwrite the prior setting; puts omitting
+            `roles` leave roles unchanged.
+
+            Wire-lenient: an entry whose role string this host doesn't know
+            binds nothing but does NOT fail the put — see `DisplayRoles`.
+        """
         params: dict[str, Any] = {
             "name": name,
         }
@@ -1104,6 +1176,14 @@ class MethodsMixin:
         return result
 
     async def collection_replace(self, name: str, scope: "ReplaceScope", entries: list["CollectionPutEntry"] | None = None, label: str | None = None, roles: dict[str, "FieldDisplay"] | None = None) -> CollectionReplaceResponse:
+        """Make the records in scope exactly the given set: upsert changed, delete absent, skip byte-identical. Scope is required and bounds what may be deleted.
+
+        entries: The desired set. After the call, the records in scope are exactly these.
+            default []
+        label: Same semantics as `collection.put`'s `label`.
+        roles: Same semantics as `collection.put`'s `roles`.
+        scope: What the call is allowed to delete. Required — see `ReplaceScope`.
+        """
         params: dict[str, Any] = {
             "name": name,
             "scope": scope,
@@ -1118,6 +1198,12 @@ class MethodsMixin:
         return result
 
     async def collections_create_user(self, name: str, description: str | None = None, words_text: str | None = None) -> CollectionsCreateUserResponse:
+        """Create a simple user list of words (name + words_text, one entry per line, optional `word = value`) and seed its entries
+
+        description: default ""
+        name: Collection name (lowercase, underscores).
+        words_text: default ""
+        """
         params: dict[str, Any] = {
             "name": name,
         }
@@ -1129,6 +1215,11 @@ class MethodsMixin:
         return result
 
     async def collections_list(self, kind: str | None = None) -> list[CollectionsListSection]:
+        """List collections with entries for display, optionally filtered by kind
+
+        kind: Filter by collection kind: "entity", "data", "commands", "log". If omitted, returns all.
+            default null
+        """
         params: dict[str, Any] = {
         }
         if kind is not None:
@@ -1137,10 +1228,12 @@ class MethodsMixin:
         return (result or {}).get("sections") or []
 
     async def collections_owned(self) -> list[OwnedCollection]:
+        """List the collections holding records the caller owns, with per-group counts — the enumeration half of per-record ownership"""
         result = await self.call(METHOD_COLLECTIONS_OWNED)
         return (result or {}).get("owned") or []
 
     async def commands_add_alias(self, action: str, default_pattern: str, new_pattern: str) -> None:
+        """Add an extra spoken form (alias) for an existing command"""
         params: dict[str, Any] = {
             "action": action,
             "default_pattern": default_pattern,
@@ -1149,6 +1242,14 @@ class MethodsMixin:
         await self.call(METHOD_COMMANDS_ADD_ALIAS, params)
 
     async def commands_confusability(self, requires_tags: list[str] | None = None, words: list[str] | None = None) -> list[ConfusabilityFinding]:
+        """Author-time acoustic confusability for a phrase: existing command words it may be misheard as that are co-eligible in its context
+
+        requires_tags: The command's context (its `requires_tags`); empty = free context. Used by
+            tier-2 so a warning only fires when the confuser is co-eligible here.
+            default []
+        words: The literal spoken words of the phrase being authored.
+            default []
+        """
         params: dict[str, Any] = {
         }
         if requires_tags is not None:
@@ -1159,28 +1260,59 @@ class MethodsMixin:
         return (result or {}).get("findings") or []
 
     async def commands_delete(self, canonical: str) -> None:
+        """Delete a user command by canonical name"""
         params: dict[str, Any] = {
             "canonical": canonical,
         }
         await self.call(METHOD_COMMANDS_DELETE, params)
 
     async def commands_enumerate(self) -> list[EnumeratedCommand]:
+        """Flat enumeration of every registered command with dynamic/static classification — calibration host source of truth"""
         result = await self.call(METHOD_COMMANDS_ENUMERATE)
         return (result or {}).get("commands") or []
 
     async def commands_list(self) -> CommandsListResponse:
+        """Return all commands grouped by category for HUD display"""
         result = await self.call(METHOD_COMMANDS_LIST)
         return result
 
     async def commands_list_aliases(self) -> list[CommandOverride]:
+        """List the current user command-phrase aliases (added spoken forms)"""
         result = await self.call(METHOD_COMMANDS_LIST_ALIASES)
         return (result or {}).get("aliases") or []
 
     async def commands_list_overrides(self) -> list[CommandOverride]:
+        """List the current user command-phrase overrides"""
         result = await self.call(METHOD_COMMANDS_LIST_OVERRIDES)
         return (result or {}).get("overrides") or []
 
     async def commands_push(self, commands: Any | None = None, group: str | None = None) -> CommandsPushResponse:
+        """Register commands with the matching engine to the matching engine
+
+        commands: Array of `CommandSpec` JSON objects to push to the matching
+            engine. Replaces the current commands contributed by the
+            calling plugin. Wire-level type is opaque
+            (`serde_json::Value`) to keep the deserializer flexible; see
+            `CommandSpec` for the canonical field list including
+            `cancels_bridge`.
+            default null
+        group: Optional named group this push owns. Absent replaces the plugin's
+            ENTIRE command set (the original semantics, unchanged); present
+            replaces only the records in that group and leaves the plugin's other
+            groups intact.
+
+            Exists because the single implicit slot is a race whenever a plugin has
+            more than one command source. Browser has five (scroll, find,
+            references, hint skeleton, palette) and each used to push
+            independently — whichever landed last was the only set the matcher saw,
+            and the hint skeleton routinely lost. Its workaround is a mutex plus
+            rebuilding the union from every builder on each call. With groups each
+            source owns its own, and dropping a source drops its group.
+
+            See docs/design/PRINCIPLE_PLUGIN_HELD_STATE.md — this is the same
+            "can two of these coexist?" failure that `collection.replace`'s scope
+            fixes for records.
+        """
         params: dict[str, Any] = {
         }
         if commands is not None:
@@ -1191,6 +1323,7 @@ class MethodsMixin:
         return result
 
     async def commands_remove_alias(self, action: str, default_pattern: str, new_pattern: str) -> CommandsRemoveAliasResponse:
+        """Remove an added spoken form (alias) from a command"""
         params: dict[str, Any] = {
             "action": action,
             "default_pattern": default_pattern,
@@ -1200,12 +1333,14 @@ class MethodsMixin:
         return result
 
     async def commands_reset(self, canonical: str) -> None:
+        """Reset a command override to the plugin default"""
         params: dict[str, Any] = {
             "canonical": canonical,
         }
         await self.call(METHOD_COMMANDS_RESET, params)
 
     async def commands_reset_override(self, action: str, default_pattern: str) -> CommandsResetOverrideResponse:
+        """Remove a user command-phrase override (revert to the plugin default)"""
         params: dict[str, Any] = {
             "action": action,
             "default_pattern": default_pattern,
@@ -1214,6 +1349,40 @@ class MethodsMixin:
         return result
 
     async def commands_resolve(self, active_tags: list[str] | None = None, collections: list[str] | None = None, prefer_owner: str | None = None, preview: bool | None = None, require_tag: str | None = None, session_id: str | None = None, source: str | None = None, words: list[str] | None = None) -> CommandsResolveResponse:
+        """Resolve words against the command registry — returns dispatch decision, partial-match feedback, and tiebreaker telemetry in one envelope
+
+        active_tags: Active tags for tag-based scoping. If None, uses the state's active_tags.
+            default null
+        collections: Narrow completions to commands contributed by these collections'
+            contributors. None or empty = all.
+            default null
+        prefer_owner: Tiebreak hint for a genuine tie. When resolution reduces to 2+ equally-
+            eligible commands the matcher cannot separate, and exactly one of them
+            is owned by this plugin, that candidate is dispatched as a normal single
+            winner instead of the tie being surfaced. It selects *only* among the
+            already-tied candidates — it never overrides normal precedence
+            (longest-match, gated-over-ungated, scope) and has no effect when there
+            is no tie or when zero/multiple tied candidates match. Transient and
+            per-resolve; the caller supplies it for one call, it is not a stored
+            preference.
+        preview: Dry-run / verify-don't-execute mode. When true, the matcher computes
+            the full decision (winner, completions, telemetry) but commits
+            nothing: no tag writes are applied, no `sets_on_partial` bridge is
+            seeded, and no `command_matched`/`command_no_match` telemetry is
+            emitted. The action is never dispatched by `resolve` in either mode —
+            `preview` additionally suppresses the *side effects* of resolution so
+            a consumer (e.g. calibration command-practice) can score "would this
+            fire the right command?" without mutating live state or polluting the
+            no-match dashboards. Default false: normal resolve commits as before.
+            default false
+        require_tag: Restrict completions to commands requiring this tag.
+            default null
+        session_id: Audio session ID from the Swift shell. Informational — links audio
+            lifecycle events to command matches.
+        source: Input source: "command_hold", "continuous", "selection", "api".
+        words: Words to match against the command registry.
+            default []
+        """
         params: dict[str, Any] = {
         }
         if active_tags is not None:
@@ -1236,6 +1405,7 @@ class MethodsMixin:
         return result
 
     async def commands_set_override(self, action: str, default_pattern: str, new_pattern: str) -> None:
+        """Set a user command-phrase override (replace a command's spoken form)"""
         params: dict[str, Any] = {
             "action": action,
             "default_pattern": default_pattern,
@@ -1244,15 +1414,28 @@ class MethodsMixin:
         await self.call(METHOD_COMMANDS_SET_OVERRIDE, params)
 
     async def control_signal(self, signal: str) -> None:
+        """Send a control signal to the Swift shell via the control stream
+
+        signal: Raw control-stream signal string (e.g. "open hud", "hide discovery").
+            Forwarded verbatim to the Swift shell via the actuator's control stream.
+        """
         params: dict[str, Any] = {
             "signal": signal,
         }
         await self.call(METHOD_CONTROL_SIGNAL, params)
 
     async def discovery_closed(self) -> None:
+        """Notify that the discovery HUD closed; emits _platform.discovery.closed"""
         await self.call(METHOD_DISCOVERY_CLOSED)
 
     async def dispatch(self, action: Any) -> DispatchResponse:
+        """Dispatch a typed Action to a plugin or platform builtin
+
+        action: Typed `Action` variant to dispatch. Schema is loose
+            (`serde_json::Value`) — see module-level docs for the rationale.
+            The runtime closure still deserializes the typed
+            `crate::actions::Action` from this field.
+        """
         params: dict[str, Any] = {
             "action": action,
         }
@@ -1260,6 +1443,12 @@ class MethodsMixin:
         return result
 
     async def effects_assert(self, name: str) -> EffectsAssertResponse:
+        """Assert an exclusivity-shape platform effect on behalf of this plugin
+
+        name: Registered effect name (e.g. `suppress_notifications`). Must be
+            declared in the plugin's manifest `consumes.effects.asserts` and
+            match an entry in the closed `effects::REGISTERED_EFFECTS` registry.
+        """
         params: dict[str, Any] = {
             "name": name,
         }
@@ -1267,6 +1456,10 @@ class MethodsMixin:
         return result
 
     async def effects_is_active(self, name: str) -> EffectsIsActiveResponse:
+        """Query whether this plugin holds top-of-stack for the named effect
+
+        name: Registered effect name to query.
+        """
         params: dict[str, Any] = {
             "name": name,
         }
@@ -1274,6 +1467,12 @@ class MethodsMixin:
         return result
 
     async def effects_retract(self, name: str) -> EffectsRetractResponse:
+        """Retract this plugin's assertion of an exclusivity-shape platform effect
+
+        name: Registered effect name to retract. The plugin's frame is removed
+            from this effect's ownership stack. If no frame exists, the call
+            is a no-op (`retracted=false`, no error).
+        """
         params: dict[str, Any] = {
             "name": name,
         }
@@ -1281,6 +1480,16 @@ class MethodsMixin:
         return result
 
     async def events_append(self, event_type: str, data: Any | None = None, session_id: str | None = None) -> None:
+        """Append an event to the structured event log
+
+        data: Free-form event payload. Stored as a raw JSON object on the event
+            log line.
+            default null
+        event_type: Event type discriminator (e.g. "session_start", "match", "miss").
+        session_id: Logical session id this event belongs to (8-char prefix used by
+            the event-stream tooling). Defaults to "?" if absent.
+            default "?"
+        """
         params: dict[str, Any] = {
             "event_type": event_type,
         }
@@ -1291,6 +1500,17 @@ class MethodsMixin:
         await self.call(METHOD_EVENTS_APPEND, params)
 
     async def events_emit(self, event_type: str, correlation_id: str | None = None, data: Any | None = None) -> None:
+        """Emit a plugin event on the event bus
+
+        correlation_id: Optional correlation id linking related events together for
+            debugging. Auto-generated by the platform when omitted and the
+            emitting plugin is processing an event that already carried one.
+            default null · pattern ^tr_[0-9A-Za-z]{11}$
+        data: Free-form event payload published to subscribers.
+            default null
+        event_type: Convention-based event type (e.g. "clipboard.copied"). The
+            `_platform.*` namespace is reserved for the actuator.
+        """
         params: dict[str, Any] = {
             "event_type": event_type,
         }
@@ -1301,6 +1521,43 @@ class MethodsMixin:
         await self.call(METHOD_EVENTS_EMIT, params)
 
     async def hud_create_channel(self, channel: str, accepts_input: bool | None = None, anchor: Any | None = None, description: str | None = None, draggable: bool | None = None, follows_focus: bool | None = None, min_height: int | None = None, on_pointer: "OnPointer" | None = None, stack_order: int | None = None, transparent: bool | None = None, width: int | None = None) -> None:
+        """Create a new HUD broadcast channel at runtime
+
+        accepts_input: Whether the channel's window receives keyboard/mouse input.
+            Defaults to false.
+            default false
+        anchor: Anchor position on screen (`Anchor` enum, kebab-case strings:
+            `"top-left"`, `"top-right"`, `"bottom-left"`, `"bottom-right"`,
+            `"bottom-center"`, `"center"`). Defaults to `"top-right"`.
+            default null
+        channel: Channel name. Must be unique across all plugins.
+        description: Optional human-readable description shown in dev tooling.
+            default ""
+        draggable: Whether the shell lets the user drag this window and remembers its
+            position. Draggable windows should also set `follows_focus: false`.
+            Defaults to false.
+            default false
+        follows_focus: Whether this channel follows the active display on focus changes.
+            Defaults to true. Set to false for user-initiated HUDs that should
+            stay pinned to the display where they were opened.
+            default true
+        min_height: Minimum window height in points. Defaults to 100.
+            wire uint32 · default 100 · min 0
+        on_pointer: Pointer-dodge behavior: "none" (default) or "fade" (dodge the mouse —
+            fade to near-transparent while the pointer is inside the frame).
+            default "none"
+        stack_order: Stack position among windows sharing this anchor: offsets ascend from the
+            anchor edge, so the lowest pins at the corner (a persistent status window)
+            and higher values stack away (transient toasts). Ties broken by channel
+            name. Defaults to 0.
+            wire int32 · default 0
+        transparent: Fully transparent window — the shell skips its frosted vibrancy panel
+            and window shadow, so only the plugin's own markup paints. Defaults
+            to false (frosted).
+            default false
+        width: Window width in points. Defaults to 320.
+            wire uint32 · default 320 · min 0
+        """
         params: dict[str, Any] = {
             "channel": channel,
         }
@@ -1327,12 +1584,24 @@ class MethodsMixin:
         await self.call(METHOD_HUD_CREATE_CHANNEL, params)
 
     async def hud_hide(self, channel: str) -> None:
+        """Hide a HUD channel's window
+
+        channel: Channel name to hide. Sends a `close <channel>` (or
+            `hide <channel>` for built-in channels) to the Swift shell.
+        """
         params: dict[str, Any] = {
             "channel": channel,
         }
         await self.call(METHOD_HUD_HIDE, params)
 
     async def hud_push(self, channel: str, fragments: Any) -> None:
+        """Push HTML fragments to a named HUD channel
+
+        channel: Name of the HUD channel to push fragments into. Must be owned by
+            the calling plugin (verified via
+            `HudChannelRegistry::verify_owner`).
+        fragments: Array of `HudFragment` objects: `{ target_id, html, raw? }`.
+        """
         params: dict[str, Any] = {
             "channel": channel,
             "fragments": fragments,
@@ -1340,6 +1609,10 @@ class MethodsMixin:
         await self.call(METHOD_HUD_PUSH, params)
 
     async def hud_remove_channel(self, channel: str) -> HUDRemoveChannelResponse:
+        """Remove a HUD broadcast channel
+
+        channel: Channel name to remove. Must be owned by the calling plugin.
+        """
         params: dict[str, Any] = {
             "channel": channel,
         }
@@ -1347,6 +1620,13 @@ class MethodsMixin:
         return result
 
     async def hud_set_size(self, channel: str, height: int) -> None:
+        """Report actual rendered size for a HUD channel window
+
+        channel: Channel name whose actual rendered size is being reported.
+        height: Actual rendered height in points (used by world-model entries
+            instead of `min_height` when known).
+            wire uint32 · min 0
+        """
         params: dict[str, Any] = {
             "channel": channel,
             "height": height,
@@ -1354,12 +1634,22 @@ class MethodsMixin:
         await self.call(METHOD_HUD_SET_SIZE, params)
 
     async def hud_show(self, channel: str) -> None:
+        """Show a HUD channel's window
+
+        channel: Channel name to show. Sends an `open <channel>` message to the
+            Swift shell.
+        """
         params: dict[str, Any] = {
             "channel": channel,
         }
         await self.call(METHOD_HUD_SHOW, params)
 
     async def input_click(self, button: str | None = None) -> None:
+        """Click a mouse button
+
+        button: Mouse button: "left", "right", or "middle". Defaults to "left".
+            default "left"
+        """
         params: dict[str, Any] = {
         }
         if button is not None:
@@ -1367,6 +1657,12 @@ class MethodsMixin:
         await self.call(METHOD_INPUT_CLICK, params)
 
     async def input_clipboard_action(self, action: str, text: str | None = None) -> None:
+        """Perform a clipboard action (copy, paste, or set text)
+
+        action: Action: "copy", "paste", or "set".
+        text: Text to set (only used by `action: "set"`).
+            default null
+        """
         params: dict[str, Any] = {
             "action": action,
         }
@@ -1375,10 +1671,12 @@ class MethodsMixin:
         await self.call(METHOD_INPUT_CLIPBOARD_ACTION, params)
 
     async def input_clipboard_history(self) -> list[str]:
+        """Get recent clipboard entries (if available)"""
         result = await self.call(METHOD_INPUT_CLIPBOARD_HISTORY)
         return (result or {}).get("entries") or []
 
     async def input_clipboard_read(self, content_type: str) -> InputClipboardReadResponse:
+        """Read clipboard contents by type"""
         params: dict[str, Any] = {
             "content_type": content_type,
         }
@@ -1386,10 +1684,12 @@ class MethodsMixin:
         return result
 
     async def input_clipboard_read_all(self) -> list[ClipboardContents]:
+        """Read all items from the clipboard"""
         result = await self.call(METHOD_INPUT_CLIPBOARD_READ_ALL)
         return (result or {}).get("items") or []
 
     async def input_clipboard_read_format(self, format: str) -> InputClipboardReadFormatResponse:
+        """Read clipboard contents in a specific pasteboard type (UTI)"""
         params: dict[str, Any] = {
             "format": format,
         }
@@ -1397,6 +1697,7 @@ class MethodsMixin:
         return result
 
     async def input_clipboard_write(self, content_type: str, data: str) -> None:
+        """Write typed content to clipboard"""
         params: dict[str, Any] = {
             "content_type": content_type,
             "data": data,
@@ -1404,6 +1705,10 @@ class MethodsMixin:
         await self.call(METHOD_INPUT_CLIPBOARD_WRITE, params)
 
     async def input_clipboard_write_items(self, items: list["ClipboardWriteItem"] | None = None) -> None:
+        """Write multiple typed items to the clipboard
+
+        items: default []
+        """
         params: dict[str, Any] = {
         }
         if items is not None:
@@ -1411,6 +1716,11 @@ class MethodsMixin:
         await self.call(METHOD_INPUT_CLIPBOARD_WRITE_ITEMS, params)
 
     async def input_double_click(self, x: int | None = None, y: int | None = None) -> None:
+        """Double-click at position
+
+        x: wire int32 · default null
+        y: wire int32 · default null
+        """
         params: dict[str, Any] = {
         }
         if x is not None:
@@ -1420,6 +1730,14 @@ class MethodsMixin:
         await self.call(METHOD_INPUT_DOUBLE_CLICK, params)
 
     async def input_drag(self, from_x: int, from_y: int, to_x: int, to_y: int, duration_ms: int | None = None) -> None:
+        """Atomic drag: mouse down, move, mouse up
+
+        duration_ms: wire uint64 (64-bit) · default 0 · min 0
+        from_x: wire int32
+        from_y: wire int32
+        to_x: wire int32
+        to_y: wire int32
+        """
         params: dict[str, Any] = {
             "from_x": from_x,
             "from_y": from_y,
@@ -1431,10 +1749,20 @@ class MethodsMixin:
         await self.call(METHOD_INPUT_DRAG, params)
 
     async def input_list_input_sources(self) -> list[InputSource]:
+        """List available keyboard input sources"""
         result = await self.call(METHOD_INPUT_LIST_INPUT_SOURCES)
         return (result or {}).get("sources") or []
 
     async def input_mouse_button(self, direction: str, button: str | None = None) -> None:
+        """Press, release, or drag-latch a mouse button (for drag operations, etc.)
+
+        button: Button: "left", "right", or "middle". Defaults to "left".
+            default "left"
+        direction: Direction: "press", "release", or "drag". "drag" posts a
+            zero-distance dragged event at the current cursor position — macOS
+            only treats a window as grabbed once a dragged event follows the
+            press, so drag-based operations need it between press and release.
+        """
         params: dict[str, Any] = {
             "direction": direction,
         }
@@ -1443,6 +1771,17 @@ class MethodsMixin:
         await self.call(METHOD_INPUT_MOUSE_BUTTON, params)
 
     async def input_parse_key_event(self, alt: bool | None = None, code: str | None = None, ctrl: bool | None = None, key: str | None = None, meta: bool | None = None, shift: bool | None = None) -> InputParseKeyEventResponse:
+        """Parse a browser key event into a BranchKit combo string
+
+        alt: default false
+        code: `KeyboardEvent.code` — the physical key, layout-independent.
+            default ""
+        ctrl: default false
+        key: `KeyboardEvent.key` — used only to spot a bare modifier press.
+            default ""
+        meta: default false
+        shift: default false
+        """
         params: dict[str, Any] = {
         }
         if alt is not None:
@@ -1461,6 +1800,16 @@ class MethodsMixin:
         return result
 
     async def input_press_key(self, code: int | None = None, modifiers: list[str] | None = None, name: str | None = None) -> None:
+        """Press a key by raw keycode or name, with optional modifiers
+
+        code: Raw keycode (takes priority over `name` if both are present).
+            wire uint16 · default null · min 0 · max 65535
+        modifiers: Modifier keys to hold during the tap (e.g. "command", "shift").
+            default []
+        name: Named key (e.g. "return", "tab"). Resolved via `resolve_key_name`.
+            Required if `code` is absent.
+            default null
+        """
         params: dict[str, Any] = {
         }
         if code is not None:
@@ -1472,6 +1821,12 @@ class MethodsMixin:
         await self.call(METHOD_INPUT_PRESS_KEY, params)
 
     async def input_raw_key(self, code: int, direction: str) -> None:
+        """Send a raw key event (press, release, or click) without modifier lifting
+
+        code: Raw macOS keycode.
+            wire uint16 · min 0 · max 65535
+        direction: One of "press", "release", or "click".
+        """
         params: dict[str, Any] = {
             "code": code,
             "direction": direction,
@@ -1479,6 +1834,11 @@ class MethodsMixin:
         await self.call(METHOD_INPUT_RAW_KEY, params)
 
     async def input_right_click(self, x: int | None = None, y: int | None = None) -> None:
+        """Right-click at position
+
+        x: wire int32 · default null
+        y: wire int32 · default null
+        """
         params: dict[str, Any] = {
         }
         if x is not None:
@@ -1488,6 +1848,15 @@ class MethodsMixin:
         await self.call(METHOD_INPUT_RIGHT_CLICK, params)
 
     async def input_scroll(self, direction: str, amount: int | None = None, unit: str | None = None) -> None:
+        """Scroll the mouse wheel
+
+        amount: Amount in pixels/units. Defaults to 5.
+            wire int32 · default 5
+        direction: Direction: "up", "down", "left", or "right".
+        unit: Scroll unit: "line" (discrete, default) or "pixel" (continuous/smooth).
+            Pixel units are needed for horizontal scroll in most browsers.
+            default "line"
+        """
         params: dict[str, Any] = {
             "direction": direction,
         }
@@ -1498,9 +1867,11 @@ class MethodsMixin:
         await self.call(METHOD_INPUT_SCROLL, params)
 
     async def input_select_all(self) -> None:
+        """Select all content (Cmd+A)"""
         await self.call(METHOD_INPUT_SELECT_ALL)
 
     async def input_switch_input_source(self, source_id: str) -> bool:
+        """Switch keyboard input source"""
         params: dict[str, Any] = {
             "source_id": source_id,
         }
@@ -1508,6 +1879,11 @@ class MethodsMixin:
         return bool((result or {}).get("result", False))
 
     async def input_triple_click(self, x: int | None = None, y: int | None = None) -> None:
+        """Triple-click at position (select paragraph/line)
+
+        x: wire int32 · default null
+        y: wire int32 · default null
+        """
         params: dict[str, Any] = {
         }
         if x is not None:
@@ -1517,12 +1893,21 @@ class MethodsMixin:
         await self.call(METHOD_INPUT_TRIPLE_CLICK, params)
 
     async def input_type_text(self, text: str) -> None:
+        """Type text into the active application via clipboard paste
+
+        text: Text to type into the active application.
+        """
         params: dict[str, Any] = {
             "text": text,
         }
         await self.call(METHOD_INPUT_TYPE_TEXT, params)
 
     async def keybinds_register(self, snapshot: Any) -> KeybindsRegisterResponse:
+        """Register keybind snapshot with the platform (caches and sends to Swift shell)
+
+        snapshot: `RegistrySnapshot` JSON: `{ entries: [...], listen_up: [...] }`.
+            Each entry is `{ combo, action, source }`.
+        """
         params: dict[str, Any] = {
             "snapshot": snapshot,
         }
@@ -1530,18 +1915,25 @@ class MethodsMixin:
         return result
 
     async def native_accent_color(self) -> NativeAccentColorResponse:
+        """Get the system accent color name"""
         result = await self.call(METHOD_NATIVE_ACCENT_COLOR)
         return result
 
     async def native_accessibility_display_invert(self) -> NativeAccessibilityDisplayInvertResponse:
+        """Check if display colors are inverted"""
         result = await self.call(METHOD_NATIVE_ACCESSIBILITY_DISPLAY_INVERT)
         return result
 
     async def native_accessibility_enabled(self) -> NativeAccessibilityEnabledResponse:
+        """Check if accessibility access is granted for this app"""
         result = await self.call(METHOD_NATIVE_ACCESSIBILITY_ENABLED)
         return result
 
     async def native_activate_app(self, bundle_id: str, all_windows: bool | None = None) -> None:
+        """Bring an app to front by bundle ID
+
+        all_windows: default false
+        """
         params: dict[str, Any] = {
             "bundle_id": bundle_id,
         }
@@ -1550,41 +1942,51 @@ class MethodsMixin:
         await self.call(METHOD_NATIVE_ACTIVATE_APP, params)
 
     async def native_active_network_service(self) -> NativeActiveNetworkServiceResponse:
+        """Get the primary active network service name"""
         result = await self.call(METHOD_NATIVE_ACTIVE_NETWORK_SERVICE)
         return result
 
     async def native_active_ports(self) -> list[ListeningPort]:
+        """List processes with listening TCP/UDP ports"""
         result = await self.call(METHOD_NATIVE_ACTIVE_PORTS)
         return (result or {}).get("ports") or []
 
     async def native_active_space(self) -> list[ActiveSpace]:
+        """Get the active space per display"""
         result = await self.call(METHOD_NATIVE_ACTIVE_SPACE)
         return (result or {}).get("active") or []
 
     async def native_airdrop_enabled(self) -> NativeAirdropEnabledResponse:
+        """Check if AirDrop discoverability is enabled"""
         result = await self.call(METHOD_NATIVE_AIRDROP_ENABLED)
         return result
 
     async def native_airport_power(self) -> NativeAirportPowerResponse:
+        """Check if Wi-Fi (AirPort) is powered on"""
         result = await self.call(METHOD_NATIVE_AIRPORT_POWER)
         return result
 
     async def native_alert_sound(self) -> NativeAlertSoundResponse:
+        """Get the system alert sound name"""
         result = await self.call(METHOD_NATIVE_ALERT_SOUND)
         return result
 
     async def native_alert_volume(self) -> None:
+        """Get the alert volume (0.0-1.0)"""
         await self.call(METHOD_NATIVE_ALERT_VOLUME)
 
     async def native_all_window_ids(self) -> list[str]:
+        """List all on-screen window IDs"""
         result = await self.call(METHOD_NATIVE_ALL_WINDOW_IDS)
         return (result or {}).get("window_ids") or []
 
     async def native_apfs_snapshots(self) -> NativeApfsSnapshotsResponse:
+        """List APFS local snapshots as `tmutil listlocalsnapshots` prints them — a header line followed by one snapshot name per line, NOT JSON"""
         result = await self.call(METHOD_NATIVE_APFS_SNAPSHOTS)
         return result
 
     async def native_app_bundle_path(self, bundle_id: str) -> NativeAppBundlePathResponse:
+        """Get the filesystem path to an app bundle by bundle ID"""
         params: dict[str, Any] = {
             "bundle_id": bundle_id,
         }
@@ -1592,12 +1994,17 @@ class MethodsMixin:
         return result
 
     async def native_app_focused_window_id(self, bundle_id: str) -> None:
+        """Get focused window ID for app by bundle ID"""
         params: dict[str, Any] = {
             "bundle_id": bundle_id,
         }
         await self.call(METHOD_NATIVE_APP_FOCUSED_WINDOW_ID, params)
 
     async def native_app_icon(self, bundle_id: str, size: int | None = None) -> NativeAppIconResponse:
+        """Get app icon as PNG (base64)
+
+        size: wire uint32 · default 64 · min 0
+        """
         params: dict[str, Any] = {
             "bundle_id": bundle_id,
         }
@@ -1607,12 +2014,14 @@ class MethodsMixin:
         return result
 
     async def native_app_icon_path(self, bundle_id: str) -> None:
+        """Get path to app icon"""
         params: dict[str, Any] = {
             "bundle_id": bundle_id,
         }
         await self.call(METHOD_NATIVE_APP_ICON_PATH, params)
 
     async def native_app_is_agent(self, bundle_id: str) -> NativeAppIsAgentResponse:
+        """Check if app is an LSUIElement (agent/background)"""
         params: dict[str, Any] = {
             "bundle_id": bundle_id,
         }
@@ -1620,6 +2029,7 @@ class MethodsMixin:
         return result
 
     async def native_app_is_running(self, bundle_id: str) -> NativeAppIsRunningResponse:
+        """Check if an app is running by bundle ID"""
         params: dict[str, Any] = {
             "bundle_id": bundle_id,
         }
@@ -1627,6 +2037,7 @@ class MethodsMixin:
         return result
 
     async def native_app_launch_at_login(self, bundle_id: str) -> NativeAppLaunchAtLoginResponse:
+        """Check if app is in login items"""
         params: dict[str, Any] = {
             "bundle_id": bundle_id,
         }
@@ -1634,6 +2045,7 @@ class MethodsMixin:
         return result
 
     async def native_app_metadata(self, bundle_id: str) -> NativeAppMetadataResponse:
+        """Get bundle metadata for an application"""
         params: dict[str, Any] = {
             "bundle_id": bundle_id,
         }
@@ -1641,28 +2053,33 @@ class MethodsMixin:
         return result
 
     async def native_app_path(self, bundle_id: str) -> None:
+        """Get an app path by bundle ID"""
         params: dict[str, Any] = {
             "bundle_id": bundle_id,
         }
         await self.call(METHOD_NATIVE_APP_PATH, params)
 
     async def native_app_pid(self, bundle_id: str) -> None:
+        """Get PID of running app by bundle ID"""
         params: dict[str, Any] = {
             "bundle_id": bundle_id,
         }
         await self.call(METHOD_NATIVE_APP_PID, params)
 
     async def native_app_support_directory(self) -> NativeAppSupportDirectoryResponse:
+        """Get the user's Application Support directory path"""
         result = await self.call(METHOD_NATIVE_APP_SUPPORT_DIRECTORY)
         return result
 
     async def native_app_version(self, bundle_id: str) -> None:
+        """Get an app version by bundle ID"""
         params: dict[str, Any] = {
             "bundle_id": bundle_id,
         }
         await self.call(METHOD_NATIVE_APP_VERSION, params)
 
     async def native_app_windows(self, bundle_id: str) -> list[WindowDetail]:
+        """List all windows belonging to a specific app by bundle ID"""
         params: dict[str, Any] = {
             "bundle_id": bundle_id,
         }
@@ -1670,12 +2087,14 @@ class MethodsMixin:
         return (result or {}).get("windows") or []
 
     async def native_app_windows_count(self, bundle_id: str) -> None:
+        """Count windows for an app by bundle ID"""
         params: dict[str, Any] = {
             "bundle_id": bundle_id,
         }
         await self.call(METHOD_NATIVE_APP_WINDOWS_COUNT, params)
 
     async def native_apps_for_path(self, path: str) -> list[InstalledApp]:
+        """Applications the OS registers as able to open a given file (Launch Services)"""
         params: dict[str, Any] = {
             "path": path,
         }
@@ -1683,6 +2102,7 @@ class MethodsMixin:
         return (result or {}).get("apps") or []
 
     async def native_audio_device_volume(self, device_uid: str) -> NativeAudioDeviceVolumeResponse:
+        """Get volume state for a specific audio device by UID"""
         params: dict[str, Any] = {
             "device_uid": device_uid,
         }
@@ -1690,41 +2110,51 @@ class MethodsMixin:
         return result
 
     async def native_audio_devices(self) -> list[AudioDevice]:
+        """List all audio input and output devices"""
         result = await self.call(METHOD_NATIVE_AUDIO_DEVICES)
         return (result or {}).get("devices") or []
 
     async def native_audio_input_device(self) -> NativeAudioInputDeviceResponse:
+        """Get the default audio input device name"""
         result = await self.call(METHOD_NATIVE_AUDIO_INPUT_DEVICE)
         return result
 
     async def native_audio_input_level(self) -> None:
+        """Get the system audio input volume (0.0-1.0)"""
         await self.call(METHOD_NATIVE_AUDIO_INPUT_LEVEL)
 
     async def native_audio_output_device(self) -> NativeAudioOutputDeviceResponse:
+        """Get the default audio output device name"""
         result = await self.call(METHOD_NATIVE_AUDIO_OUTPUT_DEVICE)
         return result
 
     async def native_auto_brightness(self) -> NativeAutoBrightnessResponse:
+        """Check if auto-brightness is enabled"""
         result = await self.call(METHOD_NATIVE_AUTO_BRIGHTNESS)
         return result
 
     async def native_auto_rearrange_spaces(self) -> NativeAutoRearrangeSpacesResponse:
+        """Check if Spaces auto-rearrange based on usage"""
         result = await self.call(METHOD_NATIVE_AUTO_REARRANGE_SPACES)
         return result
 
     async def native_auto_timezone(self) -> NativeAutoTimezoneResponse:
+        """Check if automatic timezone is enabled"""
         result = await self.call(METHOD_NATIVE_AUTO_TIMEZONE)
         return result
 
     async def native_autocorrect_enabled(self) -> NativeAutocorrectEnabledResponse:
+        """Check if auto-correction is enabled"""
         result = await self.call(METHOD_NATIVE_AUTOCORRECT_ENABLED)
         return result
 
     async def native_automatic_login_user(self) -> NativeAutomaticLoginUserResponse:
+        """Get automatic login username if configured"""
         result = await self.call(METHOD_NATIVE_AUTOMATIC_LOGIN_USER)
         return result
 
     async def native_automation_permission(self, bundle_id: str) -> NativeAutomationPermissionResponse:
+        """Check if automation permission is granted for target app"""
         params: dict[str, Any] = {
             "bundle_id": bundle_id,
         }
@@ -1732,6 +2162,12 @@ class MethodsMixin:
         return result
 
     async def native_ax_element_at_point(self, pid: int, x: int, y: int) -> NativeAxElementAtPointResponse:
+        """Get the accessibility element at a screen point
+
+        pid: wire int32
+        x: wire int32
+        y: wire int32
+        """
         params: dict[str, Any] = {
             "pid": pid,
             "x": x,
@@ -1741,6 +2177,10 @@ class MethodsMixin:
         return result
 
     async def native_ax_element_tree(self, element: "AXElementRef", depth: int | None = None) -> AXElementNode:
+        """Get the accessibility element tree rooted at an element
+
+        depth: wire uint32 · default 3 · min 0
+        """
         params: dict[str, Any] = {
             "element": element,
         }
@@ -1750,6 +2190,11 @@ class MethodsMixin:
         return result
 
     async def native_ax_observe(self, pid: int, notifications: list[str] | None = None) -> NativeAxObserveResponse:
+        """Start observing AX notifications (STUB -- not yet implemented)
+
+        notifications: default []
+        pid: wire int32
+        """
         params: dict[str, Any] = {
             "pid": pid,
         }
@@ -1759,6 +2204,7 @@ class MethodsMixin:
         return result
 
     async def native_ax_perform_action(self, action: str, element: "AXElementRef") -> bool:
+        """Perform an action on an accessibility element"""
         params: dict[str, Any] = {
             "action": action,
             "element": element,
@@ -1767,6 +2213,10 @@ class MethodsMixin:
         return bool((result or {}).get("result", False))
 
     async def native_ax_read_attributes(self, element: "AXElementRef", attributes: list[str] | None = None) -> None:
+        """Read specific attributes from an accessibility element
+
+        attributes: default []
+        """
         params: dict[str, Any] = {
             "element": element,
         }
@@ -1775,6 +2225,7 @@ class MethodsMixin:
         await self.call(METHOD_NATIVE_AX_READ_ATTRIBUTES, params)
 
     async def native_ax_set_attribute(self, attribute: str, element: "AXElementRef", value: Any) -> bool:
+        """Set an attribute on an accessibility element"""
         params: dict[str, Any] = {
             "attribute": attribute,
             "element": element,
@@ -1784,6 +2235,7 @@ class MethodsMixin:
         return bool((result or {}).get("result", False))
 
     async def native_ax_unobserve(self, subscription_id: str) -> bool:
+        """Stop observing AX notifications (STUB)"""
         params: dict[str, Any] = {
             "subscription_id": subscription_id,
         }
@@ -1791,6 +2243,10 @@ class MethodsMixin:
         return bool((result or {}).get("result", False))
 
     async def native_batch_is_tileable(self, window_ids: list[str] | None = None) -> list[TileableEntry]:
+        """Check which windows can be tiled
+
+        window_ids: default []
+        """
         params: dict[str, Any] = {
         }
         if window_ids is not None:
@@ -1799,6 +2255,13 @@ class MethodsMixin:
         return (result or {}).get("results") or []
 
     async def native_batch_set_frames(self, frames: list["WindowFrame"] | None = None, readback: bool | None = None) -> list[WindowFrame]:
+        """Set positions/sizes for multiple windows
+
+        frames: default []
+        readback: If true, sleep 10ms after applying frames and read back the actual
+            positions (defaults to true). Set false to skip the readback round-trip.
+            default true
+        """
         params: dict[str, Any] = {
         }
         if frames is not None:
@@ -1809,20 +2272,30 @@ class MethodsMixin:
         return (result or {}).get("results") or []
 
     async def native_battery(self) -> NativeBatteryResponse:
+        """Get battery status information"""
         result = await self.call(METHOD_NATIVE_BATTERY)
         return result
 
     async def native_battery_cycle_count(self) -> None:
+        """Get battery cycle count"""
         await self.call(METHOD_NATIVE_BATTERY_CYCLE_COUNT)
 
     async def native_battery_health(self) -> NativeBatteryHealthResponse:
+        """Get battery health status"""
         result = await self.call(METHOD_NATIVE_BATTERY_HEALTH)
         return result
 
     async def native_battery_max_capacity(self) -> None:
+        """Get battery maximum capacity percentage"""
         await self.call(METHOD_NATIVE_BATTERY_MAX_CAPACITY)
 
     async def native_ble_discover_services(self, device_identifier: str) -> list[BleService]:
+        """Discover GATT services and characteristics on a paired BLE device
+
+        device_identifier: Identifier for the paired BLE device. Accepts a CoreBluetooth
+            peripheral UUID (e.g. "12345678-...") or a device name to match
+            among connected BLE HID peripherals (e.g. "Shortcut Remote").
+        """
         params: dict[str, Any] = {
             "device_identifier": device_identifier,
         }
@@ -1830,6 +2303,12 @@ class MethodsMixin:
         return (result or {}).get("services") or []
 
     async def native_ble_subscribe(self, characteristic_uuid: str, device_identifier: str, service_uuid: str) -> NativeBleSubscribeResponse:
+        """Subscribe to GATT notifications on a BLE characteristic
+
+        characteristic_uuid: GATT characteristic UUID to subscribe to (must support notify).
+        device_identifier: CoreBluetooth peripheral UUID or device name.
+        service_uuid: GATT service UUID containing the characteristic.
+        """
         params: dict[str, Any] = {
             "characteristic_uuid": characteristic_uuid,
             "device_identifier": device_identifier,
@@ -1839,6 +2318,14 @@ class MethodsMixin:
         return result
 
     async def native_ble_subscribe_all_then_write(self, device_identifier: str, subscribe_services: list[str] | None = None, writes: list["BleWriteEntry"] | None = None) -> NativeBleSubscribeAllThenWriteResponse:
+        """Subscribe to all notify characteristics on listed services, then write — single GATT cycle
+
+        device_identifier: CoreBluetooth peripheral UUID or device name.
+        subscribe_services: GATT service UUIDs to subscribe to all notify characteristics on.
+            default []
+        writes: Writes to perform after subscribing. The last `with_response` write
+            determines when the operation completes.
+        """
         params: dict[str, Any] = {
             "device_identifier": device_identifier,
         }
@@ -1850,6 +2337,17 @@ class MethodsMixin:
         return result
 
     async def native_ble_write(self, characteristic_uuid: str, device_identifier: str, service_uuid: str, data: list[int] | None = None, write_type: str | None = None) -> NativeBleWriteResponse:
+        """Write bytes to a GATT characteristic on a paired BLE device
+
+        characteristic_uuid: GATT characteristic UUID (e.g. "FFF1").
+        data: Bytes to write to the characteristic.
+            default []
+        device_identifier: Identifier for the paired BLE device. Accepts a CoreBluetooth
+            peripheral UUID or a device name (see ble_discover_services).
+        service_uuid: GATT service UUID (e.g. "FFF0").
+        write_type: Write type: "with_response" (default, reliable) or "without_response" (fire-and-forget).
+            default "with_response"
+        """
         params: dict[str, Any] = {
             "characteristic_uuid": characteristic_uuid,
             "device_identifier": device_identifier,
@@ -1863,25 +2361,34 @@ class MethodsMixin:
         return result
 
     async def native_bluetooth_devices(self) -> list[BluetoothDevice]:
+        """List paired/connected Bluetooth devices"""
         result = await self.call(METHOD_NATIVE_BLUETOOTH_DEVICES)
         return (result or {}).get("devices") or []
 
     async def native_bluetooth_power(self) -> NativeBluetoothPowerResponse:
+        """Check if Bluetooth is powered on"""
         result = await self.call(METHOD_NATIVE_BLUETOOTH_POWER)
         return result
 
     async def native_bold_text_enabled(self) -> NativeBoldTextEnabledResponse:
+        """Check if bold text is enabled in accessibility"""
         result = await self.call(METHOD_NATIVE_BOLD_TEXT_ENABLED)
         return result
 
     async def native_boot_volume(self) -> NativeBootVolumeResponse:
+        """Get the boot volume name"""
         result = await self.call(METHOD_NATIVE_BOOT_VOLUME)
         return result
 
     async def native_borders(self) -> None:
+        """Draw window border overlays (forwarded to Swift shell)"""
         await self.call(METHOD_NATIVE_BORDERS)
 
     async def native_brightness(self, display_id: int | None = None) -> NativeBrightnessResponse:
+        """Get display brightness (0.0-1.0)
+
+        display_id: wire uint32 · default null · min 0
+        """
         params: dict[str, Any] = {
         }
         if display_id is not None:
@@ -1890,6 +2397,10 @@ class MethodsMixin:
         return result
 
     async def native_bundle_for_remote_port(self, remote_port: int) -> NativeBundleForRemotePortResponse:
+        """Resolve a loopback TCP connection's remote port to the owning process's app bundle ID
+
+        remote_port: wire int32
+        """
         params: dict[str, Any] = {
             "remote_port": remote_port,
         }
@@ -1897,6 +2408,7 @@ class MethodsMixin:
         return result
 
     async def native_calendar_events_range(self, end: str, start: str) -> list[CalendarEvent]:
+        """Get calendar events in a date range (ISO 8601)"""
         params: dict[str, Any] = {
             "end": end,
             "start": start,
@@ -1905,26 +2417,32 @@ class MethodsMixin:
         return (result or {}).get("events") or []
 
     async def native_calendar_events_today(self) -> list[CalendarEvent]:
+        """Get today's calendar events"""
         result = await self.call(METHOD_NATIVE_CALENDAR_EVENTS_TODAY)
         return (result or {}).get("events") or []
 
     async def native_calendar_permission(self) -> NativeCalendarPermissionResponse:
+        """Check if calendar access is available"""
         result = await self.call(METHOD_NATIVE_CALENDAR_PERMISSION)
         return result
 
     async def native_camera_permission(self) -> NativeCameraPermissionResponse:
+        """Check if camera access is available"""
         result = await self.call(METHOD_NATIVE_CAMERA_PERMISSION)
         return result
 
     async def native_cameras(self) -> list[CameraDevice]:
+        """List available camera devices"""
         result = await self.call(METHOD_NATIVE_CAMERAS)
         return (result or {}).get("cameras") or []
 
     async def native_caps_lock_state(self) -> NativeCapsLockStateResponse:
+        """Check if Caps Lock is currently on"""
         result = await self.call(METHOD_NATIVE_CAPS_LOCK_STATE)
         return result
 
     async def native_capture_window(self, window_id: str) -> NativeCaptureWindowResponse:
+        """Capture a single window as PNG (base64)"""
         params: dict[str, Any] = {
             "window_id": window_id,
         }
@@ -1932,18 +2450,21 @@ class MethodsMixin:
         return result
 
     async def native_cascade_windows(self, bundle_id: str) -> None:
+        """Cascade all windows for an app"""
         params: dict[str, Any] = {
             "bundle_id": bundle_id,
         }
         await self.call(METHOD_NATIVE_CASCADE_WINDOWS, params)
 
     async def native_center_window(self, window_id: str) -> None:
+        """Center a window on its current display"""
         params: dict[str, Any] = {
             "window_id": window_id,
         }
         await self.call(METHOD_NATIVE_CENTER_WINDOW, params)
 
     async def native_check_permission(self, permission: str) -> NativeCheckPermissionResponse:
+        """Check a permission status (screen_recording, camera, etc.)"""
         params: dict[str, Any] = {
             "permission": permission,
         }
@@ -1951,18 +2472,25 @@ class MethodsMixin:
         return result
 
     async def native_clear_file_quarantine(self, path: str) -> None:
+        """Remove the quarantine extended attribute from a file"""
         params: dict[str, Any] = {
             "path": path,
         }
         await self.call(METHOD_NATIVE_CLEAR_FILE_QUARANTINE, params)
 
     async def native_clear_notifications(self, bundle_id: str) -> None:
+        """Clear all delivered notifications for an app"""
         params: dict[str, Any] = {
             "bundle_id": bundle_id,
         }
         await self.call(METHOD_NATIVE_CLEAR_NOTIFICATIONS, params)
 
     async def native_click_menu_item(self, pid: int, path: list[str] | None = None) -> bool:
+        """Click a menu item by navigating the menu bar path
+
+        path: default []
+        pid: wire int32
+        """
         params: dict[str, Any] = {
             "pid": pid,
         }
@@ -1972,46 +2500,59 @@ class MethodsMixin:
         return bool((result or {}).get("result", False))
 
     async def native_clipboard_change_count(self) -> NativeClipboardChangeCountResponse:
+        """Get the clipboard change count"""
         result = await self.call(METHOD_NATIVE_CLIPBOARD_CHANGE_COUNT)
         return result
 
     async def native_clipboard_file_urls(self) -> NativeClipboardFileUrlsResponse:
+        """Get file URLs from clipboard as JSON array"""
         result = await self.call(METHOD_NATIVE_CLIPBOARD_FILE_URLS)
         return result
 
     async def native_clipboard_has_image(self) -> NativeClipboardHasImageResponse:
+        """Check if clipboard contains an image"""
         result = await self.call(METHOD_NATIVE_CLIPBOARD_HAS_IMAGE)
         return result
 
     async def native_clipboard_has_text(self) -> NativeClipboardHasTextResponse:
+        """Check if clipboard contains text"""
         result = await self.call(METHOD_NATIVE_CLIPBOARD_HAS_TEXT)
         return result
 
     async def native_clipboard_html(self) -> NativeClipboardHTMLResponse:
+        """Get HTML content from clipboard"""
         result = await self.call(METHOD_NATIVE_CLIPBOARD_HTML)
         return result
 
     async def native_clipboard_image_dimensions(self) -> NativeClipboardImageDimensionsResponse:
+        """Get dimensions of clipboard image as WxH"""
         result = await self.call(METHOD_NATIVE_CLIPBOARD_IMAGE_DIMENSIONS)
         return result
 
     async def native_clipboard_rich_text(self) -> NativeClipboardRichTextResponse:
+        """Get rich text (RTF) from clipboard"""
         result = await self.call(METHOD_NATIVE_CLIPBOARD_RICH_TEXT)
         return result
 
     async def native_clipboard_set_html(self, html: str) -> None:
+        """Set HTML content on clipboard"""
         params: dict[str, Any] = {
             "html": html,
         }
         await self.call(METHOD_NATIVE_CLIPBOARD_SET_HTML, params)
 
     async def native_clipboard_set_text(self, text: str) -> None:
+        """Set clipboard text content"""
         params: dict[str, Any] = {
             "text": text,
         }
         await self.call(METHOD_NATIVE_CLIPBOARD_SET_TEXT, params)
 
     async def native_clipboard_types(self, pasteboard: str | None = None) -> list[str]:
+        """List available pasteboard types on the clipboard
+
+        pasteboard: default ""
+        """
         params: dict[str, Any] = {
         }
         if pasteboard is not None:
@@ -2020,12 +2561,18 @@ class MethodsMixin:
         return (result or {}).get("types") or []
 
     async def native_close_window(self, window_id: str) -> None:
+        """Close a window by ID"""
         params: dict[str, Any] = {
             "window_id": window_id,
         }
         await self.call(METHOD_NATIVE_CLOSE_WINDOW, params)
 
     async def native_color_at_point(self, x: int, y: int) -> NativeColorAtPointResponse:
+        """Sample pixel color at screen coordinate
+
+        x: wire int32
+        y: wire int32
+        """
         params: dict[str, Any] = {
             "x": x,
             "y": y,
@@ -2034,17 +2581,21 @@ class MethodsMixin:
         return result
 
     async def native_computer_name(self) -> NativeComputerNameResponse:
+        """Get the computer name"""
         result = await self.call(METHOD_NATIVE_COMPUTER_NAME)
         return result
 
     async def native_computer_sleep_time(self) -> None:
+        """Get computer sleep timeout in minutes, for the power source the machine is currently on"""
         await self.call(METHOD_NATIVE_COMPUTER_SLEEP_TIME)
 
     async def native_contacts_permission(self) -> NativeContactsPermissionResponse:
+        """Check if contacts access is available"""
         result = await self.call(METHOD_NATIVE_CONTACTS_PERMISSION)
         return result
 
     async def native_copy_file(self, destination: str, source: str) -> None:
+        """Copy a file or directory"""
         params: dict[str, Any] = {
             "destination": destination,
             "source": source,
@@ -2052,66 +2603,82 @@ class MethodsMixin:
         await self.call(METHOD_NATIVE_COPY_FILE, params)
 
     async def native_cpu_info(self) -> NativeCpuInfoResponse:
+        """Get CPU chip name, core count, and architecture"""
         result = await self.call(METHOD_NATIVE_CPU_INFO)
         return result
 
     async def native_cpu_temperature(self) -> None:
+        """Get CPU temperature in Celsius. Requires the third-party `osx-cpu-temp`; a reading without an explicit scale marker is rejected rather than assumed"""
         await self.call(METHOD_NATIVE_CPU_TEMPERATURE)
 
     async def native_cpu_usage(self) -> None:
+        """Get current CPU usage percentage"""
         await self.call(METHOD_NATIVE_CPU_USAGE)
 
     async def native_create_directory(self, path: str) -> None:
+        """Create a directory (with intermediate directories)"""
         params: dict[str, Any] = {
             "path": path,
         }
         await self.call(METHOD_NATIVE_CREATE_DIRECTORY, params)
 
     async def native_cron_jobs(self) -> list[str]:
+        """List the current user crontab entries"""
         result = await self.call(METHOD_NATIVE_CRON_JOBS)
         return (result or {}).get("jobs") or []
 
     async def native_currency_code(self) -> NativeCurrencyCodeResponse:
+        """Get the system currency code (e.g. USD)"""
         result = await self.call(METHOD_NATIVE_CURRENCY_CODE)
         return result
 
     async def native_current_datetime(self) -> NativeCurrentDatetimeResponse:
+        """Get current date, time, and timezone in ISO 8601"""
         result = await self.call(METHOD_NATIVE_CURRENT_DATETIME)
         return result
 
     async def native_current_user(self) -> NativeCurrentUserResponse:
+        """Get current user session info"""
         result = await self.call(METHOD_NATIVE_CURRENT_USER)
         return result
 
     async def native_current_user_admin(self) -> NativeCurrentUserAdminResponse:
+        """Check if the current user has admin privileges"""
         result = await self.call(METHOD_NATIVE_CURRENT_USER_ADMIN)
         return result
 
     async def native_current_wallpaper(self) -> NativeCurrentWallpaperResponse:
+        """Get the current desktop wallpaper path"""
         result = await self.call(METHOD_NATIVE_CURRENT_WALLPAPER)
         return result
 
     async def native_cursor(self) -> NativeCursorResponse:
+        """Get the current cursor position"""
         result = await self.call(METHOD_NATIVE_CURSOR)
         return result
 
     async def native_cursor_info(self) -> NativeCursorInfoResponse:
+        """Get current cursor type and position"""
         result = await self.call(METHOD_NATIVE_CURSOR_INFO)
         return result
 
     async def native_cursor_shake_to_locate(self) -> NativeCursorShakeToLocateResponse:
+        """Check if shake mouse to locate cursor is enabled"""
         result = await self.call(METHOD_NATIVE_CURSOR_SHAKE_TO_LOCATE)
         return result
 
     async def native_dark_mode(self) -> NativeDarkModeResponse:
+        """Check if dark mode is active"""
         result = await self.call(METHOD_NATIVE_DARK_MODE)
         return result
 
     async def native_date_format(self) -> NativeDateFormatResponse:
+        """Get user date format string"""
         result = await self.call(METHOD_NATIVE_DATE_FORMAT)
         return result
 
     async def native_default_app_for_uti(self, uti: str) -> NativeDefaultAppForUtiResponse:
+        """Get the default application for a UTI"""
         params: dict[str, Any] = {
             "uti": uti,
         }
@@ -2119,32 +2686,39 @@ class MethodsMixin:
         return result
 
     async def native_default_browser(self) -> NativeDefaultBrowserResponse:
+        """Get the default browser bundle ID"""
         result = await self.call(METHOD_NATIVE_DEFAULT_BROWSER)
         return result
 
     async def native_default_email_client(self) -> NativeDefaultEmailClientResponse:
+        """Get the default email client bundle ID"""
         result = await self.call(METHOD_NATIVE_DEFAULT_EMAIL_CLIENT)
         return result
 
     async def native_default_printer(self) -> NativeDefaultPrinterResponse:
+        """Get the default printer name"""
         result = await self.call(METHOD_NATIVE_DEFAULT_PRINTER)
         return result
 
     async def native_delete_file(self, path: str) -> None:
+        """Delete a file or empty directory"""
         params: dict[str, Any] = {
             "path": path,
         }
         await self.call(METHOD_NATIVE_DELETE_FILE, params)
 
     async def native_desktop_directory(self) -> NativeDesktopDirectoryResponse:
+        """Get the user's Desktop directory path"""
         result = await self.call(METHOD_NATIVE_DESKTOP_DIRECTORY)
         return result
 
     async def native_detect_barcodes(self) -> list[BarcodeResult]:
+        """Detect barcodes and QR codes from the screen"""
         result = await self.call(METHOD_NATIVE_DETECT_BARCODES)
         return (result or {}).get("barcodes") or []
 
     async def native_detect_barcodes_file(self, path: str) -> list[BarcodeResult]:
+        """Detect barcodes and QR codes from an image file"""
         params: dict[str, Any] = {
             "path": path,
         }
@@ -2152,14 +2726,20 @@ class MethodsMixin:
         return (result or {}).get("barcodes") or []
 
     async def native_dictation_enabled(self) -> NativeDictationEnabledResponse:
+        """Check if Dictation is enabled"""
         result = await self.call(METHOD_NATIVE_DICTATION_ENABLED)
         return result
 
     async def native_differentiate_without_color(self) -> NativeDifferentiateWithoutColorResponse:
+        """Check if differentiate without color is enabled"""
         result = await self.call(METHOD_NATIVE_DIFFERENTIATE_WITHOUT_COLOR)
         return result
 
     async def native_directory_contents(self, path: str, include_hidden: bool | None = None) -> list[DirectoryEntry]:
+        """List files and directories at a path
+
+        include_hidden: default false
+        """
         params: dict[str, Any] = {
             "path": path,
         }
@@ -2169,6 +2749,10 @@ class MethodsMixin:
         return (result or {}).get("entries") or []
 
     async def native_disk_space(self, path: str | None = None) -> NativeDiskSpaceResponse:
+        """Get disk space for a volume (default: /)
+
+        path: default ""
+        """
         params: dict[str, Any] = {
         }
         if path is not None:
@@ -2177,6 +2761,7 @@ class MethodsMixin:
         return result
 
     async def native_disk_usage(self, path: str) -> NativeDiskUsageResponse:
+        """Get disk usage for a path (like du -sh)"""
         params: dict[str, Any] = {
             "path": path,
         }
@@ -2184,110 +2769,142 @@ class MethodsMixin:
         return result
 
     async def native_dismiss_notification(self, id: str) -> None:
+        """Dismiss a delivered notification (partial — no-op)"""
         params: dict[str, Any] = {
             "id": id,
         }
         await self.call(METHOD_NATIVE_DISMISS_NOTIFICATION, params)
 
     async def native_display_brightness(self) -> None:
+        """Get current display brightness (0.0-1.0)"""
         await self.call(METHOD_NATIVE_DISPLAY_BRIGHTNESS)
 
     async def native_display_color_profiles(self) -> list[DisplayColorProfile]:
+        """Get color profile for each connected display"""
         result = await self.call(METHOD_NATIVE_DISPLAY_COLOR_PROFILES)
         return (result or {}).get("profiles") or []
 
     async def native_display_count(self) -> NativeDisplayCountResponse:
+        """Get the number of connected displays"""
         result = await self.call(METHOD_NATIVE_DISPLAY_COUNT)
         return result
 
     async def native_display_mirroring(self) -> NativeDisplayMirroringResponse:
+        """Check if display mirroring is active"""
         result = await self.call(METHOD_NATIVE_DISPLAY_MIRRORING)
         return result
 
     async def native_display_refresh_rate(self, display_id: int) -> None:
+        """Get display refresh rate in Hz
+
+        display_id: wire uint32 · min 0
+        """
         params: dict[str, Any] = {
             "display_id": display_id,
         }
         await self.call(METHOD_NATIVE_DISPLAY_REFRESH_RATE, params)
 
     async def native_display_rotation(self) -> list[DisplayRotation]:
+        """Get rotation for each connected display"""
         result = await self.call(METHOD_NATIVE_DISPLAY_ROTATION)
         return (result or {}).get("rotations") or []
 
     async def native_display_scale_factor(self, display_id: int) -> None:
+        """Get display scale factor
+
+        display_id: wire uint32 · min 0
+        """
         params: dict[str, Any] = {
             "display_id": display_id,
         }
         await self.call(METHOD_NATIVE_DISPLAY_SCALE_FACTOR, params)
 
     async def native_display_serial_number(self) -> NativeDisplaySerialNumberResponse:
+        """Get primary display serial number"""
         result = await self.call(METHOD_NATIVE_DISPLAY_SERIAL_NUMBER)
         return result
 
     async def native_display_sleep_time(self) -> None:
+        """Get display sleep timeout in minutes, for the power source the machine is currently on"""
         await self.call(METHOD_NATIVE_DISPLAY_SLEEP_TIME)
 
     async def native_displays(self) -> list[DisplayMetadata]:
+        """Get metadata for all connected displays"""
         result = await self.call(METHOD_NATIVE_DISPLAYS)
         return (result or {}).get("displays") or []
 
     async def native_dnd(self) -> NativeDndResponse:
+        """Get Do Not Disturb / Focus state (via the BranchKit Focus helper shortcut)"""
         result = await self.call(METHOD_NATIVE_DND)
         return result
 
     async def native_dns_servers(self) -> list[str]:
+        """List configured DNS server addresses"""
         result = await self.call(METHOD_NATIVE_DNS_SERVERS)
         return (result or {}).get("servers") or []
 
     async def native_dock_auto_hide(self) -> NativeDockAutoHideResponse:
+        """Check if Dock auto-hide is enabled"""
         result = await self.call(METHOD_NATIVE_DOCK_AUTO_HIDE)
         return result
 
     async def native_dock_magnification(self) -> NativeDockMagnificationResponse:
+        """Check if Dock magnification is enabled"""
         result = await self.call(METHOD_NATIVE_DOCK_MAGNIFICATION)
         return result
 
     async def native_dock_minimize_effect(self) -> NativeDockMinimizeEffectResponse:
+        """Get Dock minimize animation. Returns one of: genie, scale, suck"""
         result = await self.call(METHOD_NATIVE_DOCK_MINIMIZE_EFFECT)
         return result
 
     async def native_dock_minimize_to_app(self) -> NativeDockMinimizeToAppResponse:
+        """Check if windows minimize into app icon"""
         result = await self.call(METHOD_NATIVE_DOCK_MINIMIZE_TO_APP)
         return result
 
     async def native_dock_position(self) -> NativeDockPositionResponse:
+        """Get the Dock position (left, bottom, right)"""
         result = await self.call(METHOD_NATIVE_DOCK_POSITION)
         return result
 
     async def native_dock_show_indicators(self) -> NativeDockShowIndicatorsResponse:
+        """Check if Dock shows running app indicators"""
         result = await self.call(METHOD_NATIVE_DOCK_SHOW_INDICATORS)
         return result
 
     async def native_dock_show_recents(self) -> NativeDockShowRecentsResponse:
+        """Check if Dock shows recent apps"""
         result = await self.call(METHOD_NATIVE_DOCK_SHOW_RECENTS)
         return result
 
     async def native_dock_size(self) -> None:
+        """Get the Dock tile size (0-128)"""
         await self.call(METHOD_NATIVE_DOCK_SIZE)
 
     async def native_documents_directory(self) -> NativeDocumentsDirectoryResponse:
+        """Get the user's Documents directory path"""
         result = await self.call(METHOD_NATIVE_DOCUMENTS_DIRECTORY)
         return result
 
     async def native_downloads_directory(self) -> NativeDownloadsDirectoryResponse:
+        """Get the user's Downloads directory path"""
         result = await self.call(METHOD_NATIVE_DOWNLOADS_DIRECTORY)
         return result
 
     async def native_eject_disk(self, mount_point: str) -> None:
+        """Eject a mounted volume by path"""
         params: dict[str, Any] = {
             "mount_point": mount_point,
         }
         await self.call(METHOD_NATIVE_EJECT_DISK, params)
 
     async def native_empty_trash(self) -> None:
+        """Empty the Trash"""
         await self.call(METHOD_NATIVE_EMPTY_TRASH)
 
     async def native_env_var(self, name: str) -> NativeEnvVarResponse:
+        """Read an environment variable"""
         params: dict[str, Any] = {
             "name": name,
         }
@@ -2295,44 +2912,53 @@ class MethodsMixin:
         return result
 
     async def native_epoch_time(self) -> NativeEpochTimeResponse:
+        """Get current Unix epoch time in seconds"""
         result = await self.call(METHOD_NATIVE_EPOCH_TIME)
         return result
 
     async def native_extended_attributes(self, path: str) -> None:
+        """Read extended attributes (xattrs) from a file"""
         params: dict[str, Any] = {
             "path": path,
         }
         await self.call(METHOD_NATIVE_EXTENDED_ATTRIBUTES, params)
 
     async def native_external_disks(self) -> list[ExternalDisk]:
+        """List mounted external/removable disks"""
         result = await self.call(METHOD_NATIVE_EXTERNAL_DISKS)
         return (result or {}).get("disks") or []
 
     async def native_external_display_names(self) -> list[str]:
+        """Get names of connected external displays"""
         result = await self.call(METHOD_NATIVE_EXTERNAL_DISPLAY_NAMES)
         return (result or {}).get("names") or []
 
     async def native_fan_speeds(self) -> NativeFanSpeedsResponse:
+        """Get raw SMC fan lines as reported by powermetrics or ioreg — free-form text, NOT JSON, and unavailable unless a fan source can be read"""
         result = await self.call(METHOD_NATIVE_FAN_SPEEDS)
         return result
 
     async def native_fast_user_switching(self) -> NativeFastUserSwitchingResponse:
+        """Check if fast user switching is enabled"""
         result = await self.call(METHOD_NATIVE_FAST_USER_SWITCHING)
         return result
 
     async def native_file_acl(self, path: str) -> None:
+        """Get file ACL as string"""
         params: dict[str, Any] = {
             "path": path,
         }
         await self.call(METHOD_NATIVE_FILE_ACL, params)
 
     async def native_file_creation_date(self, path: str) -> None:
+        """Get file creation date as ISO string"""
         params: dict[str, Any] = {
             "path": path,
         }
         await self.call(METHOD_NATIVE_FILE_CREATION_DATE, params)
 
     async def native_file_exists(self, path: str) -> NativeFileExistsResponse:
+        """Check if a file or directory exists"""
         params: dict[str, Any] = {
             "path": path,
         }
@@ -2340,6 +2966,7 @@ class MethodsMixin:
         return result
 
     async def native_file_extended_attributes(self, path: str) -> list[str]:
+        """List extended attributes on a file"""
         params: dict[str, Any] = {
             "path": path,
         }
@@ -2347,6 +2974,10 @@ class MethodsMixin:
         return (result or {}).get("attributes") or []
 
     async def native_file_hash(self, path: str, algorithm: str | None = None) -> NativeFileHashResponse:
+        """Compute SHA-256 hash of a file
+
+        algorithm: default ""
+        """
         params: dict[str, Any] = {
             "path": path,
         }
@@ -2356,6 +2987,7 @@ class MethodsMixin:
         return result
 
     async def native_file_metadata(self, path: str) -> NativeFileMetadataResponse:
+        """Get metadata for a file or directory (size, dates, permissions)"""
         params: dict[str, Any] = {
             "path": path,
         }
@@ -2363,12 +2995,14 @@ class MethodsMixin:
         return result
 
     async def native_file_modification_date(self, path: str) -> None:
+        """Get file modification date as ISO string"""
         params: dict[str, Any] = {
             "path": path,
         }
         await self.call(METHOD_NATIVE_FILE_MODIFICATION_DATE, params)
 
     async def native_file_owner(self, path: str) -> NativeFileOwnerResponse:
+        """Get the owner user and group of a file"""
         params: dict[str, Any] = {
             "path": path,
         }
@@ -2376,6 +3010,7 @@ class MethodsMixin:
         return result
 
     async def native_file_quarantine(self, path: str) -> NativeFileQuarantineResponse:
+        """Check if a file has a quarantine flag"""
         params: dict[str, Any] = {
             "path": path,
         }
@@ -2383,16 +3018,22 @@ class MethodsMixin:
         return result
 
     async def native_file_sharing_enabled(self) -> NativeFileSharingEnabledResponse:
+        """Check if file sharing (SMB) is enabled"""
         result = await self.call(METHOD_NATIVE_FILE_SHARING_ENABLED)
         return result
 
     async def native_file_size(self, path: str) -> None:
+        """Get file size in bytes"""
         params: dict[str, Any] = {
             "path": path,
         }
         await self.call(METHOD_NATIVE_FILE_SIZE, params)
 
     async def native_file_tags(self, path: str, tags: list[str] | None = None) -> None:
+        """Read or write Finder tags on a file
+
+        tags: default null
+        """
         params: dict[str, Any] = {
             "path": path,
         }
@@ -2401,6 +3042,7 @@ class MethodsMixin:
         await self.call(METHOD_NATIVE_FILE_TAGS, params)
 
     async def native_file_type(self, path: str) -> NativeFileTypeResponse:
+        """Get the UTI type of a file"""
         params: dict[str, Any] = {
             "path": path,
         }
@@ -2408,78 +3050,97 @@ class MethodsMixin:
         return result
 
     async def native_file_uti(self, path: str) -> None:
+        """Get the UTI (Uniform Type Identifier) for a file"""
         params: dict[str, Any] = {
             "path": path,
         }
         await self.call(METHOD_NATIVE_FILE_UTI, params)
 
     async def native_filevault_status(self) -> NativeFilevaultStatusResponse:
+        """Check if FileVault disk encryption is enabled"""
         result = await self.call(METHOD_NATIVE_FILEVAULT_STATUS)
         return result
 
     async def native_finder_default_view(self) -> NativeFinderDefaultViewResponse:
+        """Get Finder default view style"""
         result = await self.call(METHOD_NATIVE_FINDER_DEFAULT_VIEW)
         return result
 
     async def native_finder_new_window_target(self) -> NativeFinderNewWindowTargetResponse:
+        """Get Finder new window default location"""
         result = await self.call(METHOD_NATIVE_FINDER_NEW_WINDOW_TARGET)
         return result
 
     async def native_finder_selection(self) -> list[str]:
+        """Get the currently selected files in Finder"""
         result = await self.call(METHOD_NATIVE_FINDER_SELECTION)
         return (result or {}).get("paths") or []
 
     async def native_finder_show_extensions(self) -> NativeFinderShowExtensionsResponse:
+        """Check if Finder shows file extensions"""
         result = await self.call(METHOD_NATIVE_FINDER_SHOW_EXTENSIONS)
         return result
 
     async def native_finder_show_hidden(self) -> NativeFinderShowHiddenResponse:
+        """Check if Finder shows hidden files"""
         result = await self.call(METHOD_NATIVE_FINDER_SHOW_HIDDEN)
         return result
 
     async def native_finder_show_path_bar(self) -> NativeFinderShowPathBarResponse:
+        """Check if Finder shows path bar"""
         result = await self.call(METHOD_NATIVE_FINDER_SHOW_PATH_BAR)
         return result
 
     async def native_finder_show_status_bar(self) -> NativeFinderShowStatusBarResponse:
+        """Check if Finder shows status bar"""
         result = await self.call(METHOD_NATIVE_FINDER_SHOW_STATUS_BAR)
         return result
 
     async def native_finder_window_path(self) -> NativeFinderWindowPathResponse:
+        """Get the path of the frontmost Finder window"""
         result = await self.call(METHOD_NATIVE_FINDER_WINDOW_PATH)
         return result
 
     async def native_firewall_enabled(self) -> NativeFirewallEnabledResponse:
+        """Check if macOS firewall is enabled"""
         result = await self.call(METHOD_NATIVE_FIREWALL_ENABLED)
         return result
 
     async def native_first_day_of_week(self) -> None:
+        """Get the first day of the week (1=Sunday, 2=Monday)"""
         await self.call(METHOD_NATIVE_FIRST_DAY_OF_WEEK)
 
     async def native_flush_dns(self) -> None:
+        """Flush DNS cache"""
         await self.call(METHOD_NATIVE_FLUSH_DNS)
 
     async def native_fn_key_function(self) -> NativeFnKeyFunctionResponse:
+        """Get function key default behavior"""
         result = await self.call(METHOD_NATIVE_FN_KEY_FUNCTION)
         return result
 
     async def native_focus_modes(self) -> NativeFocusModesResponse:
+        """Get configured Focus modes as the raw `com.apple.ncprefs` preference value — macOS plist text, NOT JSON"""
         result = await self.call(METHOD_NATIVE_FOCUS_MODES)
         return result
 
     async def native_focused_element(self) -> NativeFocusedElementResponse:
+        """Get the currently focused UI element (text field, button, etc.)"""
         result = await self.call(METHOD_NATIVE_FOCUSED_ELEMENT)
         return result
 
     async def native_focused_window_id(self) -> NativeFocusedWindowIDResponse:
+        """Get the currently focused window ID"""
         result = await self.call(METHOD_NATIVE_FOCUSED_WINDOW_ID)
         return result
 
     async def native_font_smoothing(self) -> NativeFontSmoothingResponse:
+        """Check if font smoothing (anti-aliasing) is enabled"""
         result = await self.call(METHOD_NATIVE_FONT_SMOOTHING)
         return result
 
     async def native_force_quit_app(self, bundle_id: str) -> bool:
+        """Force-quit an app by bundle ID"""
         params: dict[str, Any] = {
             "bundle_id": bundle_id,
         }
@@ -2487,26 +3148,32 @@ class MethodsMixin:
         return bool((result or {}).get("result", False))
 
     async def native_frontmost_app(self) -> NativeFrontmostAppResponse:
+        """Get the currently active (frontmost) application"""
         result = await self.call(METHOD_NATIVE_FRONTMOST_APP)
         return result
 
     async def native_full_disk_access(self) -> NativeFullDiskAccessResponse:
+        """Check if full disk access is granted"""
         result = await self.call(METHOD_NATIVE_FULL_DISK_ACCESS)
         return result
 
     async def native_function_keys_standard(self) -> NativeFunctionKeysStandardResponse:
+        """Check if function keys are set to standard behavior (not media)"""
         result = await self.call(METHOD_NATIVE_FUNCTION_KEYS_STANDARD)
         return result
 
     async def native_gatekeeper_status(self) -> NativeGatekeeperStatusResponse:
+        """Check if Gatekeeper is enabled"""
         result = await self.call(METHOD_NATIVE_GATEKEEPER_STATUS)
         return result
 
     async def native_gateway_address(self) -> NativeGatewayAddressResponse:
+        """Get the default gateway IP address"""
         result = await self.call(METHOD_NATIVE_GATEWAY_ADDRESS)
         return result
 
     async def native_generate_pdf(self, html: str, output_path: str) -> None:
+        """Generate a PDF from HTML content"""
         params: dict[str, Any] = {
             "html": html,
             "output_path": output_path,
@@ -2514,6 +3181,7 @@ class MethodsMixin:
         await self.call(METHOD_NATIVE_GENERATE_PDF, params)
 
     async def native_get_window_info(self, window_id: str) -> NativeGetWindowInfoResponse:
+        """Get detailed info for a single window"""
         params: dict[str, Any] = {
             "window_id": window_id,
         }
@@ -2521,6 +3189,10 @@ class MethodsMixin:
         return result
 
     async def native_glob_files(self, pattern: str, max_results: int | None = None) -> list[str]:
+        """Find files matching a glob pattern
+
+        max_results: wire uint32 · default 0 · min 0
+        """
         params: dict[str, Any] = {
             "pattern": pattern,
         }
@@ -2530,30 +3202,40 @@ class MethodsMixin:
         return (result or {}).get("paths") or []
 
     async def native_gpu_info(self) -> NativeGpuInfoResponse:
+        """Get GPU name and VRAM info"""
         result = await self.call(METHOD_NATIVE_GPU_INFO)
         return result
 
     async def native_grayscale_enabled(self) -> NativeGrayscaleEnabledResponse:
+        """Check if grayscale display is enabled"""
         result = await self.call(METHOD_NATIVE_GRAYSCALE_ENABLED)
         return result
 
     async def native_group_windows_by_app(self) -> NativeGroupWindowsByAppResponse:
+        """Check if Mission Control groups windows by app"""
         result = await self.call(METHOD_NATIVE_GROUP_WINDOWS_BY_APP)
         return result
 
     async def native_handoff_enabled(self) -> NativeHandoffEnabledResponse:
+        """Check if Handoff is enabled"""
         result = await self.call(METHOD_NATIVE_HANDOFF_ENABLED)
         return result
 
     async def native_hardware_model(self) -> NativeHardwareModelResponse:
+        """Get the hardware model identifier (e.g. Mac14,2)"""
         result = await self.call(METHOD_NATIVE_HARDWARE_MODEL)
         return result
 
     async def native_hardware_uuid(self) -> NativeHardwareUuidResponse:
+        """Get the hardware UUID"""
         result = await self.call(METHOD_NATIVE_HARDWARE_UUID)
         return result
 
     async def native_hid_claim(self, device_id: str) -> NativeHidClaimResponse:
+        """Seize exclusive access to a HID device, suppressing native macOS events
+
+        device_id: Device ID (e.g. "0x28bd:0x0202:0x48f42695").
+        """
         params: dict[str, Any] = {
             "device_id": device_id,
         }
@@ -2561,10 +3243,15 @@ class MethodsMixin:
         return result
 
     async def native_hid_devices(self) -> list[HidDeviceEntry]:
+        """List all connected non-Apple HID devices"""
         result = await self.call(METHOD_NATIVE_HID_DEVICES)
         return (result or {}).get("devices") or []
 
     async def native_hid_elements(self, device_id: str) -> list[HidElementEntry]:
+        """Return the parsed HID element tree (buttons, axes, dials) for a connected device
+
+        device_id: Device ID (e.g. "0x28bd:0x0202:0x48f42695").
+        """
         params: dict[str, Any] = {
             "device_id": device_id,
         }
@@ -2572,6 +3259,10 @@ class MethodsMixin:
         return (result or {}).get("elements") or []
 
     async def native_hid_release(self, device_id: str) -> NativeHidReleaseResponse:
+        """Release exclusive access to a HID device, restoring native macOS behavior
+
+        device_id: Device ID (e.g. "0x28bd:0x0202:0x48f42695").
+        """
         params: dict[str, Any] = {
             "device_id": device_id,
         }
@@ -2579,6 +3270,15 @@ class MethodsMixin:
         return result
 
     async def native_hid_send_report(self, device_id: str, report_id: int, report_type: str, data: list[int] | None = None) -> NativeHidSendReportResponse:
+        """Send an output or feature report to a connected HID device
+
+        data: Raw report bytes to send.
+            default []
+        device_id: Device ID (e.g. "0x28bd:0x0202:0x48f42695").
+        report_id: HID report ID.
+            wire uint32 · min 0
+        report_type: Report type: "output" or "feature".
+        """
         params: dict[str, Any] = {
             "device_id": device_id,
             "report_id": report_id,
@@ -2590,28 +3290,34 @@ class MethodsMixin:
         return result
 
     async def native_hide_app(self, bundle_id: str) -> None:
+        """Hide an app by bundle ID"""
         params: dict[str, Any] = {
             "bundle_id": bundle_id,
         }
         await self.call(METHOD_NATIVE_HIDE_APP, params)
 
     async def native_highlight_color(self) -> NativeHighlightColorResponse:
+        """Get the system highlight/selection color"""
         result = await self.call(METHOD_NATIVE_HIGHLIGHT_COLOR)
         return result
 
     async def native_home_directory(self) -> NativeHomeDirectoryResponse:
+        """Get the current user's home directory path"""
         result = await self.call(METHOD_NATIVE_HOME_DIRECTORY)
         return result
 
     async def native_homebrew_prefix(self) -> NativeHomebrewPrefixResponse:
+        """Get the Homebrew installation prefix"""
         result = await self.call(METHOD_NATIVE_HOMEBREW_PREFIX)
         return result
 
     async def native_hostname(self) -> NativeHostnameResponse:
+        """Get the system hostname"""
         result = await self.call(METHOD_NATIVE_HOSTNAME)
         return result
 
     async def native_hostname_resolve(self, hostname: str) -> list[str]:
+        """Resolve a hostname to IP addresses"""
         params: dict[str, Any] = {
             "hostname": hostname,
         }
@@ -2619,42 +3325,52 @@ class MethodsMixin:
         return (result or {}).get("addresses") or []
 
     async def native_hot_corners(self) -> NativeHotCornersResponse:
+        """Get hot corner actions as JSON string"""
         result = await self.call(METHOD_NATIVE_HOT_CORNERS)
         return result
 
     async def native_icloud_desktop_sync(self) -> NativeIcloudDesktopSyncResponse:
+        """Check if iCloud Desktop & Documents sync is enabled"""
         result = await self.call(METHOD_NATIVE_ICLOUD_DESKTOP_SYNC)
         return result
 
     async def native_icloud_drive_path(self) -> NativeIcloudDrivePathResponse:
+        """Get the local path to iCloud Drive"""
         result = await self.call(METHOD_NATIVE_ICLOUD_DRIVE_PATH)
         return result
 
     async def native_icloud_signed_in(self) -> NativeIcloudSignedInResponse:
+        """Check if the user is signed into iCloud"""
         result = await self.call(METHOD_NATIVE_ICLOUD_SIGNED_IN)
         return result
 
     async def native_increase_contrast(self) -> NativeIncreaseContrastResponse:
+        """Check if Increase Contrast is enabled"""
         result = await self.call(METHOD_NATIVE_INCREASE_CONTRAST)
         return result
 
     async def native_input_sources(self) -> list[InputSource]:
+        """List installed keyboard input sources"""
         result = await self.call(METHOD_NATIVE_INPUT_SOURCES)
         return (result or {}).get("sources") or []
 
     async def native_installed_apps(self) -> list[InstalledApp]:
+        """List all installed applications by scanning the filesystem"""
         result = await self.call(METHOD_NATIVE_INSTALLED_APPS)
         return (result or {}).get("apps") or []
 
     async def native_interface_style_switcher(self) -> NativeInterfaceStyleSwitcherResponse:
+        """Get auto appearance switching setting"""
         result = await self.call(METHOD_NATIVE_INTERFACE_STYLE_SWITCHER)
         return result
 
     async def native_ipv6_address(self) -> NativeIpv6AddressResponse:
+        """Get primary IPv6 address"""
         result = await self.call(METHOD_NATIVE_IPV6_ADDRESS)
         return result
 
     async def native_is_app_hidden(self, bundle_id: str) -> bool:
+        """Check if an application is hidden"""
         params: dict[str, Any] = {
             "bundle_id": bundle_id,
         }
@@ -2662,6 +3378,7 @@ class MethodsMixin:
         return bool((result or {}).get("result", False))
 
     async def native_is_directory(self, path: str) -> NativeIsDirectoryResponse:
+        """Check if a path is a directory"""
         params: dict[str, Any] = {
             "path": path,
         }
@@ -2669,6 +3386,7 @@ class MethodsMixin:
         return result
 
     async def native_is_file_hidden(self, path: str) -> NativeIsFileHiddenResponse:
+        """Check if file has hidden flag"""
         params: dict[str, Any] = {
             "path": path,
         }
@@ -2676,23 +3394,29 @@ class MethodsMixin:
         return result
 
     async def native_kernel_version(self) -> NativeKernelVersionResponse:
+        """Get the Darwin kernel version string"""
         result = await self.call(METHOD_NATIVE_KERNEL_VERSION)
         return result
 
     async def native_key_repeat_delay(self) -> None:
+        """Get initial key repeat delay"""
         await self.call(METHOD_NATIVE_KEY_REPEAT_DELAY)
 
     async def native_key_repeat_rate(self) -> None:
+        """Get the keyboard repeat rate (keys per second)"""
         await self.call(METHOD_NATIVE_KEY_REPEAT_RATE)
 
     async def native_keyboard_brightness(self) -> None:
+        """Get keyboard backlight brightness (0.0-1.0)"""
         await self.call(METHOD_NATIVE_KEYBOARD_BRIGHTNESS)
 
     async def native_keyboard_layout(self) -> NativeKeyboardLayoutResponse:
+        """Get the current keyboard layout and key mappings"""
         result = await self.call(METHOD_NATIVE_KEYBOARD_LAYOUT)
         return result
 
     async def native_keychain_delete(self, account: str, service: str) -> None:
+        """Delete a keychain item by service and account"""
         params: dict[str, Any] = {
             "account": account,
             "service": service,
@@ -2700,6 +3424,7 @@ class MethodsMixin:
         await self.call(METHOD_NATIVE_KEYCHAIN_DELETE, params)
 
     async def native_keychain_read(self, account: str, service: str) -> NativeKeychainReadResponse:
+        """Read a password from the keychain by service and account"""
         params: dict[str, Any] = {
             "account": account,
             "service": service,
@@ -2708,6 +3433,7 @@ class MethodsMixin:
         return result
 
     async def native_keychain_write(self, account: str, password: str, service: str) -> None:
+        """Store a password in the keychain for a service and account"""
         params: dict[str, Any] = {
             "account": account,
             "password": password,
@@ -2716,6 +3442,11 @@ class MethodsMixin:
         await self.call(METHOD_NATIVE_KEYCHAIN_WRITE, params)
 
     async def native_kill_process(self, pid: int, signal: int | None = None) -> None:
+        """Send a signal to a process by PID
+
+        pid: wire int32
+        signal: wire int32 · default 0
+        """
         params: dict[str, Any] = {
             "pid": pid,
         }
@@ -2724,10 +3455,15 @@ class MethodsMixin:
         await self.call(METHOD_NATIVE_KILL_PROCESS, params)
 
     async def native_last_reboot(self) -> NativeLastRebootResponse:
+        """Get the last reboot date/time"""
         result = await self.call(METHOD_NATIVE_LAST_REBOOT)
         return result
 
     async def native_launch_app(self, bundle_id: str, new_instance: bool | None = None) -> None:
+        """Launch an application by bundle ID
+
+        new_instance: default false
+        """
         params: dict[str, Any] = {
             "bundle_id": bundle_id,
         }
@@ -2736,100 +3472,128 @@ class MethodsMixin:
         await self.call(METHOD_NATIVE_LAUNCH_APP, params)
 
     async def native_launchd_agents(self) -> list[str]:
+        """List user launch agents"""
         result = await self.call(METHOD_NATIVE_LAUNCHD_AGENTS)
         return (result or {}).get("agents") or []
 
     async def native_launchd_daemons(self) -> list[str]:
+        """List system launch daemons"""
         result = await self.call(METHOD_NATIVE_LAUNCHD_DAEMONS)
         return (result or {}).get("daemons") or []
 
     async def native_list_audio_input_devices(self) -> list[str]:
+        """List available audio input device names"""
         result = await self.call(METHOD_NATIVE_LIST_AUDIO_INPUT_DEVICES)
         return (result or {}).get("devices") or []
 
     async def native_list_audio_output_devices(self) -> list[str]:
+        """List available audio output device names"""
         result = await self.call(METHOD_NATIVE_LIST_AUDIO_OUTPUT_DEVICES)
         return (result or {}).get("devices") or []
 
     async def native_list_notifications(self) -> list[DeliveredNotification]:
+        """List delivered notifications (partial — returns empty)"""
         result = await self.call(METHOD_NATIVE_LIST_NOTIFICATIONS)
         return (result or {}).get("notifications") or []
 
     async def native_list_shortcuts(self) -> list[ShortcutInfo]:
+        """List available Shortcuts.app shortcuts"""
         result = await self.call(METHOD_NATIVE_LIST_SHORTCUTS)
         return (result or {}).get("shortcuts") or []
 
     async def native_list_spaces(self) -> list[SpaceInfo]:
+        """List all spaces across all displays"""
         result = await self.call(METHOD_NATIVE_LIST_SPACES)
         return (result or {}).get("spaces") or []
 
     async def native_live_text_enabled(self) -> NativeLiveTextEnabledResponse:
+        """Check if Live Text is enabled"""
         result = await self.call(METHOD_NATIVE_LIVE_TEXT_ENABLED)
         return result
 
     async def native_local_ip(self) -> NativeLocalIPResponse:
+        """Get the primary local/LAN IP address"""
         result = await self.call(METHOD_NATIVE_LOCAL_IP)
         return result
 
     async def native_locale(self) -> NativeLocaleResponse:
+        """Get current system locale identifier"""
         result = await self.call(METHOD_NATIVE_LOCALE)
         return result
 
     async def native_location_enabled(self) -> NativeLocationEnabledResponse:
+        """Check if Location Services is enabled"""
         result = await self.call(METHOD_NATIVE_LOCATION_ENABLED)
         return result
 
     async def native_log_out(self) -> None:
+        """Log out current user"""
         await self.call(METHOD_NATIVE_LOG_OUT)
 
     async def native_logged_in_users(self) -> list[str]:
+        """List currently logged-in users"""
         result = await self.call(METHOD_NATIVE_LOGGED_IN_USERS)
         return (result or {}).get("users") or []
 
     async def native_login_items(self) -> list[LoginItem]:
+        """List login items (launch-at-login entries)"""
         result = await self.call(METHOD_NATIVE_LOGIN_ITEMS)
         return (result or {}).get("items") or []
 
     async def native_login_items_modern(self) -> list[str]:
+        """List modern login items (SMAppService)"""
         result = await self.call(METHOD_NATIVE_LOGIN_ITEMS_MODERN)
         return (result or {}).get("items") or []
 
     async def native_low_power_mode(self) -> NativeLowPowerModeResponse:
+        """Check if Low Power Mode is enabled"""
         result = await self.call(METHOD_NATIVE_LOW_POWER_MODE)
         return result
 
     async def native_mac_address(self) -> NativeMacAddressResponse:
+        """Get primary network interface MAC address"""
         result = await self.call(METHOD_NATIVE_MAC_ADDRESS)
         return result
 
     async def native_maximize_window(self, window_id: str) -> None:
+        """Maximize window to fill screen"""
         params: dict[str, Any] = {
             "window_id": window_id,
         }
         await self.call(METHOD_NATIVE_MAXIMIZE_WINDOW, params)
 
     async def native_measurement_system(self) -> NativeMeasurementSystemResponse:
+        """Get the measurement system. Returns one of: metric, us"""
         result = await self.call(METHOD_NATIVE_MEASUREMENT_SYSTEM)
         return result
 
     async def native_media_next_track(self) -> None:
+        """Skip to next track in the current media player"""
         await self.call(METHOD_NATIVE_MEDIA_NEXT_TRACK)
 
     async def native_media_play_pause(self) -> None:
+        """Toggle play/pause for the current media player"""
         await self.call(METHOD_NATIVE_MEDIA_PLAY_PAUSE)
 
     async def native_media_previous_track(self) -> None:
+        """Skip to previous track in the current media player"""
         await self.call(METHOD_NATIVE_MEDIA_PREVIOUS_TRACK)
 
     async def native_memory_info(self) -> NativeMemoryInfoResponse:
+        """Get total and available system memory"""
         result = await self.call(METHOD_NATIVE_MEMORY_INFO)
         return result
 
     async def native_memory_pressure(self) -> NativeMemoryPressureResponse:
+        """Get memory pressure level. Unavailable when `memory_pressure -Q` names no level, which is the stock macOS 15 case — it reports only a free-percentage summary. Returns one of: nominal, warn, critical"""
         result = await self.call(METHOD_NATIVE_MEMORY_PRESSURE)
         return result
 
     async def native_menu_bar(self, pid: int) -> list[MenuItem]:
+        """Read the menu bar structure of an application by PID
+
+        pid: wire int32
+        """
         params: dict[str, Any] = {
             "pid": pid,
         }
@@ -2837,36 +3601,49 @@ class MethodsMixin:
         return (result or {}).get("items") or []
 
     async def native_menu_bar_auto_hide(self) -> NativeMenuBarAutoHideResponse:
+        """Check if menu bar auto-hide is enabled"""
         result = await self.call(METHOD_NATIVE_MENU_BAR_AUTO_HIDE)
         return result
 
     async def native_menu_bar_battery_percent(self) -> NativeMenuBarBatteryPercentResponse:
+        """Check if battery percentage is shown in menu bar"""
         result = await self.call(METHOD_NATIVE_MENU_BAR_BATTERY_PERCENT)
         return result
 
     async def native_menu_bar_clock_format(self) -> NativeMenuBarClockFormatResponse:
+        """Get menu bar clock format string"""
         result = await self.call(METHOD_NATIVE_MENU_BAR_CLOCK_FORMAT)
         return result
 
     async def native_microphone_permission(self) -> NativeMicrophonePermissionResponse:
+        """Check if microphone access is available"""
         result = await self.call(METHOD_NATIVE_MICROPHONE_PERMISSION)
         return result
 
     async def native_minimize_window(self, window_id: str) -> None:
+        """Minimize a window by ID"""
         params: dict[str, Any] = {
             "window_id": window_id,
         }
         await self.call(METHOD_NATIVE_MINIMIZE_WINDOW, params)
 
     async def native_model_name(self) -> NativeModelNameResponse:
+        """Get the hardware model name (e.g. MacBook Pro 14-inch 2023)"""
         result = await self.call(METHOD_NATIVE_MODEL_NAME)
         return result
 
     async def native_mount_points(self) -> list[str]:
+        """List mounted volumes"""
         result = await self.call(METHOD_NATIVE_MOUNT_POINTS)
         return (result or {}).get("volumes") or []
 
     async def native_mouse_button_click(self, button: int, x: int | None = None, y: int | None = None) -> None:
+        """Click a specific mouse button (middle, button4, etc.)
+
+        button: wire uint32 · min 0
+        x: wire int32 · default null
+        y: wire int32 · default null
+        """
         params: dict[str, Any] = {
             "button": button,
         }
@@ -2877,9 +3654,11 @@ class MethodsMixin:
         await self.call(METHOD_NATIVE_MOUSE_BUTTON_CLICK, params)
 
     async def native_mouse_speed(self) -> None:
+        """Get the mouse tracking speed (0.0-3.0)"""
         await self.call(METHOD_NATIVE_MOUSE_SPEED)
 
     async def native_move_file(self, destination: str, source: str) -> None:
+        """Move or rename a file or directory"""
         params: dict[str, Any] = {
             "destination": destination,
             "source": source,
@@ -2887,6 +3666,10 @@ class MethodsMixin:
         await self.call(METHOD_NATIVE_MOVE_FILE, params)
 
     async def native_move_window_to_display(self, display_id: int, window_id: str) -> None:
+        """Move a window to a different display
+
+        display_id: wire uint32 · min 0
+        """
         params: dict[str, Any] = {
             "display_id": display_id,
             "window_id": window_id,
@@ -2894,6 +3677,10 @@ class MethodsMixin:
         await self.call(METHOD_NATIVE_MOVE_WINDOW_TO_DISPLAY, params)
 
     async def native_move_window_to_space(self, space_id: int, window_id: str) -> bool:
+        """DEPRECATED, silent no-op on modern macOS: the private CGS move APIs this calls are dead (verified on Sequoia 2026-07-25) — the window does not move and the call still reports true. Kept for older systems. For a working move, drive the visible path the bundled windows plugin uses: mouse-hold the title bar + Ctrl+N. space_id here is an opaque CGS space id from native.list_spaces, NOT the 1-based ordinal that native.switch_space takes
+
+        space_id: wire uint64 (64-bit) · min 0
+        """
         params: dict[str, Any] = {
             "space_id": space_id,
             "window_id": window_id,
@@ -2902,32 +3689,39 @@ class MethodsMixin:
         return bool((result or {}).get("result", False))
 
     async def native_mute(self, muted: bool) -> None:
+        """Set mute state on default output device"""
         params: dict[str, Any] = {
             "muted": muted,
         }
         await self.call(METHOD_NATIVE_MUTE, params)
 
     async def native_network_bandwidth(self) -> NativeNetworkBandwidthResponse:
+        """Get network link speed"""
         result = await self.call(METHOD_NATIVE_NETWORK_BANDWIDTH)
         return result
 
     async def native_network_dns_domain(self) -> NativeNetworkDnsDomainResponse:
+        """Get DNS search domain"""
         result = await self.call(METHOD_NATIVE_NETWORK_DNS_DOMAIN)
         return result
 
     async def native_network_interfaces(self) -> list[NetworkInterface]:
+        """List network interfaces with IP addresses"""
         result = await self.call(METHOD_NATIVE_NETWORK_INTERFACES)
         return (result or {}).get("interfaces") or []
 
     async def native_network_proxy_enabled(self) -> NativeNetworkProxyEnabledResponse:
+        """Check if any network proxy is configured"""
         result = await self.call(METHOD_NATIVE_NETWORK_PROXY_ENABLED)
         return result
 
     async def native_network_quality(self) -> NativeNetworkQualityResponse:
+        """Run a quick network quality test (upload/download Mbps)"""
         result = await self.call(METHOD_NATIVE_NETWORK_QUALITY)
         return result
 
     async def native_network_reachable(self, host: str) -> NativeNetworkReachableResponse:
+        """Check if a host is reachable via network"""
         params: dict[str, Any] = {
             "host": host,
         }
@@ -2935,27 +3729,38 @@ class MethodsMixin:
         return result
 
     async def native_network_signal_strength(self) -> None:
+        """Get Wi-Fi signal strength in dBm"""
         await self.call(METHOD_NATIVE_NETWORK_SIGNAL_STRENGTH)
 
     async def native_network_ssid(self) -> NativeNetworkSsidResponse:
+        """Get currently connected Wi-Fi SSID"""
         result = await self.call(METHOD_NATIVE_NETWORK_SSID)
         return result
 
     async def native_new_app_window(self, bundle_id: str) -> None:
+        """Open a new window of an app on the current Space, without switching to an existing window on another Space"""
         params: dict[str, Any] = {
             "bundle_id": bundle_id,
         }
         await self.call(METHOD_NATIVE_NEW_APP_WINDOW, params)
 
     async def native_night_shift(self) -> NativeNightShiftResponse:
+        """Check if Night Shift is currently enabled"""
         result = await self.call(METHOD_NATIVE_NIGHT_SHIFT)
         return result
 
     async def native_notification_sound_enabled(self) -> NativeNotificationSoundEnabledResponse:
+        """Check if notification sounds are enabled"""
         result = await self.call(METHOD_NATIVE_NOTIFICATION_SOUND_ENABLED)
         return result
 
     async def native_notify(self, title: str, body: str | None = None, sound: str | None = None, subtitle: str | None = None) -> NativeNotifyResponse:
+        """Post a rich notification (osascript fallback)
+
+        body: default null
+        sound: default null
+        subtitle: default null
+        """
         params: dict[str, Any] = {
             "title": title,
         }
@@ -2969,14 +3774,20 @@ class MethodsMixin:
         return result
 
     async def native_now_playing(self) -> NativeNowPlayingResponse:
+        """Get currently playing media info (title, artist, album, app)"""
         result = await self.call(METHOD_NATIVE_NOW_PLAYING)
         return result
 
     async def native_number_format_decimal(self) -> NativeNumberFormatDecimalResponse:
+        """Get decimal separator character"""
         result = await self.call(METHOD_NATIVE_NUMBER_FORMAT_DECIMAL)
         return result
 
     async def native_observe_windows(self, pid: int) -> NativeObserveWindowsResponse:
+        """Start observing window events for a PID (STUB -- not yet implemented)
+
+        pid: wire int32
+        """
         params: dict[str, Any] = {
             "pid": pid,
         }
@@ -2984,10 +3795,12 @@ class MethodsMixin:
         return result
 
     async def native_ocr_clipboard(self) -> list[OcrRegion]:
+        """OCR text from the clipboard image"""
         result = await self.call(METHOD_NATIVE_OCR_CLIPBOARD)
         return (result or {}).get("regions") or []
 
     async def native_ocr_file(self, path: str) -> list[OcrRegion]:
+        """OCR text from an image file path"""
         params: dict[str, Any] = {
             "path": path,
         }
@@ -2995,10 +3808,18 @@ class MethodsMixin:
         return (result or {}).get("regions") or []
 
     async def native_ocr_screen(self) -> list[OcrRegion]:
+        """OCR text from the current screen"""
         result = await self.call(METHOD_NATIVE_OCR_SCREEN)
         return (result or {}).get("regions") or []
 
     async def native_ocr_screen_region(self, height: float, width: float, x: float, y: float) -> list[OcrRegion]:
+        """OCR text from a screen region (x, y, width, height)
+
+        height: wire double
+        width: wire double
+        x: wire double
+        y: wire double
+        """
         params: dict[str, Any] = {
             "height": height,
             "width": width,
@@ -3009,6 +3830,10 @@ class MethodsMixin:
         return (result or {}).get("regions") or []
 
     async def native_ocr_window(self, window_id: int) -> list[OcrRegion]:
+        """OCR text from a specific window by ID
+
+        window_id: wire uint32 · min 0
+        """
         params: dict[str, Any] = {
             "window_id": window_id,
         }
@@ -3016,18 +3841,24 @@ class MethodsMixin:
         return (result or {}).get("regions") or []
 
     async def native_open_app_settings(self, bundle_id: str) -> None:
+        """Open an app's preferences window"""
         params: dict[str, Any] = {
             "bundle_id": bundle_id,
         }
         await self.call(METHOD_NATIVE_OPEN_APP_SETTINGS, params)
 
     async def native_open_finder_window(self, path: str) -> None:
+        """Open a Finder window at a specific path"""
         params: dict[str, Any] = {
             "path": path,
         }
         await self.call(METHOD_NATIVE_OPEN_FINDER_WINDOW, params)
 
     async def native_open_system_settings(self, pane: str | None = None) -> None:
+        """Open System Settings to a specific pane (e.g. 'Privacy_Accessibility')
+
+        pane: default null
+        """
         params: dict[str, Any] = {
         }
         if pane is not None:
@@ -3035,18 +3866,21 @@ class MethodsMixin:
         await self.call(METHOD_NATIVE_OPEN_SYSTEM_SETTINGS, params)
 
     async def native_open_target(self, target: str) -> None:
+        """Open a URL or file path with the default handler"""
         params: dict[str, Any] = {
             "target": target,
         }
         await self.call(METHOD_NATIVE_OPEN_TARGET, params)
 
     async def native_open_url(self, url: str) -> None:
+        """Open a URL in the default handler"""
         params: dict[str, Any] = {
             "url": url,
         }
         await self.call(METHOD_NATIVE_OPEN_URL, params)
 
     async def native_open_with_app(self, bundle_id: str, target: str) -> None:
+        """Open a URL or path with a specific application"""
         params: dict[str, Any] = {
             "bundle_id": bundle_id,
             "target": target,
@@ -3054,10 +3888,15 @@ class MethodsMixin:
         await self.call(METHOD_NATIVE_OPEN_WITH_APP, params)
 
     async def native_optimized_charging(self) -> NativeOptimizedChargingResponse:
+        """Check if optimized battery charging is enabled"""
         result = await self.call(METHOD_NATIVE_OPTIMIZED_CHARGING)
         return result
 
     async def native_pdf_extract_text(self, path: str, page: int | None = None) -> None:
+        """Extract text from a PDF file
+
+        page: wire uint64 (64-bit) · default 0 · min 0
+        """
         params: dict[str, Any] = {
             "path": path,
         }
@@ -3066,12 +3905,14 @@ class MethodsMixin:
         await self.call(METHOD_NATIVE_PDF_EXTRACT_TEXT, params)
 
     async def native_pdf_page_count(self, path: str) -> None:
+        """Get the page count of a PDF file"""
         params: dict[str, Any] = {
             "path": path,
         }
         await self.call(METHOD_NATIVE_PDF_PAGE_COUNT, params)
 
     async def native_pin_window_above(self, pinned: bool, window_id: str) -> None:
+        """Pin or unpin a window above all others"""
         params: dict[str, Any] = {
             "pinned": pinned,
             "window_id": window_id,
@@ -3079,41 +3920,54 @@ class MethodsMixin:
         await self.call(METHOD_NATIVE_PIN_WINDOW_ABOVE, params)
 
     async def native_pinch_to_zoom(self) -> NativePinchToZoomResponse:
+        """Check if pinch-to-zoom gesture is enabled"""
         result = await self.call(METHOD_NATIVE_PINCH_TO_ZOOM)
         return result
 
     async def native_ping(self, host: str) -> None:
+        """Ping a host and return latency in milliseconds"""
         params: dict[str, Any] = {
             "host": host,
         }
         await self.call(METHOD_NATIVE_PING, params)
 
     async def native_play_feedback_when_volume_changed(self) -> NativePlayFeedbackWhenVolumeChangedResponse:
+        """Check if volume change feedback sound is enabled"""
         result = await self.call(METHOD_NATIVE_PLAY_FEEDBACK_WHEN_VOLUME_CHANGED)
         return result
 
     async def native_play_sound(self, name: str) -> None:
+        """Play a named system sound"""
         params: dict[str, Any] = {
             "name": name,
         }
         await self.call(METHOD_NATIVE_PLAY_SOUND, params)
 
     async def native_poll_burst(self) -> None:
+        """Request burst-mode world model polling (200ms intervals)"""
         await self.call(METHOD_NATIVE_POLL_BURST)
 
     async def native_power_adapter_connected(self) -> NativePowerAdapterConnectedResponse:
+        """Check if power adapter is connected"""
         result = await self.call(METHOD_NATIVE_POWER_ADAPTER_CONNECTED)
         return result
 
     async def native_power_source(self) -> NativePowerSourceResponse:
+        """Get current power source type. Returns one of: AC, Battery, UPS, Unknown"""
         result = await self.call(METHOD_NATIVE_POWER_SOURCE)
         return result
 
     async def native_press_and_hold_enabled(self) -> NativePressAndHoldEnabledResponse:
+        """Check if press-and-hold for accented characters is enabled"""
         result = await self.call(METHOD_NATIVE_PRESS_AND_HOLD_ENABLED)
         return result
 
     async def native_prevent_sleep(self, assertion_id: str | None = None, reason: str | None = None) -> NativePreventSleepResponse:
+        """Assert or release sleep prevention
+
+        assertion_id: default null
+        reason: default "BranchKit plugin"
+        """
         params: dict[str, Any] = {
         }
         if assertion_id is not None:
@@ -3124,32 +3978,45 @@ class MethodsMixin:
         return result
 
     async def native_primary_display(self) -> NativePrimaryDisplayResponse:
+        """Get metadata for the primary display"""
         result = await self.call(METHOD_NATIVE_PRIMARY_DISPLAY)
         return result
 
     async def native_primary_display_id(self) -> NativePrimaryDisplayIDResponse:
+        """Get primary display ID"""
         result = await self.call(METHOD_NATIVE_PRIMARY_DISPLAY_ID)
         return result
 
     async def native_printer_sharing_enabled(self) -> NativePrinterSharingEnabledResponse:
+        """Check if printer sharing is enabled"""
         result = await self.call(METHOD_NATIVE_PRINTER_SHARING_ENABLED)
         return result
 
     async def native_printers(self) -> list[PrinterInfo]:
+        """List available printers"""
         result = await self.call(METHOD_NATIVE_PRINTERS)
         return (result or {}).get("printers") or []
 
     async def native_process_count(self) -> NativeProcessCountResponse:
+        """Get total number of running processes"""
         result = await self.call(METHOD_NATIVE_PROCESS_COUNT)
         return result
 
     async def native_process_cpu_usage(self, pid: int) -> None:
+        """Get CPU usage for process by PID
+
+        pid: wire int32
+        """
         params: dict[str, Any] = {
             "pid": pid,
         }
         await self.call(METHOD_NATIVE_PROCESS_CPU_USAGE, params)
 
     async def native_process_exists(self, pid: int) -> NativeProcessExistsResponse:
+        """Check if a process with given PID exists
+
+        pid: wire int32
+        """
         params: dict[str, Any] = {
             "pid": pid,
         }
@@ -3157,6 +4024,10 @@ class MethodsMixin:
         return result
 
     async def native_process_info(self, pid: int) -> NativeProcessInfoResponse:
+        """Get info about a process by PID (name, cpu, memory, path)
+
+        pid: wire int32
+        """
         params: dict[str, Any] = {
             "pid": pid,
         }
@@ -3164,54 +4035,83 @@ class MethodsMixin:
         return result
 
     async def native_process_list(self) -> list[ProcessInfo]:
+        """List all running processes with PID, name, and user"""
         result = await self.call(METHOD_NATIVE_PROCESS_LIST)
         return (result or {}).get("processes") or []
 
     async def native_process_memory_usage(self, pid: int) -> None:
+        """Get memory usage in bytes for process by PID
+
+        pid: wire int32
+        """
         params: dict[str, Any] = {
             "pid": pid,
         }
         await self.call(METHOD_NATIVE_PROCESS_MEMORY_USAGE, params)
 
     async def native_process_name(self, pid: int) -> None:
+        """Get process name by PID
+
+        pid: wire int32
+        """
         params: dict[str, Any] = {
             "pid": pid,
         }
         await self.call(METHOD_NATIVE_PROCESS_NAME, params)
 
     async def native_process_parent_pid(self, pid: int) -> None:
+        """Get parent PID of a process
+
+        pid: wire int32
+        """
         params: dict[str, Any] = {
             "pid": pid,
         }
         await self.call(METHOD_NATIVE_PROCESS_PARENT_PID, params)
 
     async def native_process_path(self, pid: int) -> None:
+        """Get the executable path for a PID
+
+        pid: wire int32
+        """
         params: dict[str, Any] = {
             "pid": pid,
         }
         await self.call(METHOD_NATIVE_PROCESS_PATH, params)
 
     async def native_process_start_time(self, pid: int) -> None:
+        """Get process start time as ISO string
+
+        pid: wire int32
+        """
         params: dict[str, Any] = {
             "pid": pid,
         }
         await self.call(METHOD_NATIVE_PROCESS_START_TIME, params)
 
     async def native_proxy_settings(self) -> NativeProxySettingsResponse:
+        """Get system proxy configuration"""
         result = await self.call(METHOD_NATIVE_PROXY_SETTINGS)
         return result
 
     async def native_public_ip(self) -> NativePublicIPResponse:
+        """Get the external/public IP address via a DNS lookup (no HTTP)"""
         result = await self.call(METHOD_NATIVE_PUBLIC_IP)
         return result
 
     async def native_purge_memory(self) -> None:
+        """Purge inactive memory"""
         await self.call(METHOD_NATIVE_PURGE_MEMORY)
 
     async def native_purgeable_space(self) -> None:
+        """Get purgeable disk space in bytes"""
         await self.call(METHOD_NATIVE_PURGEABLE_SPACE)
 
     async def native_quick_look(self, path: str, size: int | None = None) -> NativeQuickLookResponse:
+        """Generate Quick Look thumbnail as PNG (base64)
+
+        size: wire uint32 · default 512 · min 0
+        """
         params: dict[str, Any] = {
             "path": path,
         }
@@ -3221,6 +4121,7 @@ class MethodsMixin:
         return result
 
     async def native_quit_app(self, bundle_id: str) -> bool:
+        """Gracefully quit an app by bundle ID"""
         params: dict[str, Any] = {
             "bundle_id": bundle_id,
         }
@@ -3228,16 +4129,19 @@ class MethodsMixin:
         return bool((result or {}).get("result", False))
 
     async def native_raise_window(self, window_id: str) -> None:
+        """Raise a window to the front"""
         params: dict[str, Any] = {
             "window_id": window_id,
         }
         await self.call(METHOD_NATIVE_RAISE_WINDOW, params)
 
     async def native_random_uuid(self) -> NativeRandomUuidResponse:
+        """Generate a random UUID v4"""
         result = await self.call(METHOD_NATIVE_RANDOM_UUID)
         return result
 
     async def native_read_app_preference(self, domain: str, key: str) -> None:
+        """Read a preference value for an app domain"""
         params: dict[str, Any] = {
             "domain": domain,
             "key": key,
@@ -3245,6 +4149,7 @@ class MethodsMixin:
         await self.call(METHOD_NATIVE_READ_APP_PREFERENCE, params)
 
     async def native_read_file(self, path: str) -> NativeReadFileResponse:
+        """Read file contents as UTF-8 string"""
         params: dict[str, Any] = {
             "path": path,
         }
@@ -3252,6 +4157,10 @@ class MethodsMixin:
         return result
 
     async def native_read_file_binary(self, path: str, max_bytes: int | None = None) -> NativeReadFileBinaryResponse:
+        """Read a file as base64-encoded binary
+
+        max_bytes: wire uint64 (64-bit) · default null · min 0
+        """
         params: dict[str, Any] = {
             "path": path,
         }
@@ -3261,12 +4170,14 @@ class MethodsMixin:
         return result
 
     async def native_read_plist(self, path: str) -> None:
+        """Read a property list file as JSON"""
         params: dict[str, Any] = {
             "path": path,
         }
         await self.call(METHOD_NATIVE_READ_PLIST, params)
 
     async def native_recent_documents(self, bundle_id: str) -> list[str]:
+        """Get recent documents for an app (by bundle ID)"""
         params: dict[str, Any] = {
             "bundle_id": bundle_id,
         }
@@ -3274,22 +4185,27 @@ class MethodsMixin:
         return (result or {}).get("paths") or []
 
     async def native_reduce_motion(self) -> NativeReduceMotionResponse:
+        """Check if Reduce Motion is enabled"""
         result = await self.call(METHOD_NATIVE_REDUCE_MOTION)
         return result
 
     async def native_reduce_transparency(self) -> NativeReduceTransparencyResponse:
+        """Check if Reduce Transparency is enabled"""
         result = await self.call(METHOD_NATIVE_REDUCE_TRANSPARENCY)
         return result
 
     async def native_reminders_incomplete(self) -> list[ReminderItem]:
+        """Get incomplete reminders"""
         result = await self.call(METHOD_NATIVE_REMINDERS_INCOMPLETE)
         return (result or {}).get("reminders") or []
 
     async def native_remote_login_enabled(self) -> NativeRemoteLoginEnabledResponse:
+        """Check if Remote Login (SSH) is enabled"""
         result = await self.call(METHOD_NATIVE_REMOTE_LOGIN_ENABLED)
         return result
 
     async def native_rename_file(self, new_name: str, path: str) -> None:
+        """Rename a file or directory (same parent, new name)"""
         params: dict[str, Any] = {
             "new_name": new_name,
             "path": path,
@@ -3297,30 +4213,39 @@ class MethodsMixin:
         await self.call(METHOD_NATIVE_RENAME_FILE, params)
 
     async def native_request_screen_capture(self) -> NativeRequestScreenCaptureResponse:
+        """Request screen capture permission (shows system dialog)"""
         result = await self.call(METHOD_NATIVE_REQUEST_SCREEN_CAPTURE)
         return result
 
     async def native_resource_usage(self) -> NativeResourceUsageResponse:
+        """Get CPU and memory usage snapshot"""
         result = await self.call(METHOD_NATIVE_RESOURCE_USAGE)
         return result
 
     async def native_restart_app(self, bundle_id: str) -> None:
+        """Quit and relaunch an app by bundle ID"""
         params: dict[str, Any] = {
             "bundle_id": bundle_id,
         }
         await self.call(METHOD_NATIVE_RESTART_APP, params)
 
     async def native_reveal_in_finder(self, path: str) -> None:
+        """Reveal file in Finder"""
         params: dict[str, Any] = {
             "path": path,
         }
         await self.call(METHOD_NATIVE_REVEAL_IN_FINDER, params)
 
     async def native_rosetta_installed(self) -> NativeRosettaInstalledResponse:
+        """Check if Rosetta 2 is installed (Apple Silicon)"""
         result = await self.call(METHOD_NATIVE_ROSETTA_INSTALLED)
         return result
 
     async def native_run_applescript(self, script: str) -> NativeRunApplescriptResponse:
+        """Execute an AppleScript via osascript
+
+        script: AppleScript source to execute via `osascript`.
+        """
         params: dict[str, Any] = {
             "script": script,
         }
@@ -3328,6 +4253,7 @@ class MethodsMixin:
         return result
 
     async def native_run_jxa(self, script: str) -> NativeRunJxaResponse:
+        """Run JavaScript for Automation (JXA) code"""
         params: dict[str, Any] = {
             "script": script,
         }
@@ -3335,6 +4261,10 @@ class MethodsMixin:
         return result
 
     async def native_run_shortcut(self, name: str, input: str | None = None) -> NativeRunShortcutResponse:
+        """Run a Shortcuts.app shortcut by name
+
+        input: default null
+        """
         params: dict[str, Any] = {
             "name": name,
         }
@@ -3344,47 +4274,63 @@ class MethodsMixin:
         return result
 
     async def native_running_apps(self) -> list[RunningApp]:
+        """List all running applications"""
         result = await self.call(METHOD_NATIVE_RUNNING_APPS)
         return (result or {}).get("apps") or []
 
     async def native_screen_capture_permission(self) -> NativeScreenCapturePermissionResponse:
+        """Check screen capture permission status (Sonoma 14+)"""
         result = await self.call(METHOD_NATIVE_SCREEN_CAPTURE_PERMISSION)
         return result
 
     async def native_screen_count(self) -> NativeScreenCountResponse:
+        """Get number of connected displays"""
         result = await self.call(METHOD_NATIVE_SCREEN_COUNT)
         return result
 
     async def native_screen_lock(self) -> None:
+        """Lock the screen"""
         await self.call(METHOD_NATIVE_SCREEN_LOCK)
 
     async def native_screen_locked(self) -> NativeScreenLockedResponse:
+        """Check if screen is currently locked"""
         result = await self.call(METHOD_NATIVE_SCREEN_LOCKED)
         return result
 
     async def native_screen_resolution(self) -> NativeScreenResolutionResponse:
+        """Get primary display resolution as 'WxH'"""
         result = await self.call(METHOD_NATIVE_SCREEN_RESOLUTION)
         return result
 
     async def native_screen_saver_ask_password(self) -> NativeScreenSaverAskPasswordResponse:
+        """Check if password required after screen saver"""
         result = await self.call(METHOD_NATIVE_SCREEN_SAVER_ASK_PASSWORD)
         return result
 
     async def native_screen_saver_delay(self) -> None:
+        """Get delay before password required after screen saver"""
         await self.call(METHOD_NATIVE_SCREEN_SAVER_DELAY)
 
     async def native_screen_saver_start(self) -> None:
+        """Start the screen saver"""
         await self.call(METHOD_NATIVE_SCREEN_SAVER_START)
 
     async def native_screen_saver_status(self) -> NativeScreenSaverStatusResponse:
+        """Check if the screen saver is currently active"""
         result = await self.call(METHOD_NATIVE_SCREEN_SAVER_STATUS)
         return result
 
     async def native_screen_sharing_enabled(self) -> NativeScreenSharingEnabledResponse:
+        """Check if screen sharing is enabled"""
         result = await self.call(METHOD_NATIVE_SCREEN_SHARING_ENABLED)
         return result
 
     async def native_screenshot(self, display_id: int | None = None, region: "ScreenshotRegion" | None = None, window_id: str | None = None) -> NativeScreenshotResponse:
+        """Capture a screenshot as base64-encoded PNG
+
+        display_id: wire uint32 · default null · min 0
+        window_id: default null
+        """
         params: dict[str, Any] = {
         }
         if display_id is not None:
@@ -3397,30 +4343,37 @@ class MethodsMixin:
         return result
 
     async def native_screenshot_format(self) -> NativeScreenshotFormatResponse:
+        """Get screenshot file format"""
         result = await self.call(METHOD_NATIVE_SCREENSHOT_FORMAT)
         return result
 
     async def native_screenshot_include_shadow(self) -> NativeScreenshotIncludeShadowResponse:
+        """Check if screenshots include window shadow"""
         result = await self.call(METHOD_NATIVE_SCREENSHOT_INCLUDE_SHADOW)
         return result
 
     async def native_screenshot_location(self) -> NativeScreenshotLocationResponse:
+        """Get the configured screenshot save location"""
         result = await self.call(METHOD_NATIVE_SCREENSHOT_LOCATION)
         return result
 
     async def native_screenshot_show_thumbnail(self) -> NativeScreenshotShowThumbnailResponse:
+        """Check if screenshot thumbnail is shown"""
         result = await self.call(METHOD_NATIVE_SCREENSHOT_SHOW_THUMBNAIL)
         return result
 
     async def native_scroll_direction(self) -> NativeScrollDirectionResponse:
+        """Check if natural (inverted) scroll direction is enabled"""
         result = await self.call(METHOD_NATIVE_SCROLL_DIRECTION)
         return result
 
     async def native_scroll_direction_natural(self) -> NativeScrollDirectionNaturalResponse:
+        """Check if scroll direction is natural"""
         result = await self.call(METHOD_NATIVE_SCROLL_DIRECTION_NATURAL)
         return result
 
     async def native_search_contacts(self, query: str) -> list[ContactInfo]:
+        """Search contacts by name"""
         params: dict[str, Any] = {
             "query": query,
         }
@@ -3428,28 +4381,34 @@ class MethodsMixin:
         return (result or {}).get("contacts") or []
 
     async def native_secure_input_enabled(self) -> NativeSecureInputEnabledResponse:
+        """Check if Secure Input is currently enabled (blocks key events)"""
         result = await self.call(METHOD_NATIVE_SECURE_INPUT_ENABLED)
         return result
 
     async def native_selected_finder_items(self) -> list[str]:
+        """Get Finder selection"""
         result = await self.call(METHOD_NATIVE_SELECTED_FINDER_ITEMS)
         return (result or {}).get("paths") or []
 
     async def native_selected_text(self) -> NativeSelectedTextResponse:
+        """Get the currently selected text from the frontmost app"""
         result = await self.call(METHOD_NATIVE_SELECTED_TEXT)
         return result
 
     async def native_serial_number(self) -> NativeSerialNumberResponse:
+        """Get the hardware serial number"""
         result = await self.call(METHOD_NATIVE_SERIAL_NUMBER)
         return result
 
     async def native_set_airport_power(self, on: bool) -> None:
+        """Turn Wi-Fi (AirPort) on or off"""
         params: dict[str, Any] = {
             "on": on,
         }
         await self.call(METHOD_NATIVE_SET_AIRPORT_POWER, params)
 
     async def native_set_app_hidden(self, bundle_id: str, hidden: bool) -> None:
+        """Hide or unhide an app"""
         params: dict[str, Any] = {
             "bundle_id": bundle_id,
             "hidden": hidden,
@@ -3457,6 +4416,10 @@ class MethodsMixin:
         await self.call(METHOD_NATIVE_SET_APP_HIDDEN, params)
 
     async def native_set_audio_device(self, device_type: str, uid: str) -> None:
+        """Set the default audio input or output device
+
+        device_type: "input" or "output".
+        """
         params: dict[str, Any] = {
             "device_type": device_type,
             "uid": uid,
@@ -3464,6 +4427,10 @@ class MethodsMixin:
         await self.call(METHOD_NATIVE_SET_AUDIO_DEVICE, params)
 
     async def native_set_audio_device_volume(self, device_uid: str, volume: float) -> None:
+        """Set volume for a specific audio device by UID
+
+        volume: wire double
+        """
         params: dict[str, Any] = {
             "device_uid": device_uid,
             "volume": volume,
@@ -3471,30 +4438,39 @@ class MethodsMixin:
         await self.call(METHOD_NATIVE_SET_AUDIO_DEVICE_VOLUME, params)
 
     async def native_set_audio_input_device(self, name: str) -> None:
+        """Set active audio input device by name"""
         params: dict[str, Any] = {
             "name": name,
         }
         await self.call(METHOD_NATIVE_SET_AUDIO_INPUT_DEVICE, params)
 
     async def native_set_audio_output_device(self, name: str) -> None:
+        """Set active audio output device by name"""
         params: dict[str, Any] = {
             "name": name,
         }
         await self.call(METHOD_NATIVE_SET_AUDIO_OUTPUT_DEVICE, params)
 
     async def native_set_auto_rearrange_spaces(self, enabled: bool) -> None:
+        """Enable or disable auto-rearrange Spaces"""
         params: dict[str, Any] = {
             "enabled": enabled,
         }
         await self.call(METHOD_NATIVE_SET_AUTO_REARRANGE_SPACES, params)
 
     async def native_set_bluetooth_power(self, on: bool) -> None:
+        """Turn Bluetooth on or off"""
         params: dict[str, Any] = {
             "on": on,
         }
         await self.call(METHOD_NATIVE_SET_BLUETOOTH_POWER, params)
 
     async def native_set_brightness(self, brightness: float, display_id: int | None = None) -> None:
+        """Set display brightness (0.0-1.0)
+
+        brightness: wire double
+        display_id: wire uint32 · default null · min 0
+        """
         params: dict[str, Any] = {
             "brightness": brightness,
         }
@@ -3503,60 +4479,73 @@ class MethodsMixin:
         await self.call(METHOD_NATIVE_SET_BRIGHTNESS, params)
 
     async def native_set_computer_name(self, name: str) -> None:
+        """Set the computer name"""
         params: dict[str, Any] = {
             "name": name,
         }
         await self.call(METHOD_NATIVE_SET_COMPUTER_NAME, params)
 
     async def native_set_dark_mode(self, dark: bool) -> None:
+        """Set dark or light mode"""
         params: dict[str, Any] = {
             "dark": dark,
         }
         await self.call(METHOD_NATIVE_SET_DARK_MODE, params)
 
     async def native_set_dnd(self, enabled: bool) -> None:
+        """Set Do Not Disturb on or off (idempotent; via the BranchKit Focus helper shortcut)"""
         params: dict[str, Any] = {
             "enabled": enabled,
         }
         await self.call(METHOD_NATIVE_SET_DND, params)
 
     async def native_set_dock_auto_hide(self, enabled: bool) -> None:
+        """Enable or disable Dock auto-hide"""
         params: dict[str, Any] = {
             "enabled": enabled,
         }
         await self.call(METHOD_NATIVE_SET_DOCK_AUTO_HIDE, params)
 
     async def native_set_dock_magnification(self, enabled: bool) -> None:
+        """Enable or disable Dock magnification"""
         params: dict[str, Any] = {
             "enabled": enabled,
         }
         await self.call(METHOD_NATIVE_SET_DOCK_MAGNIFICATION, params)
 
     async def native_set_dock_minimize_effect(self, effect: str) -> None:
+        """Set Dock minimize animation (genie/scale)"""
         params: dict[str, Any] = {
             "effect": effect,
         }
         await self.call(METHOD_NATIVE_SET_DOCK_MINIMIZE_EFFECT, params)
 
     async def native_set_dock_position(self, position: str) -> None:
+        """Set the Dock position (left, bottom, right)"""
         params: dict[str, Any] = {
             "position": position,
         }
         await self.call(METHOD_NATIVE_SET_DOCK_POSITION, params)
 
     async def native_set_dock_show_recents(self, enabled: bool) -> None:
+        """Show or hide recent apps in Dock"""
         params: dict[str, Any] = {
             "enabled": enabled,
         }
         await self.call(METHOD_NATIVE_SET_DOCK_SHOW_RECENTS, params)
 
     async def native_set_dock_size(self, size: float) -> None:
+        """Set Dock tile size
+
+        size: wire double
+        """
         params: dict[str, Any] = {
             "size": size,
         }
         await self.call(METHOD_NATIVE_SET_DOCK_SIZE, params)
 
     async def native_set_extended_attribute(self, name: str, path: str, value: str) -> None:
+        """Set an extended attribute on a file"""
         params: dict[str, Any] = {
             "name": name,
             "path": path,
@@ -3565,6 +4554,7 @@ class MethodsMixin:
         await self.call(METHOD_NATIVE_SET_EXTENDED_ATTRIBUTE, params)
 
     async def native_set_file_hidden(self, hidden: bool, path: str) -> None:
+        """Set file hidden flag"""
         params: dict[str, Any] = {
             "hidden": hidden,
             "path": path,
@@ -3572,6 +4562,7 @@ class MethodsMixin:
         await self.call(METHOD_NATIVE_SET_FILE_HIDDEN, params)
 
     async def native_set_file_permissions(self, mode: str, path: str) -> None:
+        """Set file permissions (chmod octal mode)"""
         params: dict[str, Any] = {
             "mode": mode,
             "path": path,
@@ -3579,24 +4570,31 @@ class MethodsMixin:
         await self.call(METHOD_NATIVE_SET_FILE_PERMISSIONS, params)
 
     async def native_set_finder_show_extensions(self, enabled: bool) -> None:
+        """Show or hide file extensions in Finder"""
         params: dict[str, Any] = {
             "enabled": enabled,
         }
         await self.call(METHOD_NATIVE_SET_FINDER_SHOW_EXTENSIONS, params)
 
     async def native_set_finder_show_hidden(self, enabled: bool) -> None:
+        """Show or hide hidden files in Finder"""
         params: dict[str, Any] = {
             "enabled": enabled,
         }
         await self.call(METHOD_NATIVE_SET_FINDER_SHOW_HIDDEN, params)
 
     async def native_set_highlight_color(self, color: str) -> None:
+        """Set system highlight/accent color"""
         params: dict[str, Any] = {
             "color": color,
         }
         await self.call(METHOD_NATIVE_SET_HIGHLIGHT_COLOR, params)
 
     async def native_set_hot_corner(self, action: int, corner: str) -> None:
+        """Set a hot corner action
+
+        action: wire uint32 · min 0
+        """
         params: dict[str, Any] = {
             "action": action,
             "corner": corner,
@@ -3604,90 +4602,120 @@ class MethodsMixin:
         await self.call(METHOD_NATIVE_SET_HOT_CORNER, params)
 
     async def native_set_input_source(self, source_id: str) -> None:
+        """Switch to a keyboard input source by ID"""
         params: dict[str, Any] = {
             "source_id": source_id,
         }
         await self.call(METHOD_NATIVE_SET_INPUT_SOURCE, params)
 
     async def native_set_key_repeat_delay(self, delay: float) -> None:
+        """Set initial key repeat delay
+
+        delay: wire double
+        """
         params: dict[str, Any] = {
             "delay": delay,
         }
         await self.call(METHOD_NATIVE_SET_KEY_REPEAT_DELAY, params)
 
     async def native_set_key_repeat_rate(self, rate: float) -> None:
+        """Set key repeat rate
+
+        rate: wire double
+        """
         params: dict[str, Any] = {
             "rate": rate,
         }
         await self.call(METHOD_NATIVE_SET_KEY_REPEAT_RATE, params)
 
     async def native_set_menu_bar_auto_hide(self, enabled: bool) -> None:
+        """Enable or disable menu bar auto-hide"""
         params: dict[str, Any] = {
             "enabled": enabled,
         }
         await self.call(METHOD_NATIVE_SET_MENU_BAR_AUTO_HIDE, params)
 
     async def native_set_mouse_speed(self, speed: float) -> None:
+        """Set mouse tracking speed
+
+        speed: wire double
+        """
         params: dict[str, Any] = {
             "speed": speed,
         }
         await self.call(METHOD_NATIVE_SET_MOUSE_SPEED, params)
 
     async def native_set_night_shift(self, enabled: bool) -> None:
+        """Enable or disable Night Shift"""
         params: dict[str, Any] = {
             "enabled": enabled,
         }
         await self.call(METHOD_NATIVE_SET_NIGHT_SHIFT, params)
 
     async def native_set_screenshot_format(self, format: str) -> None:
+        """Set screenshot file format (png/jpg/pdf/tiff)"""
         params: dict[str, Any] = {
             "format": format,
         }
         await self.call(METHOD_NATIVE_SET_SCREENSHOT_FORMAT, params)
 
     async def native_set_screenshot_include_shadow(self, enabled: bool) -> None:
+        """Enable or disable window shadow in screenshots"""
         params: dict[str, Any] = {
             "enabled": enabled,
         }
         await self.call(METHOD_NATIVE_SET_SCREENSHOT_INCLUDE_SHADOW, params)
 
     async def native_set_screenshot_location(self, path: str) -> None:
+        """Set the screenshot save location"""
         params: dict[str, Any] = {
             "path": path,
         }
         await self.call(METHOD_NATIVE_SET_SCREENSHOT_LOCATION, params)
 
     async def native_set_scroll_direction_natural(self, enabled: bool) -> None:
+        """Set natural scroll direction"""
         params: dict[str, Any] = {
             "enabled": enabled,
         }
         await self.call(METHOD_NATIVE_SET_SCROLL_DIRECTION_NATURAL, params)
 
     async def native_set_sidebar_icon_size(self, size: int) -> None:
+        """Set sidebar icon size (1=small,2=medium,3=large)
+
+        size: wire uint32 · min 0
+        """
         params: dict[str, Any] = {
             "size": size,
         }
         await self.call(METHOD_NATIVE_SET_SIDEBAR_ICON_SIZE, params)
 
     async def native_set_stage_manager(self, enabled: bool) -> None:
+        """Enable or disable Stage Manager"""
         params: dict[str, Any] = {
             "enabled": enabled,
         }
         await self.call(METHOD_NATIVE_SET_STAGE_MANAGER, params)
 
     async def native_set_tap_to_click(self, enabled: bool) -> None:
+        """Enable or disable tap-to-click"""
         params: dict[str, Any] = {
             "enabled": enabled,
         }
         await self.call(METHOD_NATIVE_SET_TAP_TO_CLICK, params)
 
     async def native_set_trackpad_speed(self, speed: float) -> None:
+        """Set trackpad tracking speed
+
+        speed: wire double
+        """
         params: dict[str, Any] = {
             "speed": speed,
         }
         await self.call(METHOD_NATIVE_SET_TRACKPAD_SPEED, params)
 
     async def native_set_url_scheme_handler(self, bundle_id: str, scheme: str) -> None:
+        """Register an application as the handler for a URL scheme"""
         params: dict[str, Any] = {
             "bundle_id": bundle_id,
             "scheme": scheme,
@@ -3695,18 +4723,27 @@ class MethodsMixin:
         await self.call(METHOD_NATIVE_SET_URL_SCHEME_HANDLER, params)
 
     async def native_set_volume(self, volume: float) -> None:
+        """Set system volume (0.0–1.0)
+
+        volume: wire double
+        """
         params: dict[str, Any] = {
             "volume": volume,
         }
         await self.call(METHOD_NATIVE_SET_VOLUME, params)
 
     async def native_set_wallpaper(self, path: str) -> None:
+        """Set the desktop wallpaper to an image file"""
         params: dict[str, Any] = {
             "path": path,
         }
         await self.call(METHOD_NATIVE_SET_WALLPAPER, params)
 
     async def native_set_window_alpha(self, alpha: float, window_id: str) -> None:
+        """Set window transparency
+
+        alpha: wire double
+        """
         params: dict[str, Any] = {
             "alpha": alpha,
             "window_id": window_id,
@@ -3714,6 +4751,7 @@ class MethodsMixin:
         await self.call(METHOD_NATIVE_SET_WINDOW_ALPHA, params)
 
     async def native_set_window_level(self, level: str, window_id: str) -> bool:
+        """Set a window's level (floating, normal, below)"""
         params: dict[str, Any] = {
             "level": level,
             "window_id": window_id,
@@ -3722,6 +4760,11 @@ class MethodsMixin:
         return bool((result or {}).get("result", False))
 
     async def native_set_window_position(self, window_id: str, x: int, y: int) -> None:
+        """Move a window to x,y without changing size
+
+        x: wire int32
+        y: wire int32
+        """
         params: dict[str, Any] = {
             "window_id": window_id,
             "x": x,
@@ -3730,6 +4773,7 @@ class MethodsMixin:
         await self.call(METHOD_NATIVE_SET_WINDOW_POSITION, params)
 
     async def native_set_window_shadow(self, enabled: bool, window_id: str) -> None:
+        """Enable or disable the drop shadow for a window"""
         params: dict[str, Any] = {
             "enabled": enabled,
             "window_id": window_id,
@@ -3737,6 +4781,11 @@ class MethodsMixin:
         await self.call(METHOD_NATIVE_SET_WINDOW_SHADOW, params)
 
     async def native_set_window_size(self, h: int, w: int, window_id: str) -> None:
+        """Resize a window without changing position
+
+        h: wire int32
+        w: wire int32
+        """
         params: dict[str, Any] = {
             "h": h,
             "w": w,
@@ -3745,6 +4794,7 @@ class MethodsMixin:
         await self.call(METHOD_NATIVE_SET_WINDOW_SIZE, params)
 
     async def native_set_window_sticky(self, sticky: bool, window_id: str) -> None:
+        """Set a window to appear on all spaces (sticky)"""
         params: dict[str, Any] = {
             "sticky": sticky,
             "window_id": window_id,
@@ -3752,49 +4802,65 @@ class MethodsMixin:
         await self.call(METHOD_NATIVE_SET_WINDOW_STICKY, params)
 
     async def native_sharing_name(self) -> NativeSharingNameResponse:
+        """Get the local network sharing name"""
         result = await self.call(METHOD_NATIVE_SHARING_NAME)
         return result
 
     async def native_show_scroll_bars(self) -> NativeShowScrollBarsResponse:
+        """Get scroll bar visibility setting"""
         result = await self.call(METHOD_NATIVE_SHOW_SCROLL_BARS)
         return result
 
     async def native_sidebar_icon_size(self) -> NativeSidebarIconSizeResponse:
+        """Get sidebar icon size. Returns one of: small, medium, large"""
         result = await self.call(METHOD_NATIVE_SIDEBAR_ICON_SIZE)
         return result
 
     async def native_sip_status(self) -> NativeSipStatusResponse:
+        """Check if System Integrity Protection is enabled"""
         result = await self.call(METHOD_NATIVE_SIP_STATUS)
         return result
 
     async def native_siri_enabled(self) -> NativeSiriEnabledResponse:
+        """Check if Siri is enabled"""
         result = await self.call(METHOD_NATIVE_SIRI_ENABLED)
         return result
 
     async def native_sleep_now(self) -> None:
+        """Put the system to sleep immediately"""
         await self.call(METHOD_NATIVE_SLEEP_NOW)
 
     async def native_slow_keys(self) -> NativeSlowKeysResponse:
+        """Check if Slow Keys is enabled"""
         result = await self.call(METHOD_NATIVE_SLOW_KEYS)
         return result
 
     async def native_smart_quotes_enabled(self) -> NativeSmartQuotesEnabledResponse:
+        """Check if smart quotes are enabled"""
         result = await self.call(METHOD_NATIVE_SMART_QUOTES_ENABLED)
         return result
 
     async def native_smart_zoom(self) -> NativeSmartZoomResponse:
+        """Check if smart zoom (double-tap) is enabled"""
         result = await self.call(METHOD_NATIVE_SMART_ZOOM)
         return result
 
     async def native_sound_effects_enabled(self) -> NativeSoundEffectsEnabledResponse:
+        """Check if UI sound effects are enabled"""
         result = await self.call(METHOD_NATIVE_SOUND_EFFECTS_ENABLED)
         return result
 
     async def native_spaces_span_displays(self) -> NativeSpacesSpanDisplaysResponse:
+        """Check if Spaces span displays independently"""
         result = await self.call(METHOD_NATIVE_SPACES_SPAN_DISPLAYS)
         return result
 
     async def native_speak(self, text: str, rate: float | None = None, voice: str | None = None) -> None:
+        """Speak text using the system text-to-speech engine
+
+        rate: wire double · default null
+        voice: default null
+        """
         params: dict[str, Any] = {
             "text": text,
         }
@@ -3805,14 +4871,20 @@ class MethodsMixin:
         await self.call(METHOD_NATIVE_SPEAK, params)
 
     async def native_speech_locales(self) -> list[SpeechLocale]:
+        """List available speech recognition locales"""
         result = await self.call(METHOD_NATIVE_SPEECH_LOCALES)
         return (result or {}).get("locales") or []
 
     async def native_speech_recognition_available(self) -> NativeSpeechRecognitionAvailableResponse:
+        """Check if on-device speech recognition is available"""
         result = await self.call(METHOD_NATIVE_SPEECH_RECOGNITION_AVAILABLE)
         return result
 
     async def native_speech_recognize_file(self, path: str, locale: str | None = None) -> None:
+        """Recognize speech from an audio file (returns transcript)
+
+        locale: default ""
+        """
         params: dict[str, Any] = {
             "path": path,
         }
@@ -3821,10 +4893,16 @@ class MethodsMixin:
         await self.call(METHOD_NATIVE_SPEECH_RECOGNIZE_FILE, params)
 
     async def native_spelling_language(self) -> NativeSpellingLanguageResponse:
+        """Get current spelling language"""
         result = await self.call(METHOD_NATIVE_SPELLING_LANGUAGE)
         return result
 
     async def native_spotlight(self, query: str, limit: int | None = None, scope: list[str] | None = None) -> list[SpotlightResult]:
+        """Search files via Spotlight
+
+        limit: wire uint32 · default 20 · min 0
+        scope: default null
+        """
         params: dict[str, Any] = {
             "query": query,
         }
@@ -3836,40 +4914,52 @@ class MethodsMixin:
         return (result or {}).get("results") or []
 
     async def native_stage_manager_enabled(self) -> NativeStageManagerEnabledResponse:
+        """Check if Stage Manager is enabled"""
         result = await self.call(METHOD_NATIVE_STAGE_MANAGER_ENABLED)
         return result
 
     async def native_startup_disk(self) -> NativeStartupDiskResponse:
+        """Get the boot volume name and path"""
         result = await self.call(METHOD_NATIVE_STARTUP_DISK)
         return result
 
     async def native_startup_sound_enabled(self) -> NativeStartupSoundEnabledResponse:
+        """Check if startup sound is enabled"""
         result = await self.call(METHOD_NATIVE_STARTUP_SOUND_ENABLED)
         return result
 
     async def native_status_indicator(self) -> NativeStatusIndicatorResponse:
+        """Whether a visible status-indicator surface (tray/status item) exists that can show recording state"""
         result = await self.call(METHOD_NATIVE_STATUS_INDICATOR)
         return result
 
     async def native_sticky_keys(self) -> NativeStickyKeysResponse:
+        """Check if Sticky Keys is enabled"""
         result = await self.call(METHOD_NATIVE_STICKY_KEYS)
         return result
 
     async def native_swipe_between_pages(self) -> NativeSwipeBetweenPagesResponse:
+        """Check if swipe between pages gesture is enabled"""
         result = await self.call(METHOD_NATIVE_SWIPE_BETWEEN_PAGES)
         return result
 
     async def native_switch_space(self, space_id: int) -> None:
+        """Switch to a Mission Control desktop by number (1-16) via the user's Switch-to-Desktop symbolic hotkey (respects remaps, auto-enables disabled shortcuts; falls back to default Ctrl+N)
+
+        space_id: wire uint64 (64-bit) · min 0
+        """
         params: dict[str, Any] = {
             "space_id": space_id,
         }
         await self.call(METHOD_NATIVE_SWITCH_SPACE, params)
 
     async def native_switch_space_when_switching_app(self) -> NativeSwitchSpaceWhenSwitchingAppResponse:
+        """Check if switching to app switches to its Space"""
         result = await self.call(METHOD_NATIVE_SWITCH_SPACE_WHEN_SWITCHING_APP)
         return result
 
     async def native_symlink(self, link: str, source: str) -> None:
+        """Create a symbolic link"""
         params: dict[str, Any] = {
             "link": link,
             "source": source,
@@ -3877,116 +4967,143 @@ class MethodsMixin:
         await self.call(METHOD_NATIVE_SYMLINK, params)
 
     async def native_system_appearance(self) -> NativeSystemAppearanceResponse:
+        """Get system appearance info (accent color, highlight color, reduce motion, reduce transparency)"""
         result = await self.call(METHOD_NATIVE_SYSTEM_APPEARANCE)
         return result
 
     async def native_system_info(self) -> NativeSystemInfoResponse:
+        """Get system identity (macOS version, model, serial)"""
         result = await self.call(METHOD_NATIVE_SYSTEM_INFO)
         return result
 
     async def native_system_integrity_info(self) -> NativeSystemIntegrityInfoResponse:
+        """Get SIP and security policy details"""
         result = await self.call(METHOD_NATIVE_SYSTEM_INTEGRITY_INFO)
         return result
 
     async def native_system_language(self) -> NativeSystemLanguageResponse:
+        """Get the system language code (e.g. en)"""
         result = await self.call(METHOD_NATIVE_SYSTEM_LANGUAGE)
         return result
 
     async def native_system_region(self) -> NativeSystemRegionResponse:
+        """Get the system region code (e.g. US)"""
         result = await self.call(METHOD_NATIVE_SYSTEM_REGION)
         return result
 
     async def native_system_sounds(self) -> list[str]:
+        """List available system alert sounds"""
         result = await self.call(METHOD_NATIVE_SYSTEM_SOUNDS)
         return (result or {}).get("sounds") or []
 
     async def native_system_uptime(self) -> NativeSystemUptimeResponse:
+        """Get system uptime"""
         result = await self.call(METHOD_NATIVE_SYSTEM_UPTIME)
         return result
 
     async def native_system_uptime_seconds(self) -> NativeSystemUptimeSecondsResponse:
+        """Get system uptime in seconds"""
         result = await self.call(METHOD_NATIVE_SYSTEM_UPTIME_SECONDS)
         return result
 
     async def native_tap_to_click(self) -> NativeTapToClickResponse:
+        """Check if tap-to-click is enabled on trackpad"""
         result = await self.call(METHOD_NATIVE_TAP_TO_CLICK)
         return result
 
     async def native_temp_directory(self) -> NativeTempDirectoryResponse:
+        """Get the system temporary directory path"""
         result = await self.call(METHOD_NATIVE_TEMP_DIRECTORY)
         return result
 
     async def native_temperature_unit(self) -> NativeTemperatureUnitResponse:
+        """Get temperature unit preference"""
         result = await self.call(METHOD_NATIVE_TEMPERATURE_UNIT)
         return result
 
     async def native_text_replacements(self) -> NativeTextReplacementsResponse:
+        """Get user text replacements as the raw `NSUserDictionaryReplacementItems` preference value — macOS plist text, NOT JSON"""
         result = await self.call(METHOD_NATIVE_TEXT_REPLACEMENTS)
         return result
 
     async def native_thermal_state(self) -> NativeThermalStateResponse:
+        """Get coarse CPU throttling state from `pmset -g therm`. NOT ProcessInfo.thermalState — for the four-level nominal/fair/serious/critical reading, subscribe to _platform.thermal.changed. Returns one of: nominal, throttled"""
         result = await self.call(METHOD_NATIVE_THERMAL_STATE)
         return result
 
     async def native_three_finger_drag(self) -> NativeThreeFingerDragResponse:
+        """Check if three-finger drag is enabled"""
         result = await self.call(METHOD_NATIVE_THREE_FINGER_DRAG)
         return result
 
     async def native_thunderbolt_devices(self) -> NativeThunderboltDevicesResponse:
+        """List connected Thunderbolt devices"""
         result = await self.call(METHOD_NATIVE_THUNDERBOLT_DEVICES)
         return result
 
     async def native_time_format(self) -> NativeTimeFormatResponse:
+        """Get user time format string"""
         result = await self.call(METHOD_NATIVE_TIME_FORMAT)
         return result
 
     async def native_time_machine_last_backup(self) -> NativeTimeMachineLastBackupResponse:
+        """Get the last Time Machine backup date"""
         result = await self.call(METHOD_NATIVE_TIME_MACHINE_LAST_BACKUP)
         return result
 
     async def native_time_machine_status(self) -> NativeTimeMachineStatusResponse:
+        """Check if Time Machine is enabled and get destination"""
         result = await self.call(METHOD_NATIVE_TIME_MACHINE_STATUS)
         return result
 
     async def native_time_on_battery(self) -> None:
+        """Get time on battery in minutes since last unplug"""
         await self.call(METHOD_NATIVE_TIME_ON_BATTERY)
 
     async def native_timezone(self) -> NativeTimezoneResponse:
+        """Get current system timezone identifier"""
         result = await self.call(METHOD_NATIVE_TIMEZONE)
         return result
 
     async def native_toggle_bluetooth(self, enabled: bool) -> None:
+        """Toggle Bluetooth on/off"""
         params: dict[str, Any] = {
             "enabled": enabled,
         }
         await self.call(METHOD_NATIVE_TOGGLE_BLUETOOTH, params)
 
     async def native_toggle_fullscreen(self, window_id: str) -> None:
+        """Toggle native fullscreen for a window"""
         params: dict[str, Any] = {
             "window_id": window_id,
         }
         await self.call(METHOD_NATIVE_TOGGLE_FULLSCREEN, params)
 
     async def native_toggle_wifi(self, enabled: bool) -> None:
+        """Toggle Wi-Fi on/off"""
         params: dict[str, Any] = {
             "enabled": enabled,
         }
         await self.call(METHOD_NATIVE_TOGGLE_WIFI, params)
 
     async def native_touch_id_available(self) -> NativeTouchIDAvailableResponse:
+        """Check if Touch ID / biometric auth hardware is available"""
         result = await self.call(METHOD_NATIVE_TOUCH_ID_AVAILABLE)
         return result
 
     async def native_trackpad_speed(self) -> None:
+        """Get the trackpad tracking speed (0.0-3.0)"""
         await self.call(METHOD_NATIVE_TRACKPAD_SPEED)
 
     async def native_transparency_consent(self, service: str) -> None:
+        """Check TCC consent status for a service (e.g. kTCCServiceAccessibility)"""
         params: dict[str, Any] = {
             "service": service,
         }
         await self.call(METHOD_NATIVE_TRANSPARENCY_CONSENT, params)
 
     async def native_trash(self, path: str) -> bool:
+        """Move file to Trash"""
         params: dict[str, Any] = {
             "path": path,
         }
@@ -3994,30 +5111,36 @@ class MethodsMixin:
         return bool((result or {}).get("result", False))
 
     async def native_true_tone(self) -> NativeTrueToneResponse:
+        """Check if True Tone is enabled. KNOWN LIMITATION: the `corebrightnessdiag` probe this depends on is absent from macOS 15, where this always reports false"""
         result = await self.call(METHOD_NATIVE_TRUE_TONE)
         return result
 
     async def native_tts_voices(self) -> list[TtsVoice]:
+        """List available text-to-speech voices"""
         result = await self.call(METHOD_NATIVE_TTS_VOICES)
         return (result or {}).get("voices") or []
 
     async def native_twenty_four_hour_clock(self) -> NativeTwentyFourHourClockResponse:
+        """Check if 24-hour clock is enabled"""
         result = await self.call(METHOD_NATIVE_TWENTY_FOUR_HOUR_CLOCK)
         return result
 
     async def native_unhide_app(self, bundle_id: str) -> None:
+        """Unhide a hidden application"""
         params: dict[str, Any] = {
             "bundle_id": bundle_id,
         }
         await self.call(METHOD_NATIVE_UNHIDE_APP, params)
 
     async def native_unminimize_window(self, window_id: str) -> None:
+        """Restore a minimized window by ID"""
         params: dict[str, Any] = {
             "window_id": window_id,
         }
         await self.call(METHOD_NATIVE_UNMINIMIZE_WINDOW, params)
 
     async def native_unobserve_windows(self, subscription_id: str) -> bool:
+        """Stop observing window events (STUB)"""
         params: dict[str, Any] = {
             "subscription_id": subscription_id,
         }
@@ -4025,6 +5148,7 @@ class MethodsMixin:
         return bool((result or {}).get("result", False))
 
     async def native_unzip(self, destination: str, source: str) -> None:
+        """Extract a zip archive to a directory"""
         params: dict[str, Any] = {
             "destination": destination,
             "source": source,
@@ -4032,6 +5156,7 @@ class MethodsMixin:
         await self.call(METHOD_NATIVE_UNZIP, params)
 
     async def native_url_scheme_handler(self, scheme: str) -> NativeURLSchemeHandlerResponse:
+        """Get the bundle ID registered as the handler for a URL scheme"""
         params: dict[str, Any] = {
             "scheme": scheme,
         }
@@ -4039,34 +5164,46 @@ class MethodsMixin:
         return result
 
     async def native_usb_devices(self) -> list[UsbDevice]:
+        """List connected USB devices"""
         result = await self.call(METHOD_NATIVE_USB_DEVICES)
         return (result or {}).get("devices") or []
 
     async def native_user_avatar(self) -> NativeUserAvatarResponse:
+        """Get the current user account avatar as base64 PNG"""
         result = await self.call(METHOD_NATIVE_USER_AVATAR)
         return result
 
     async def native_user_name(self) -> NativeUserNameResponse:
+        """Get the current user's display name"""
         result = await self.call(METHOD_NATIVE_USER_NAME)
         return result
 
     async def native_user_shell(self) -> NativeUserShellResponse:
+        """Get the current user's login shell path"""
         result = await self.call(METHOD_NATIVE_USER_SHELL)
         return result
 
     async def native_voiceover_enabled(self) -> NativeVoiceoverEnabledResponse:
+        """Check if VoiceOver is enabled"""
         result = await self.call(METHOD_NATIVE_VOICEOVER_ENABLED)
         return result
 
     async def native_volume(self) -> NativeVolumeResponse:
+        """Get system volume and mute state"""
         result = await self.call(METHOD_NATIVE_VOLUME)
         return result
 
     async def native_vpn_status(self) -> NativeVpnStatusResponse:
+        """Check if a VPN connection is active"""
         result = await self.call(METHOD_NATIVE_VPN_STATUS)
         return result
 
     async def native_warp_cursor(self, x: int, y: int) -> None:
+        """Move the cursor to a position
+
+        x: wire int32
+        y: wire int32
+        """
         params: dict[str, Any] = {
             "x": x,
             "y": y,
@@ -4074,20 +5211,24 @@ class MethodsMixin:
         await self.call(METHOD_NATIVE_WARP_CURSOR, params)
 
     async def native_wifi(self) -> NativeWifiResponse:
+        """Get WiFi interface information"""
         result = await self.call(METHOD_NATIVE_WIFI)
         return result
 
     async def native_wifi_networks(self) -> list[str]:
+        """Scan for nearby Wi-Fi networks"""
         result = await self.call(METHOD_NATIVE_WIFI_NETWORKS)
         return (result or {}).get("networks") or []
 
     async def native_window_app(self, window_id: str) -> None:
+        """Get the owning app bundle ID for a window"""
         params: dict[str, Any] = {
             "window_id": window_id,
         }
         await self.call(METHOD_NATIVE_WINDOW_APP, params)
 
     async def native_window_bounds(self, window_id: str) -> NativeWindowBoundsResponse:
+        """Get a window position and size by ID"""
         params: dict[str, Any] = {
             "window_id": window_id,
         }
@@ -4095,12 +5236,14 @@ class MethodsMixin:
         return result
 
     async def native_window_display_id(self, window_id: str) -> None:
+        """Get display ID for window"""
         params: dict[str, Any] = {
             "window_id": window_id,
         }
         await self.call(METHOD_NATIVE_WINDOW_DISPLAY_ID, params)
 
     async def native_window_is_fullscreen(self, window_id: str) -> NativeWindowIsFullscreenResponse:
+        """Check if window is fullscreen"""
         params: dict[str, Any] = {
             "window_id": window_id,
         }
@@ -4108,6 +5251,7 @@ class MethodsMixin:
         return result
 
     async def native_window_is_minimized(self, window_id: str) -> NativeWindowIsMinimizedResponse:
+        """Check if window is minimized"""
         params: dict[str, Any] = {
             "window_id": window_id,
         }
@@ -4115,30 +5259,42 @@ class MethodsMixin:
         return result
 
     async def native_window_layer(self, window_id: str) -> None:
+        """Get window layer level"""
         params: dict[str, Any] = {
             "window_id": window_id,
         }
         await self.call(METHOD_NATIVE_WINDOW_LAYER, params)
 
     async def native_window_screenshot(self, window_id: int) -> None:
+        """Take a screenshot of a specific window as base64 PNG
+
+        window_id: wire uint32 · min 0
+        """
         params: dict[str, Any] = {
             "window_id": window_id,
         }
         await self.call(METHOD_NATIVE_WINDOW_SCREENSHOT, params)
 
     async def native_window_subrole(self, window_id: str) -> None:
+        """Get window subrole"""
         params: dict[str, Any] = {
             "window_id": window_id,
         }
         await self.call(METHOD_NATIVE_WINDOW_SUBROLE, params)
 
     async def native_window_title(self, window_id: str) -> None:
+        """Get a window title by ID"""
         params: dict[str, Any] = {
             "window_id": window_id,
         }
         await self.call(METHOD_NATIVE_WINDOW_TITLE, params)
 
     async def native_world_model(self, on_screen: bool | None = None) -> WorldModel:
+        """Get a snapshot of all windows and displays (with managed HUD windows)
+
+        on_screen: If true, only return windows visible on screen.
+            default false
+        """
         params: dict[str, Any] = {
         }
         if on_screen is not None:
@@ -4147,6 +5303,7 @@ class MethodsMixin:
         return result
 
     async def native_write_app_preference(self, domain: str, key: str, value: Any) -> None:
+        """Write a preference value for an app domain"""
         params: dict[str, Any] = {
             "domain": domain,
             "key": key,
@@ -4155,6 +5312,7 @@ class MethodsMixin:
         await self.call(METHOD_NATIVE_WRITE_APP_PREFERENCE, params)
 
     async def native_write_file(self, contents: str, path: str) -> None:
+        """Write string contents to a file"""
         params: dict[str, Any] = {
             "contents": contents,
             "path": path,
@@ -4162,14 +5320,17 @@ class MethodsMixin:
         await self.call(METHOD_NATIVE_WRITE_FILE, params)
 
     async def native_xcode_path(self) -> NativeXcodePathResponse:
+        """Get the active Xcode developer directory path"""
         result = await self.call(METHOD_NATIVE_XCODE_PATH)
         return result
 
     async def native_xcode_version(self) -> NativeXcodeVersionResponse:
+        """Get the installed Xcode version"""
         result = await self.call(METHOD_NATIVE_XCODE_VERSION)
         return result
 
     async def native_zip(self, destination: str, source: str) -> None:
+        """Create a zip archive from files or a directory"""
         params: dict[str, Any] = {
             "destination": destination,
             "source": source,
@@ -4177,10 +5338,16 @@ class MethodsMixin:
         await self.call(METHOD_NATIVE_ZIP, params)
 
     async def native_zoom_enabled(self) -> NativeZoomEnabledResponse:
+        """Check if Zoom accessibility is enabled"""
         result = await self.call(METHOD_NATIVE_ZOOM_ENABLED)
         return result
 
     async def output_state(self, state: "OutputState") -> OutputStateResponse:
+        """Set a HUD channel's current semantic output state — a document of what is true for the person, in human language, consumed by every renderer; supersedes the previous state
+
+        state: The document that becomes the channel's current state. Its `channel`
+            must be owned by the calling plugin.
+        """
         params: dict[str, Any] = {
             "state": state,
         }
@@ -4188,6 +5355,36 @@ class MethodsMixin:
         return result
 
     async def overrides_apply(self, action: str, collection: str, field: str | None = None, fields: Any | None = None, id: str | None = None, new_id: str | None = None, tenant: str | None = None) -> OverridesApplyResponse:
+        """Add, remove, restore, patch, rename, revert (reset one entry to its plugin default), or reset user overrides for a collection
+
+        action: Action: "add", "remove", "restore", "reset", "patch", "rename", or
+            "revert".
+        collection: Collection name to override.
+        field: Field key for the "unpatch" action — removes ONE field from the
+            tenant's patch of `id` (the per-field inverse of "patch"; the patch
+            entry is dropped when its last field goes). The settings form's
+            per-field revert: sparse by construction, so the reverted field
+            resumes tracking the shipped default. Ignored by other actions.
+            default null
+        fields: Partial record fields for "patch", or complete record for "add".
+            default null
+        id: Record ID (id_field value) for patch/remove/restore actions. For
+            "rename" it is the entry's *current* key (surface form) to replace; for
+            "revert" the current key of the entry to reset to its plugin default.
+            default null
+        new_id: New key (id_field value) for the "rename" action — the entry is re-added
+            under this key with every other field (value, aliases) preserved.
+            Ignored by other actions.
+            default null
+        tenant: Which overlay tenant this mutation targets — a writer-namespace value
+            (`"_user"` or a plugin id). Defaults: a plugin caller targets its OWN
+            overlay; a host caller targets `"_user"`. A plugin transporting a user
+            gesture from its settings tab says `"_user"` explicitly; it may never
+            target another plugin's overlay. Plugin overlays carry per-field
+            patches only (`patch`/`restore`/`reset`) — annotation, not authorship
+            (docs/design/DESIGN_WRITER_SCOPED_OVERLAY.md).
+            default null
+        """
         params: dict[str, Any] = {
             "action": action,
             "collection": collection,
@@ -4206,10 +5403,20 @@ class MethodsMixin:
         return result
 
     async def overrides_list(self) -> list[OverlayRow]:
+        """List overlay entries — a plugin sees which collections carry its annotations (including dangling ids to prune); the host sees every tenant"""
         result = await self.call(METHOD_OVERRIDES_LIST)
         return (result or {}).get("overlays") or []
 
     async def pipelines_grammar(self, full: bool | None = None) -> PipelinesGrammarResponse:
+        """Get the current command grammar word list — or, with full=true, the complete vocabulary_update seed payload (words, narrow_to, weights, DAG)
+
+        full: When true, also return the full `vocabulary_update` payload a starting
+            recognition pipeline would be seeded with — words plus narrow_to,
+            word_weights, and the structured grammar DAG. Read-only: exporting
+            does not touch the committed-vocab accounting. Used by the
+            voice-regress harness to decode against the exact live grammar.
+            default false
+        """
         params: dict[str, Any] = {
         }
         if full is not None:
@@ -4218,6 +5425,19 @@ class MethodsMixin:
         return result
 
     async def pipelines_inject(self, event_type: str, name: str, stage: str, data: Any | None = None) -> PipelinesInjectResponse:
+        """Send a custom configuration event to one stage of a running pipeline
+
+        data: default null
+        event_type: Must be a custom event type — `ext.<vendor>.<name>`. The typed families
+            (`audio_*`, `transcript`, `vocabulary_update`) are the platform's to
+            send; a plugin forging one into its own pipeline was previously
+            unchecked here.
+        name: Pipeline to configure. The caller must have introduced it.
+        stage: Stage within that pipeline, spelled as the pipeline definition spells
+            it — a role like `_platform.stt` or a qualified stage name. Required:
+            before per-stage channels existed this operation could only ever reach
+            the terminal stage, and silently did nothing for any other.
+        """
         params: dict[str, Any] = {
             "event_type": event_type,
             "name": name,
@@ -4229,6 +5449,11 @@ class MethodsMixin:
         return result
 
     async def pipelines_run(self, name: str, ephemeral: bool | None = None, param_overrides: dict[str, Any] | None = None) -> PipelinesRunResponse:
+        """Start a named pipeline
+
+        ephemeral: default false
+        param_overrides: default {}
+        """
         params: dict[str, Any] = {
             "name": name,
         }
@@ -4240,10 +5465,19 @@ class MethodsMixin:
         return result
 
     async def pipelines_status(self) -> PipelinesStatusResponse:
+        """List currently running pipelines"""
         result = await self.call(METHOD_PIPELINES_STATUS)
         return result
 
     async def pipelines_stop(self, name: str, audio_cutoff_ms: int | None = None) -> PipelinesStopResponse:
+        """Stop a running pipeline by name
+
+        audio_cutoff_ms: Shared-clock position (the AudioChunk timestamp_ms timebase) after
+            which buffered audio must not be processed — e.g. the onset of a
+            detected dictation stop phrase, from the transcript's word_onsets_ms.
+            Absent = process everything.
+            wire uint64 (64-bit) · default null · min 0
+        """
         params: dict[str, Any] = {
             "name": name,
         }
@@ -4253,6 +5487,13 @@ class MethodsMixin:
         return result
 
     async def pipelines_warm(self, name: str, param_overrides: dict[str, Any] | None = None) -> PipelinesWarmResponse:
+        """Pre-spawn + pre-load a pipeline's recognizer stages (grammar built off the hold path)
+
+        param_overrides: Per-stage param overrides applied to the warmed consumer stages, mirroring
+            `pipelines.run`. Lets a caller prewarm the model it will actually run (e.g.
+            a user-selected STT model) instead of only the pipeline's default.
+            default {}
+        """
         params: dict[str, Any] = {
             "name": name,
         }
@@ -4262,6 +5503,14 @@ class MethodsMixin:
         return result
 
     async def plugin_data_export(self, path: str, filename: str | None = None) -> PluginDataExportResponse:
+        """Copy one file out of the caller's own data dir into Downloads and reveal it (the one egress a plugin cannot perform itself)
+
+        filename: Name to save it under. Defaults to the source file's name. A path
+            separator here is refused rather than resolved — this names a file in
+            Downloads, not a location.
+            default null
+        path: Path of the file to export, relative to the caller's data dir.
+        """
         params: dict[str, Any] = {
             "path": path,
         }
@@ -4271,6 +5520,23 @@ class MethodsMixin:
         return result
 
     async def plugin_debug(self, data: Any | None = None, level: "PluginLogLevel" | None = None, tag: str | None = None) -> None:
+        """Write a diagnostic line to this plugin's per-plugin log file. Use shared.Logf instead for cross-cutting coordination lines that belong in actuator.log.
+
+        data: Arbitrary JSON payload — serialized to one line in the log file
+            so `tail -f` and `grep` work, while `jq` can still operate on
+            the payload column.
+            default null
+        level: Severity level for the line. v1 callers omit this and the handler
+            falls through to `Debug`; v2 callers pass one of
+            `trace`/`debug`/`info`/`warn`/`error`. Lines below the per-plugin
+            threshold are dropped at the handler; `warn`/`error` additionally
+            cross-post to `actuator.log` via the `plugin.diagnostic` event.
+        tag: Optional structural tag (e.g. `BK_ACTIVATE_PATH`, `STT_BATCH`).
+            Renders between the timestamp and the payload in the per-plugin
+            log file, matching the actuator log's `[TAG]` column convention.
+            Empty/missing renders as `[<ts>] <payload>` with no tag bracket.
+            default null
+        """
         params: dict[str, Any] = {
         }
         if data is not None:
@@ -4282,6 +5548,25 @@ class MethodsMixin:
         await self.call(METHOD_PLUGIN_DEBUG, params)
 
     async def plugin_report_health(self, degraded: bool, reason: str | None = None) -> None:
+        """Report whether this plugin can do its job. For a standing condition the platform cannot see from outside — a companion app disconnected, a device unplugged — not for a call that failed once.
+
+        degraded: `true` when the plugin is running but cannot do its job — an external
+            dependency it needs is gone, a device it drives is unplugged, a
+            companion it talks to has disconnected. `false` clears the report.
+
+            This is NOT for "something failed once": a failed call is a failed
+            call. It is for a standing condition the user can act on and would
+            otherwise have to guess at.
+        reason: One user-facing sentence saying what is wrong and, where possible, what
+            to do about it — "Chrome — extension disconnected; reload it at
+            chrome://extensions". The plugin owns this text; the platform invents
+            no copy for a plugin's failure.
+
+            Required when `degraded` is true and ignored otherwise. Truncated to
+            200 characters (one status line; a plugin with more to say has
+            `plugin.debug`) and rendered as data, never markup.
+            default null
+        """
         params: dict[str, Any] = {
             "degraded": degraded,
         }
@@ -4290,6 +5575,7 @@ class MethodsMixin:
         await self.call(METHOD_PLUGIN_REPORT_HEALTH, params)
 
     async def privacy_get_recording(self, name: str) -> PrivacyGetRecordingResponse:
+        """Read the effective recording flag for a log-kind collection (privacy control plane)"""
         params: dict[str, Any] = {
             "name": name,
         }
@@ -4297,6 +5583,7 @@ class MethodsMixin:
         return result
 
     async def privacy_set_recording(self, enabled: bool, name: str) -> None:
+        """Toggle the recording flag on a log-kind collection (privacy control plane)"""
         params: dict[str, Any] = {
             "enabled": enabled,
             "name": name,
@@ -4304,10 +5591,16 @@ class MethodsMixin:
         await self.call(METHOD_PRIVACY_SET_RECORDING, params)
 
     async def privileges_list(self) -> list[PrivilegeStatusEntry]:
+        """The caller's own declared privileges with live granted/pending/denied state"""
         result = await self.call(METHOD_PRIVILEGES_LIST)
         return (result or {}).get("privileges") or []
 
     async def privileges_relinquish(self, privilege: str) -> PrivilegesRelinquishResponse:
+        """Give back one of the caller's optional privileges: returns a live grant and/or withdraws a pending request; de-escalation, no consent needed
+
+        privilege: Privilege name — must appear in the calling plugin's
+            `optional_privileges`.
+        """
         params: dict[str, Any] = {
             "privilege": privilege,
         }
@@ -4315,6 +5608,15 @@ class MethodsMixin:
         return result
 
     async def privileges_request(self, privilege: str, reason: str | None = None) -> PrivilegesRequestResponse:
+        """Request one of the caller's declared optional privileges; lands as an Approve/Dismiss to-do on the Plugins page
+
+        privilege: Privilege name — must appear in the calling plugin's
+            `optional_privileges`.
+        reason: Short attributed reason shown to the user next to the Approve
+            button (e.g. "script 'headphones' uses query:power"). Untrusted
+            text; capped server-side.
+            default ""
+        """
         params: dict[str, Any] = {
             "privilege": privilege,
         }
@@ -4324,6 +5626,15 @@ class MethodsMixin:
         return result
 
     async def recognition_bias_apply(self, strength: float, force: bool | None = None) -> RecognitionBiasApplyResponse:
+        """Apply a calibration-measured strength to the never-standalone recognition bias (provenance: calibration); refuses over a manually-set value unless force
+
+        force: Overwrite a manually-set value. Without it, `manual` provenance refuses
+            (`applied: false`) so the caller can confirm with the user first — a
+            calibration apply must never silently clobber a hand-set value.
+            default false
+        strength: Strength to apply (> 0; the setting is also switched on).
+            wire double
+        """
         params: dict[str, Any] = {
             "strength": strength,
         }
@@ -4333,10 +5644,18 @@ class MethodsMixin:
         return result
 
     async def recognition_bias_get(self) -> RecognitionBiasGetResponse:
+        """Read the never-standalone recognition bias (enabled, strength, provenance)"""
         result = await self.call(METHOD_RECOGNITION_BIAS_GET)
         return result
 
     async def recognition_bias_set(self, enabled: bool | None = None, strength: float | None = None) -> RecognitionBiasSetResponse:
+        """Manually set the never-standalone recognition bias (provenance: manual); the write path behind the Recordings tab's control
+
+        enabled: Omitted = leave the on/off half unchanged.
+            default null
+        strength: Omitted = leave the stored strength unchanged. Negative → 0.
+            wire double · default null
+        """
         params: dict[str, Any] = {
         }
         if enabled is not None:
@@ -4347,6 +5666,14 @@ class MethodsMixin:
         return result
 
     async def recognition_redecode(self, items: list["RedecodeItem"], model: str, stage: str, max_active: int | None = None) -> RecognitionRedecodeResponse:
+        """Re-decode the caller's own captured audio through a registered recognizer stage against the LIVE grammar (the fragility ladder) — the actuator runs it because the grammar is platform state and plugins cannot exec
+
+        max_active: wire uint32 · default null · min 0
+        model: Model dir name under app-support `models/` (single component, no
+            traversal), e.g. `"sherpa-offline-nemo"`.
+        stage: Registered stage id whose binary's `probe` subcommand runs the re-decode,
+            e.g. `"voice.sherpa_commands"`. Validated against the stage registry.
+        """
         params: dict[str, Any] = {
             "items": items,
             "model": model,
@@ -4358,6 +5685,11 @@ class MethodsMixin:
         return result
 
     async def selection_pick(self, index: int) -> SelectionPickResponse:
+        """Resolve a selection pick by index — clears selection state, emits event, closes HUD
+
+        index: Zero-based index into the previously-set selection items array.
+            wire uint64 (64-bit) · min 0
+        """
         params: dict[str, Any] = {
             "index": index,
         }
@@ -4365,6 +5697,15 @@ class MethodsMixin:
         return result
 
     async def selection_set(self, channel: str | None = None, items: Any | None = None, title: str | None = None) -> None:
+        """Show the selection HUD with items for the user to pick from
+
+        channel: HUD channel to show the selection in. Defaults to `"main"`.
+            default null
+        items: Array of `HUDItem` objects: `{ id, tag?, title, subtitle?, icon? }`.
+            default null
+        title: Optional title displayed at the top of the selection HUD.
+            default null
+        """
         params: dict[str, Any] = {
         }
         if channel is not None:
@@ -4376,28 +5717,60 @@ class MethodsMixin:
         await self.call(METHOD_SELECTION_SET, params)
 
     async def session_boundary(self) -> None:
+        """Emit _platform.input.session_boundary at actual session boundaries"""
         await self.call(METHOD_SESSION_BOUNDARY)
 
     async def session_end_cleanup(self) -> SessionEndCleanupResponse:
+        """Tear down input-session HUD/tag state and emit session_ended event"""
         result = await self.call(METHOD_SESSION_END_CLEANUP)
         return result
 
     async def settings_patch_signals(self, signals: str) -> None:
+        """Push Datastar signal patches to the calling plugin's active settings SSE streams
+
+        signals: Datastar signal expression, e.g. `{activeGroup: 2, activeDialModeIndex: 1}`.
+            Sent as a `datastar-patch-signals` SSE event to all active settings streams.
+        """
         params: dict[str, Any] = {
             "signals": signals,
         }
         await self.call(METHOD_SETTINGS_PATCH_SIGNALS, params)
 
     async def settings_redirect(self, tab: str) -> None:
+        """Navigate the settings UI to a tab declared by the calling plugin"""
         params: dict[str, Any] = {
             "tab": tab,
         }
         await self.call(METHOD_SETTINGS_REDIRECT, params)
 
     async def settings_refresh(self) -> None:
+        """Trigger a full re-render of all active settings SSE streams"""
         await self.call(METHOD_SETTINGS_REFRESH)
 
     async def settings_rules_create(self, newruleactionjson: str | None = None, newruleactiontype: str | None = None, newruleactionval: str | None = None, newrulecategory: str | None = None, newruleclearstags: str | None = None, newruledescription: str | None = None, newrulephrase: str | None = None, newrulerequirestags: str | None = None, newrulesetstags: str | None = None) -> SettingsRulesCreateResponse:
+        """Create a new user voice command from settings-UI signals
+
+        newruleactionjson: Raw JSON action body, used when `newruleactiontype = "json"`.
+            default null
+        newruleactiontype: Action variant (dotted type like "system.volume_up", "sequence", "json", ...).
+            Determines which other `newruleaction*` fields are consumed.
+            default null
+        newruleactionval: Action value used by simple action types (e.g. text for "input.type").
+            default null
+        newrulecategory: Category bucket the rule belongs to. Defaults to "User".
+            default null
+        newruleclearstags: Comma-separated tags the rule clears when it fires.
+            default null
+        newruledescription: Optional human-readable description shown in the rules table.
+            default null
+        newrulephrase: The phrase the user wants matched (with optional `<slot>` placeholders).
+            Required — `build_command_from_signals` rejects an empty phrase.
+            default null
+        newrulerequirestags: Comma-separated tags required for the rule to match.
+            default null
+        newrulesetstags: Comma-separated tags the rule sets when it fires.
+            default null
+        """
         params: dict[str, Any] = {
         }
         if newruleactionjson is not None:
@@ -4422,6 +5795,20 @@ class MethodsMixin:
         return result
 
     async def settings_rules_update(self, canonical: str, newruleactionjson: str | None = None, newruleactiontype: str | None = None, newruleactionval: str | None = None, newrulecategory: str | None = None, newruleclearstags: str | None = None, newruledescription: str | None = None, newrulephrase: str | None = None, newrulerequirestags: str | None = None, newrulesetstags: str | None = None) -> SettingsRulesUpdateResponse:
+        """Update an existing user voice command from settings-UI signals
+
+        canonical: Existing canonical command id (the previous canonical phrase) of
+            the rule being updated. Required.
+        newruleactionjson: default null
+        newruleactiontype: default null
+        newruleactionval: default null
+        newrulecategory: default null
+        newruleclearstags: default null
+        newruledescription: default null
+        newrulephrase: default null
+        newrulerequirestags: default null
+        newrulesetstags: default null
+        """
         params: dict[str, Any] = {
             "canonical": canonical,
         }
@@ -4447,6 +5834,12 @@ class MethodsMixin:
         return result
 
     async def system_launch_app(self, bundle_id: str, new_instance: bool | None = None) -> None:
+        """Launch an app and post a 'Launching' notification to the HUD
+
+        bundle_id: Bundle ID of the application to launch (e.g. "com.apple.Safari").
+        new_instance: Whether to launch a fresh instance even if the app is already running.
+            default false
+        """
         params: dict[str, Any] = {
             "bundle_id": bundle_id,
         }
@@ -4455,6 +5848,16 @@ class MethodsMixin:
         await self.call(METHOD_SYSTEM_LAUNCH_APP, params)
 
     async def system_notify(self, body: str, title: str, duration_secs: int | None = None) -> None:
+        """Show a HUD notification with title and body text
+
+        body: Notification body text (rendered inside `<div id="body-text">`).
+        duration_secs: Auto-dismiss duration in seconds. When absent, defaults to
+            [`DEFAULT_NOTIFY_DURATION_SECS`] (5s). Pass `0` for a sticky
+            notification that only closes when the user clicks Dismiss.
+            Pass any positive integer for a custom duration.
+            wire uint32 · default null · min 0
+        title: Notification title (rendered as `<h1 id="title">`).
+        """
         params: dict[str, Any] = {
             "body": body,
             "title": title,
@@ -4464,16 +5867,22 @@ class MethodsMixin:
         await self.call(METHOD_SYSTEM_NOTIFY, params)
 
     async def system_run_shell(self, command: str) -> None:
+        """Run a shell command via /bin/bash -c (security-sensitive)
+
+        command: Shell command to execute via `/bin/bash -c`.
+        """
         params: dict[str, Any] = {
             "command": command,
         }
         await self.call(METHOD_SYSTEM_RUN_SHELL, params)
 
     async def trial_begin(self) -> TrialBeginResponse:
+        """Open a calibration trial — writes _platform.calibration.active, returns a trial_id"""
         result = await self.call(METHOD_TRIAL_BEGIN)
         return result
 
     async def trial_end(self, trial_id: str) -> TrialEndResponse:
+        """Close a calibration trial — clears the tag and spawns release RPCs to fixture owners"""
         params: dict[str, Any] = {
             "trial_id": trial_id,
         }
@@ -4481,6 +5890,10 @@ class MethodsMixin:
         return result
 
     async def trial_enter_context(self, command_id: str, trial_id: str) -> TrialEnterContextResponse:
+        """Enter a command's context for a trial — writes mode-gated requires_tags (platform write) or forwards trial_apply_fixture to a dynamic command's owner — and returns the entered context (kind + tags + fixture_handle)
+
+        command_id: Command id from `commands.enumerate` — `<owner_plugin>:<pattern>`.
+        """
         params: dict[str, Any] = {
             "command_id": command_id,
             "trial_id": trial_id,
@@ -4489,6 +5902,7 @@ class MethodsMixin:
         return result
 
     async def trial_register_fixture(self, fixture_handle: str, owner_plugin_id: str, trial_id: str) -> None:
+        """Register a fixture handle under an open trial so trial_end can release it"""
         params: dict[str, Any] = {
             "fixture_handle": fixture_handle,
             "owner_plugin_id": owner_plugin_id,
@@ -4497,6 +5911,10 @@ class MethodsMixin:
         await self.call(METHOD_TRIAL_REGISTER_FIXTURE, params)
 
     async def trial_resolve_samples(self, command_id: str) -> list[str]:
+        """Resolve concrete prompt phrases for a command whose vocabulary the caller can't derive — forwards trial_samples to a dynamic command's owner (empty when the owner doesn't implement the optional hook; the host then falls back to its own default).
+
+        command_id: Command id from `commands.enumerate` — `<owner_plugin>:<pattern>`.
+        """
         params: dict[str, Any] = {
             "command_id": command_id,
         }
@@ -4504,8 +5922,10 @@ class MethodsMixin:
         return (result or {}).get("prompts") or []
 
     async def vocabulary_commit(self) -> None:
+        """Commit pending vocabulary additions to the recognition pipeline"""
         await self.call(METHOD_VOCABULARY_COMMIT)
 
     async def wiring_describe(self) -> list[WiringCollection]:
+        """Describe the resolved collection graph as the caller can see it"""
         result = await self.call(METHOD_WIRING_DESCRIBE)
         return (result or {}).get("collections") or []

@@ -5,9 +5,11 @@ from typing import Any, Literal, NotRequired, TypedDict
 
 # ===== Shared types (from components/schemas) =====
 
+# Detailed info about an accessibility element.
 AXElementInfo = TypedDict("AXElementInfo", {
     "actions": list[str],
     "attributes": list[str],
+    # wire uint32 · min 0
     "children_count": int,
     "description": NotRequired[str],
     "enabled": bool,
@@ -21,46 +23,111 @@ AXElementInfo = TypedDict("AXElementInfo", {
     "value": NotRequired[Any],
 })
 
+# A tree node of accessibility elements (recursive).
+#
+# schemars handles the self-reference automatically via a `$defs`
+# entry — no `#[schema(no_recursion)]` annotation needed (that was
+# utoipa-specific and was dropped in Phase 2j-utoipa-removal).
 AXElementNode = TypedDict("AXElementNode", {
     "children": list["AXElementNode"],
     "element": "AXElementInfo",
 })
 
+# A reference to an accessibility element by PID + path from the application root.
 AXElementRef = TypedDict("AXElementRef", {
+    # default []
     "path": NotRequired[list["AXPathSegment"]],
+    # wire int32
     "pid": int,
 })
 
+# A segment of an accessibility element path (role + index among siblings with that role).
 AXPathSegment = TypedDict("AXPathSegment", {
+    # wire uint32 · min 0
     "index": int,
     "role": str,
 })
 
+# Schema for a single field within an action type.
 ActionFieldSchema = TypedDict("ActionFieldSchema", {
+    # Shipped default value. REQUIRED on every field of a
+    # `preset: settings` collection — the settings base record is
+    # materialized from these at read time, which is what makes default
+    # evolution work (an untouched field always reads the CURRENT shipped
+    # default, never a stale saved copy). Validated against `field_type`
+    # at manifest load. Advisory elsewhere (generic UIs may prefill).
     "default": NotRequired[Any],
+    # One line saying what this setting DOES, rendered under the label
+    # wherever the platform draws the field — the Collections view, and any
+    # generic form.
+    #
+    # A label names a setting; this says why you would touch it. Every
+    # hand-written settings tab in this repo carries such a line
+    # ("Auto-correct when Whisper outputs entirely in UPPERCASE"), and a
+    # field described here is described identically in every surface that
+    # renders it, including your own.
     "description": str,
+    # Optional display role for generic UI rendering. See `FieldDisplay`.
+    # Currently consumed by the Collections tab's log-kind timeline view
+    # to pick which fields appear in the row summary.
+    #
+    # Deserialization is deliberately LENIENT: an unrecognized role string
+    # degrades to `None` instead of failing the whole manifest parse.
+    # Display roles are guaranteed display-only (the matcher never reads
+    # them), so a plugin built against a newer SDK that declares a role
+    # this host predates must still load — strictness tracks blast
+    # radius. The typo-catching strictness lives at publish time
+    # (branchkit-gen validates against the schema's closed enum) and in
+    # the load-time validator, which walks the raw JSON and emits a loud
+    # warning for every unknown role it degraded. See
+    # docs/design/DESIGN_COLLECTION_FIELD_ROLES.md, Decision 5.
     "display": NotRequired["FieldDisplay"],
+    # Allowed string values for `field_type: "enum"`. Ignored otherwise.
     "enum_values": list[str],
+    # Declared type for this field. See `FieldType`.
+    # default "string"
     "field_type": "FieldType",
+    # Nested field list for `field_type: "object"` (recursive). Ignored
+    # for other field types.
     "fields": list["ActionFieldSchema"],
+    # JSON key name (e.g. "selector", "direction").
     "key": str,
+    # Human-readable label for UI rendering.
+    # default ""
     "label": str,
+    # Placeholder text for input fields.
     "placeholder": NotRequired[str],
+    # Whether this field is required.
+    # default false
     "required": bool,
 })
 
+# Schema declaration for a plugin-defined action type.
+# Enables generic UI rendering (structured editor fields) for any plugin's actions.
 ActionTypeSchema = TypedDict("ActionTypeSchema", {
+    # Ordered list of fields for this action type.
     "fields": list["ActionFieldSchema"],
+    # Human-readable label (e.g. "Click Element", "Snap Window").
+    # default ""
     "label": str,
+    # Supported interaction modes: "tap" (single press), "hold" (start/stop via phase),
+    # and/or "toggle" (start/stop cycle). Defaults to ["tap"] if omitted.
     "modes": list[str],
 })
 
+# The currently active space per display.
 ActiveSpace = TypedDict("ActiveSpace", {
+    # The display ID.
+    # wire uint32 · min 0
     "display_id": int,
+    # The currently active space ID on that display.
+    # wire uint64 (64-bit) · min 0
     "space_id": int,
 })
 
+# An audio input/output device.
 AudioDevice = TypedDict("AudioDevice", {
+    # wire uint32 · min 0
     "id": int,
     "is_default_input": bool,
     "is_default_output": bool,
@@ -71,36 +138,55 @@ AudioDevice = TypedDict("AudioDevice", {
 })
 
 BarcodeResult = TypedDict("BarcodeResult", {
+    # wire double
     "height": float,
     "payload": str,
     "symbology": str,
+    # wire double
     "width": float,
+    # wire double
     "x": float,
+    # wire double
     "y": float,
 })
 
+# A GATT characteristic.
 BleCharacteristic = TypedDict("BleCharacteristic", {
     "properties": list[str],
     "uuid": str,
 })
 
+# A GATT service with its characteristics.
 BleService = TypedDict("BleService", {
     "characteristics": list["BleCharacteristic"],
     "uuid": str,
 })
 
+# A write to perform during the subscribe-and-write GATT cycle.
 BleWriteEntry = TypedDict("BleWriteEntry", {
+    # Characteristic UUID to write to.
     "characteristic_uuid": str,
+    # Data bytes to write.
+    # default []
     "data": NotRequired[list[int]],
+    # GATT service UUID containing the target characteristic.
     "service_uuid": str,
+    # Write type: "with_response" (default) or "without_response".
+    # default "with_response"
     "write_type": NotRequired[str],
 })
 
+# A paired or connected Bluetooth device.
 BluetoothDevice = TypedDict("BluetoothDevice", {
+    # Device MAC address.
     "address": str,
+    # Device type hint (e.g. "headphones", "keyboard"), if available.
     "device_type": NotRequired[str],
+    # Whether the device is currently connected.
     "is_connected": bool,
+    # Whether the device is paired.
     "is_paired": bool,
+    # Device name.
     "name": str,
 })
 
@@ -120,6 +206,7 @@ CameraDevice = TypedDict("CameraDevice", {
     "unique_id": str,
 })
 
+# Clipboard contents read from the OS.
 ClipboardContents = TypedDict("ClipboardContents", {
     "available_types": list[str],
     "content_type": str,
@@ -128,6 +215,7 @@ ClipboardContents = TypedDict("ClipboardContents", {
     "text": NotRequired[str],
 })
 
+# An item to write to the clipboard with typed content.
 ClipboardWriteItem = TypedDict("ClipboardWriteItem", {
     "content_type": str,
     "file_urls": NotRequired[list[str]],
@@ -135,29 +223,110 @@ ClipboardWriteItem = TypedDict("ClipboardWriteItem", {
     "text": NotRequired[str],
 })
 
+# One record to upsert. Same shape as the older single-record wire form
+# `{id, payload}`; bulk callers pass multiple entries in one call.
+# `payload` is optional on the wire (OpenRPC marks only `id` as
+# required); a missing payload deserializes as `Value::Null` so
+# schema-driven SDK codegen can omit it without tripping a
+# `missing field` parse error here.
 CollectionPutEntry = TypedDict("CollectionPutEntry", {
     "id": str,
+    # default null
     "payload": NotRequired[Any],
 })
 
+# One record as returned by a backend. The `id` field is whatever the
+# collection's `id_strategy` resolves to (auto-ulid string, by-field value,
+# key/value composite, or "singleton" for singleton collections).
+#
+# The wire / schema name is `CollectionRecord` to avoid colliding with
+# TypeScript's builtin `Record<K, V>` utility type (the codegen emits
+# `Record<string, T>` map shapes alongside our own types).
 CollectionRecord = TypedDict("CollectionRecord", {
+    # Writer-chosen group label — which of the writer's named replace-sets
+    # this record belongs to. `None` = ungrouped, the common case.
+    #
+    # Groups exist so one plugin can maintain several independent record sets
+    # in one collection, each replaced without touching the others — command
+    # sources are the motivating case (`commands.push`'s `group` stamps
+    # this). Meaningful only WITHIN a writer: (writer, group) is the scope a
+    # grouped replace computes its complement over, so two plugins using the
+    # same group label never interact.
+    #
+    # **Last write, unlike `writer`.** Ownership is creation-stamped because
+    # a record must not change hands by being touched; group is a placement,
+    # and re-putting a record under a different group MOVES it — the old
+    # group's next replace must not still count it.
+    #
+    # Storage support varies by backend shape: backends without a per-record
+    # envelope (shared_overrides' contribution blobs) REFUSE writes carrying
+    # a group rather than dropping it silently — see `backend_conformance`.
     "group": NotRequired[str],
     "id": str,
+    # Actor label of the writer that CREATED this record — which hosted
+    # thing the `writer` plugin was acting for. `None` for the ordinary
+    # case: a plugin acting only for itself.
+    #
+    # Creation-stamped, exactly like `writer` and for the same reason: it
+    # is the finer-grained half of the same answer ("whose record is
+    # this"), so touching a record must not relabel it. Last-touch
+    # attribution is the audit log's job, and it carries the label too.
+    #
+    # **Not an ownership axis.** `collection.replace` scopes its
+    # complement by `writer` alone; two scripts hosted by one plugin share
+    # one owner, because the platform grants and enforces at the plugin.
+    # Making this a scoping key would turn an observability label into a
+    # sub-principal, which `docs/design/DESIGN_HOST_PLUGINS.md` forbids. Per-
+    # hosted-thing separation is the host's job — one host-owned
+    # collection namespaced by script, not a platform ownership rule.
     "on_behalf_of": NotRequired[str],
     "payload": NotRequired[Any],
+    # Monotonic per-record write counter, backend-maintained. Increments
+    # on every put/patch of the same id; starts at 1. Reserved as the
+    # compare-and-swap anchor (`put` opt `if_version`) so optimistic
+    # concurrency never needs a breaking envelope change. `0` = written
+    # before this field existed.
+    # wire uint64 (64-bit) · default 0 · min 0
     "revision": int,
+    # Unix-milliseconds write time, backend-maintained. Log-shaped
+    # records carry their append time (ULID-aligned); keyed records the
+    # last write. `0` = written before this field existed.
+    # wire uint64 (64-bit) · default 0 · min 0
     "timestamp_ms": int,
+    # Who owns this record: the plugin id that CREATED it, or `_platform`
+    # for host writes. Backend-maintained. `""` = written before this field
+    # existed.
+    #
+    # **Creation, not last touch** — deliberately unlike `revision` and
+    # `timestamp_ms`, which both track the most recent write. A later write
+    # by a different plugin does not transfer ownership, because the
+    # question this field answers is "whose record is this", not "who
+    # touched it last". Last-touch is already served by the audit log; what
+    # the platform had no answer for was ownership.
+    #
+    # This is what lets a write be scoped to its author.
+    # `collection.replace` computes its complement over records whose writer
+    # is the caller, so a replace can only ever delete what that caller
+    # created — which is why a collection-wide replace is safe for any
+    # writer the collection accepts, not just its introducer, and why
+    # another plugin's records (and the user's) are invisible to the diff.
+    # `ListOpts.writer` is the read-side twin: ask for your own records.
+    #
+    # See docs/design/DESIGN_RECORD_OWNERSHIP.md.
+    # default ""
     "writer": str,
 })
 
 CollectionsListItem = TypedDict("CollectionsListItem", {
     "id": str,
+    # Plugin ID that contributed this item.
     "source": str,
     "subtitle": NotRequired[str],
     "title": str,
 })
 
 CollectionsListSection = TypedDict("CollectionsListSection", {
+    # wire uint · min 0
     "entry_count": int,
     "items": list["CollectionsListItem"],
     "label": str,
@@ -165,6 +334,25 @@ CollectionsListSection = TypedDict("CollectionsListSection", {
     "plugin": str,
 })
 
+# A user override of a command's *spoken phrase* — "say `new_pattern` instead
+# of `default_pattern` for `action`." A keyed delta on top of the contributed
+# defaults, owned by the platform and applied when the command union is built
+# (`rebuild_commands_cache`), so it wins over the default and survives the
+# contributing plugin/extension re-contributing on reconnect.
+#
+# Keyed by the stable `(action, default_pattern)` identity, NOT by the phrase
+# (which changes the instant you override it):
+#  - `action` — the full action id (`Action::type_label`, e.g.
+#    `browser.scroll`), carrying the plugin prefix so the layer stays
+#    plugin-agnostic across browser/tiling/system.
+#  - `default_pattern` — the default spoken form this replaces
+#    (`Command::display_name`, the actuator's canonical `<capture>` notation).
+#    Needed because one action can carry several patterns, each with its own
+#    params; the key names which one.
+#
+# A stale override (default renamed/removed upstream) simply stops matching
+# and the new default applies — single source + derived delta, no dual-sync.
+# See `docs/design/DESIGN_COMMAND_PHRASE_OVERRIDES.md`.
 CommandOverride = TypedDict("CommandOverride", {
     "action": str,
     "default_pattern": str,
@@ -173,10 +361,13 @@ CommandOverride = TypedDict("CommandOverride", {
 
 CommandRowData = TypedDict("CommandRowData", {
     "action": str,
+    # Raw action JSON for editor decomposition (complements the display `action` string).
     "action_json": NotRequired[Any],
     "canonical": str,
     "category": str,
     "clears_tags": list[str],
+    # Optional "what it does / use case" text from the command definition —
+    # the same field used as the HUD subtitle, shown in the command editor row.
     "description": NotRequired[str],
     "is_user": bool,
     "pattern": str,
@@ -184,28 +375,77 @@ CommandRowData = TypedDict("CommandRowData", {
     "requires_tags": list[str],
     "sets_tags": list[str],
     "tier": str,
+    # All expanded spoken forms (cartesian product of pattern alternatives).
     "variants": list[str],
 })
 
+# One Command in a `commands.push` payload — published purely for
+# discoverability. Wire deserialization goes through
+# `commands::parse_commands_with_templates` against the opaque JSON
+# value, so adding/removing a field here doesn't change runtime
+# behavior. Edit `commands::PartialCommand` first; mirror here.
 CommandSpec = TypedDict("CommandSpec", {
+    # Action fired on match. Plugin-typed: `{"type":"plugin", "action_type":"...","params":{...}}`
+    # or a built-in like `{"type":"key","code":36}`.
     "action": Any,
+    # When true, this gated command is allowed to win during a
+    # mid-bridge restricted resolve. Default false: gated sibling
+    # commands (`show_hints`, `dismiss`-style) are suppressed while
+    # the user is mid-codeword. Set true on explicit cancel words
+    # (`dismiss`, `cancel`, `exit`) that should be able to abort an
+    # in-progress bridge. See
+    # `docs/design/DESIGN_MULTI_CANDIDATE_BRIDGE.md`.
     "cancels_bridge": NotRequired[bool],
+    # Category shown in Settings UI command lists.
     "category": NotRequired[str],
+    # Tags this command clears from active_gates on match.
     "clears_tags": NotRequired[list[str]],
+    # One-line help text. Surfaced in Settings UI.
     "description": NotRequired[str],
+    # Prefix-discovery affordance for a `literal-prefix + tail-capture`
+    # command (e.g. `["jump", "<browser_tabs>"]`). Declaring it makes the
+    # bare prefix ("jump") speakable on its own: instead of firing, it opens
+    # the Discovery HUD over the capture's entries. One of:
+    # `"prefix"` (non-exclusive — the capture's words stay live in free
+    # context) or `"exclusive"` (entering the prefix flips an auto-minted
+    # mode so the words only decode while it holds — for large/dynamic sets).
+    # Only valid when the pattern is literal word(s) followed by a single
+    # tail capture; other shapes are rejected at load. See
+    # `docs/design/DESIGN_DISCOVERABLE_PREFIX.md`.
     "discovery": NotRequired[str],
+    # Discovery-HUD display override per capture binding name: when the
+    # HUD renders a capture slot of this command, enumerate the named
+    # collection instead of the matching one. Matching is untouched — a
+    # sealed/static matching collection can pair with a live display menu.
+    # Unknown capture names are inert. See
+    # `docs/design/DESIGN_CAPTURE_DISPLAY_FORMS.md`.
     "display_sources": NotRequired[dict[str, str]],
+    # Spoken pattern, e.g. `["switch", "<apps>"]`. Tokens are either
+    # literal strings or capture references like `<name:collection>`.
     "pattern": list[Any],
+    # Tags that must ALL be active for this command to match. Empty
+    # means the command is ungated (a global).
     "requires_tags": NotRequired[list[str]],
+    # Tags this command sets when it Partial-matches (mid-capture
+    # mode tag). Bound to the bridge's lifecycle; cleared on
+    # completion. See `docs/design/DESIGN_SETS_ON_PARTIAL.md`.
     "sets_on_partial": NotRequired[list[str]],
+    # Tags this command sets in active_gates on match.
     "sets_tags": NotRequired[list[str]],
+    # Optional command-variant declarations (alternate phrasings).
+    # Each variant inherits the parent's tags/action unless overridden.
     "variants": NotRequired[list[Any]],
 })
 
+# One acoustic collision: `target` (a candidate word) sounds like `confuser`
+# (an existing command word) and the two compete in the candidate's context.
 ConfusabilityFinding = TypedDict("ConfusabilityFinding", {
     "confuser": str,
+    # wire uint · min 0
     "distance": int,
+    # That command's display phrase, to name it in the warning.
     "example": str,
+    # Owning plugin of a command that emits the confuser.
     "owner": str,
     "target": str,
 })
@@ -220,15 +460,23 @@ ContactInfo = TypedDict("ContactInfo", {
 CpuInfo = TypedDict("CpuInfo", {
     "architecture": str,
     "chip": str,
+    # wire uint32 · min 0
     "core_count": int,
+    # wire uint32 · min 0
     "efficiency_cores": NotRequired[int],
+    # wire uint32 · min 0
     "performance_cores": NotRequired[int],
 })
 
+# A delivered notification.
 DeliveredNotification = TypedDict("DeliveredNotification", {
+    # Notification body text.
     "body": NotRequired[str],
+    # Delivery timestamp (ISO 8601).
     "delivered_at": str,
+    # Notification identifier.
     "id": str,
+    # Notification title.
     "title": str,
 })
 
@@ -237,11 +485,15 @@ DirectoryEntry = TypedDict("DirectoryEntry", {
     "is_symlink": bool,
     "name": str,
     "path": str,
+    # wire uint64 (64-bit) · min 0
     "size": int,
 })
 
 DiscoverItem = TypedDict("DiscoverItem", {
     "id": str,
+    # The subtitle is itself a matchable spoken form — the entry has an
+    # alias equal to its display name (e.g. a promoted selection record).
+    # Browse surfaces may mark the row so the user knows the name works.
     "speakable": bool,
     "subtitle": NotRequired[str],
     "tag": str,
@@ -250,55 +502,109 @@ DiscoverItem = TypedDict("DiscoverItem", {
 
 DisplayColorProfile = TypedDict("DisplayColorProfile", {
     "color_space": str,
+    # wire uint32 · min 0
     "display_id": int,
     "profile_name": str,
 })
 
 DisplayInfo = TypedDict("DisplayInfo", {
+    # wire int32
     "h": int,
+    # wire uint32 · min 0
     "id": int,
+    # wire int32 · default 0
     "visible_h": int,
+    # wire int32 · default 0
     "visible_w": int,
+    # Visible bounds (excluding menu bar and dock), in top-left origin coordinates.
+    # Zero if not available.
+    # wire int32 · default 0
     "visible_x": int,
+    # wire int32 · default 0
     "visible_y": int,
+    # wire int32
     "w": int,
+    # wire int32
     "x": int,
+    # wire int32
     "y": int,
 })
 
+# Full display metadata — richer than WorldModel's DisplayInfo.
 DisplayMetadata = TypedDict("DisplayMetadata", {
+    # CoreGraphics display ID.
+    # wire uint32 · min 0
     "display_id": int,
+    # wire int32
     "h": int,
+    # Whether this is a built-in display (laptop screen).
     "is_builtin": bool,
+    # Whether this is the primary display.
     "is_primary": bool,
+    # Human-readable display name (e.g. "Built-in Retina Display").
     "name": str,
+    # Display refresh rate in Hz (e.g. 60.0, 120.0).
+    # wire double
     "refresh_rate": float,
+    # Native pixel resolution height.
+    # wire uint32 · min 0
     "resolution_h": int,
+    # Native pixel resolution width.
+    # wire uint32 · min 0
     "resolution_w": int,
+    # Retina scale factor (e.g. 2.0 for HiDPI).
+    # wire double
     "scale_factor": float,
+    # wire int32
     "visible_h": int,
+    # wire int32
     "visible_w": int,
+    # Visible bounds (excluding menu bar and dock).
+    # wire int32
     "visible_x": int,
+    # wire int32
     "visible_y": int,
+    # wire int32
     "w": int,
+    # Full bounds in top-left origin screen coordinates.
+    # wire int32
     "x": int,
+    # wire int32
     "y": int,
 })
 
 DisplayRotation = TypedDict("DisplayRotation", {
+    # wire uint32 · min 0
     "degrees": int,
+    # wire uint32 · min 0
     "display_id": int,
 })
 
 EnumeratedCommand = TypedDict("EnumeratedCommand", {
+    # Dispatch action type, e.g. `"browser.scroll"` (template-resolved). The
+    # stable identity of what the command does — lets a companion correlate a
+    # spoken command with the action it triggers (the pattern is display text,
+    # not an identifier).
     "action": str,
+    # The ready-to-store keybind value (`{"action": "<dotted.type>",
+    # "params": {…}}`) when the command's action is statically bindable —
+    # a concrete plugin action with no capture template, no sequence, and
+    # no intrinsic phase. Absent otherwise. This is what the Keybinds
+    # tab's bind-a-command flow copies.
     "binding": NotRequired[Any],
+    # Optional grouping label from the command definition (e.g. "Navigation").
     "category": NotRequired[str],
+    # Optional human-readable "what it does / use case" text from the command
+    # definition — the same field used as the HUD subtitle.
     "description": NotRequired[str],
     "dynamic": bool,
+    # Same as `owner_plugin` when dynamic; omitted when static. Surfaced
+    # separately so callers can pattern-match `if let Some(owner) = ...`.
     "dynamic_owner": NotRequired[str],
+    # `<owner_plugin>:<display_pattern>` — stable across reloads.
     "id": str,
     "owner_plugin": str,
+    # Human-readable pattern (first option of each slot).
     "pattern": str,
     "requires_tags": list[str],
     "sets_tags": list[str],
@@ -306,10 +612,12 @@ EnumeratedCommand = TypedDict("EnumeratedCommand", {
 
 ExternalDisk = TypedDict("ExternalDisk", {
     "file_system": NotRequired[str],
+    # wire uint64 (64-bit) · min 0
     "free_bytes": int,
     "is_removable": bool,
     "mount_point": str,
     "name": str,
+    # wire uint64 (64-bit) · min 0
     "total_bytes": int,
 })
 
@@ -334,51 +642,83 @@ FieldDisplay = Literal["primary", "secondary", "group", "description", "payload"
 # declare statically.
 FieldType = Literal["string", "int", "number", "boolean", "string[]", "enum", "object", "json"]
 
+# Integer rectangle for window position and size. Mirrors the `Frame`
+# component in the Plugin RPC schema (used by `_platform.window.created` and
+# `_platform.window.frame_changed` event payloads).
 Frame = TypedDict("Frame", {
+    # wire int32
     "h": int,
+    # wire int32
     "w": int,
+    # wire int32
     "x": int,
+    # wire int32
     "y": int,
 })
 
 HidDeviceEntry = TypedDict("HidDeviceEntry", {
+    # wire uint32 · min 0
     "axes": int,
     "ble_uuid": NotRequired[str],
+    # wire uint32 · min 0
     "buttons": int,
     "id": str,
     "product": str,
+    # wire uint32 · min 0
     "product_id": int,
     "seized": bool,
     "transport": str,
+    # wire uint32 · min 0
     "vendor_id": int,
 })
 
+# A single input element from a HID device's report descriptor.
 HidElementEntry = TypedDict("HidElementEntry", {
+    # wire uint32 · min 0
     "bit_offset": int,
+    # wire uint32 · min 0
     "byte_offset": int,
+    # wire int64 (64-bit)
     "logical_max": int,
+    # wire int64 (64-bit)
     "logical_min": int,
+    # wire uint32 · min 0
     "report_count": int,
+    # wire uint32 · min 0
     "report_id": int,
+    # wire uint32 · min 0
     "report_size": int,
     "type": str,
+    # wire uint32 · min 0
     "usage": int,
+    # wire uint32 · min 0
     "usage_page": int,
 })
 
+# An available keyboard input source.
 InputSource = TypedDict("InputSource", {
+    # Input source identifier (e.g. "com.apple.keylayout.US").
     "id": str,
+    # Whether this is the currently active input source.
     "is_active": bool,
+    # Localized display name.
     "name": str,
 })
 
+# An installed application discovered by scanning the filesystem.
 InstalledApp = TypedDict("InstalledApp", {
     "bundle_id": str,
     "name": str,
 })
 
 ListCommandItem = TypedDict("ListCommandItem", {
+    # True iff this command's vocabulary depends on runtime state pushes
+    # (DependentCapture, or a capture against a collection no plugin
+    # declares in provides.collections). Calibration consumers use this
+    # to decide whether to invoke a fixture RPC.
     "dynamic": bool,
+    # Owning plugin when `dynamic` is true — the plugin to ask for a
+    # calibration fixture. Omitted for static commands.
     "dynamic_owner": NotRequired[str],
     "id": str,
     "subtitle": NotRequired[str],
@@ -391,30 +731,106 @@ ListCommandSection = TypedDict("ListCommandSection", {
     "title": str,
 })
 
+# Listing parameters for `list`. All fields optional — an empty `ListOpts`
+# asks a BACKEND for every record in default ordering. That is not what an
+# RPC caller gets: `StateService::list` substitutes
+# `StateService::DEFAULT_LIST_LIMIT` when the caller passed no `limit`, so
+# "every record" is the backend contract and never the plugin-visible one.
+# See docs/design/DESIGN_PLATFORM_LOAD_SAFEGUARDS.md.
+# CLOSED vocabulary (verb-surface consolidation, 2026-06-11): every
+# added opt must be shape-generic or explicitly shape-scoped and
+# documented in DESIGN_PLATFORM_STATE.md section 3.2 — an undisciplined
+# opts bag becomes a hidden taxonomy that defeats the eight-verb thesis.
 ListOpts = TypedDict("ListOpts", {
+    # Shape-scoped to `by_field` log collections (the compacted-changelog
+    # projection — see `docs/design/DESIGN_LOG_ANNOTATION_PROJECTION.md`, and
+    # DESIGN_PLATFORM_STATE.md §3.2). When true, a keyed log's raw appends
+    # are folded by their key field per the collection's `merge` and one
+    # record per key is returned (the record's current state) instead of the
+    # raw append history. Ignored by non-log backends; a validation error on
+    # an auto-ulid log (no key field to fold on). Absent/false = raw read.
     "compacted": NotRequired[bool],
+    # Opaque pagination cursor. Backends define the format; callers pass
+    # back the cursor value returned by a prior `list` call.
     "cursor": NotRequired[str],
+    # Maximum records to return. None = no limit AT THE BACKEND; over RPC,
+    # `StateService::list` substitutes `StateService::DEFAULT_LIST_LIMIT`
+    # for a caller that passed none, and emits a `LIST_TRUNCATED` diagnostic
+    # if that bound actually cut the result short. An explicit limit is
+    # honored either way, above or below the default.
+    # wire uint · min 0
     "limit": NotRequired[int],
+    # Inclusive lower bound on `timestamp_ms` (or equivalent ordering key).
+    # wire uint64 (64-bit) · min 0
     "since_ms": NotRequired[int],
+    # Exclusive upper bound on `timestamp_ms`.
+    # wire uint64 (64-bit) · min 0
     "until_ms": NotRequired[int],
+    # Shape-generic equality filter on `Record::writer` — return only records
+    # owned by this writer. Absent = every record, whoever owns it.
+    #
+    # This is the ONE in-verb extension DESIGN_PLATFORM_STATE.md section 3.2
+    # reserved ("the only in-verb extension we would entertain is equality
+    # filters on list opts"), spent here rather than on a general predicate
+    # language: it is exact equality on one structural envelope field, so it
+    # cannot compose into a query engine every backend must reimplement.
+    #
+    # It exists so a caller can ask for its OWN records — the read half of
+    # scoped writes. `collection.replace` computes its complement from this,
+    # which is what lets a replace be safe on a multi-writer collection
+    # without the introducer restriction. See docs/design/DESIGN_RECORD_OWNERSHIP.md.
+    #
+    # Filtering happens BEFORE `limit`, so a limited+filtered read returns up
+    # to `limit` MATCHING records rather than the matches within the first
+    # `limit` records. Backends are free to filter earlier as an optimization
+    # (skipping a whole non-matching contribution, say) as long as the
+    # observable result is identical — `backend_conformance` pins that.
     "writer": NotRequired[str],
 })
 
 ListeningPort = TypedDict("ListeningPort", {
+    # wire int32
     "pid": NotRequired[int],
+    # wire uint16 · min 0 · max 65535
     "port": int,
     "process_name": NotRequired[str],
     "protocol": str,
 })
 
+# One record in a log collection.
 LogEntry = TypedDict("LogEntry", {
+    # ULID — Crockford base32, sortable by creation time. Acts as the
+    # entry's primary key for `get(id)` and `delete(id)` calls.
     "id": str,
+    # Actor label of the writer that appended this entry — see
+    # `Record::on_behalf_of`. `None` for entries whose writer was acting
+    # only for itself, and for anything written before the field existed.
+    #
+    # Follows `writer` through the fold: the INTRODUCING entry's label
+    # stays on a folded record, so an annotation by another script does not
+    # relabel the record it annotates.
     "on_behalf_of": NotRequired[str],
+    # Plugin-defined entry payload. Validated against the collection's
+    # `fields` schema at append time by the service layer (not here).
     "payload": NotRequired[Any],
+    # Unix milliseconds. Duplicated from the ULID's embedded timestamp for
+    # cheap range queries that don't want to decode the ULID.
+    # wire uint64 (64-bit) · min 0
     "timestamp_ms": int,
+    # Plugin id that appended this entry, or `_platform` for host writes.
+    # `""` for entries written before this field existed — `serde(default)`
+    # so already-persisted logs rehydrate rather than failing to parse.
+    #
+    # Logs are append-once per ULID, so for a raw entry "creation writer"
+    # and "last writer" are the same thing. On a KEYED log they are not:
+    # the folded record keeps its INTRODUCING entry's writer, so an
+    # annotation by another plugin does not transfer ownership of the
+    # record it annotates. See `Record::writer`.
+    # default ""
     "writer": str,
 })
 
+# A login item (launch-at-login entry).
 LoginItem = TypedDict("LoginItem", {
     "bundle_id": NotRequired[str],
     "hidden": bool,
@@ -422,11 +838,16 @@ LoginItem = TypedDict("LoginItem", {
     "path": str,
 })
 
+# One `(record, field)` a tenant set, with the provenance of the decision.
 ManagedFieldRow = TypedDict("ManagedFieldRow", {
+    # Who applied it: a plugin id, or `_host` for the Settings UI.
     "actor": str,
+    # wire uint64 (64-bit) · min 0
     "at_unix_ms": int,
     "field": str,
     "id": str,
+    # `user` | `relayed` | `plugin` — whose intent this represents. `relayed`
+    # is a plugin's unverified claim to be carrying a user gesture.
     "origin": str,
 })
 
@@ -438,18 +859,35 @@ ManagedFieldRow = TypedDict("ManagedFieldRow", {
 MatchWinner = Literal["gated_scoped", "gated_unscoped", "ungated", "no_match"]
 
 MemoryInfo = TypedDict("MemoryInfo", {
+    # wire uint64 (64-bit) · min 0
     "available_bytes": int,
+    # wire uint64 (64-bit) · min 0
     "swap_total_bytes": int,
+    # wire uint64 (64-bit) · min 0
     "swap_used_bytes": int,
+    # wire uint64 (64-bit) · min 0
     "total_bytes": int,
+    # wire uint64 (64-bit) · min 0
     "used_bytes": int,
 })
 
+# A menu bar item (or submenu) from an application.
+#
+# Self-referential via `children: Vec<MenuItem>`. schemars handles
+# the recursion via a `$defs` entry; the previous utoipa-specific
+# `#[schema(no_recursion)]` annotation was dropped in
+# Phase 2j-utoipa-removal.
 MenuItem = TypedDict("MenuItem", {
+    # Child menu items (submenus).
     "children": list["MenuItem"],
+    # Whether the menu item is enabled.
     "enabled": bool,
+    # Zero-based index within the parent menu.
+    # wire uint32 · min 0
     "index": int,
+    # Keyboard shortcut string (e.g. "⌘S"), if any.
     "shortcut": NotRequired[str],
+    # The title of the menu item.
     "title": str,
 })
 
@@ -477,18 +915,25 @@ NowPlayingInfo = TypedDict("NowPlayingInfo", {
     "album": NotRequired[str],
     "app_bundle_id": NotRequired[str],
     "artist": NotRequired[str],
+    # wire double
     "duration": NotRequired[float],
+    # wire double
     "elapsed": NotRequired[float],
     "is_playing": bool,
     "title": NotRequired[str],
 })
 
 OcrRegion = TypedDict("OcrRegion", {
+    # wire double
     "confidence": float,
+    # wire double
     "height": float,
     "text": str,
+    # wire double
     "width": float,
+    # wire double
     "x": float,
+    # wire double
     "y": float,
 })
 
@@ -497,58 +942,159 @@ OnActionStatus = Literal["ok", "error", "not_handled"]
 # What a HUD window does when the pointer moves into its frame.
 OnPointer = Literal["none", "fade"]
 
+# What confirming an item does — EXACTLY ONE of `say` or `dispatch`.
+#
+# `say` is the common case for commands: the words are routed through the
+# same matcher the person's voice would reach, so confirming an item is
+# indistinguishable from speaking it. `dispatch` names an action type
+# directly, for items that are not commands.
 OutputAction = TypedDict("OutputAction", {
+    # An action type to dispatch — `windows.desk`.
     "dispatch": NotRequired[str],
+    # Parameters for `dispatch`. Meaningless with `say`.
     "params": NotRequired[Any],
+    # Words to inject as if spoken.
     "say": NotRequired[str],
 })
 
+# One thing the person can know about or act on.
+#
+# Every item has a `phrase`; an item with an `action` can be confirmed, and
+# confirming it does what the action says. Without an action, an item is
+# information, and a renderer that offers items in turn skips it.
 OutputItem = TypedDict("OutputItem", {
+    # What confirming this item does. Absent means information only.
     "action": NotRequired["OutputAction"],
+    # Open extension, namespaced by plugin id — see [`OutputState::extra`].
     "extra": NotRequired[dict[str, Any]],
+    # Stable within the document — what a renderer reports back as chosen.
     "id": str,
+    # The item in human words — "snap left", "desk two". The utterance, the
+    # cells, the text — and the words injected when the item is confirmed
+    # through the same matcher a voice would use.
     "phrase": str,
+    # A second line — "move the window to the left half".
     "subtitle": NotRequired[str],
+    # The item as a label — "snap left".
     "title": str,
 })
 
+# How far along something measurable is, in time.
 OutputProgress = TypedDict("OutputProgress", {
+    # wire uint64 (64-bit) · min 0
     "remaining_ms": int,
+    # wire uint64 (64-bit) · min 0
     "total_ms": int,
 })
 
+# A titled group of items.
 OutputSection = TypedDict("OutputSection", {
+    # default []
     "items": NotRequired[list["OutputItem"]],
+    # The group's name — "Windows". May be empty for an ungrouped list.
     "title": str,
 })
 
+# A superseding statement of what is true for the person on one channel.
+#
+# A push REPLACES the channel's current state; it is never appended. The
+# person needs what is true now, never a transcript of what was true, and a
+# renderer mid-utterance abandons it when the next state arrives.
+#
+# Core (every renderer must understand): `kind`, `title`, `phrase`, each
+# item's `phrase` and `action`, `urgency`, `locale`, `v`. Beside it, `extra`
+# is open and namespaced by plugin id for what the shape did not
+# anticipate; a renderer ignores what it does not understand, so an
+# extension never breaks a modality.
 OutputState = TypedDict("OutputState", {
+    # The HUD channel this state belongs to. Declared by the calling plugin
+    # in its manifest (`hud_windows`) or created at runtime; the platform
+    # verifies ownership exactly as it does for `hud.push`.
     "channel": str,
+    # Open extension, namespaced by plugin id (`{"voice": {...}}`). Nothing
+    # in core may depend on it; the platform promotes what gets used into
+    # core deliberately, as a versioned addition.
     "extra": NotRequired[dict[str, Any]],
+    # A trailing line — "say a command, or wait".
     "footer": NotRequired[str],
+    # One of the closed [`OutputKind`] vocabulary: `choices`, `mode`,
+    # `outcome`, `problem`, `progress`. Carried as a string so a kind this
+    # platform does not know degrades to `outcome` instead of failing.
     "kind": str,
+    # BCP 47 language tag of every phrase in this document — "en", "pt-BR".
     "locale": str,
+    # The state in human words — "twelve commands", "snapped left". The
+    # carrier of meaning for every receiver, named after none of them.
     "phrase": str,
+    # How far along something measurable is. Usually with `kind: progress`.
     "progress": NotRequired["OutputProgress"],
+    # Grouped items, when the state has parts — the commands open to the
+    # person, the entries in a selection. Empty for a state with none.
+    # `null` is accepted as empty: a Go producer's nil slice marshals to
+    # `null` (`operations::types::serde_compat`).
+    # default []
     "sections": NotRequired[list["OutputSection"]],
+    # The state in a few words — what a screen shows as the heading.
     "title": str,
+    # One of the closed [`OutputUrgency`] vocabulary: `ambient`, `notable`,
+    # `interrupt`. A string for the same reason `kind` is; unknown degrades
+    # to `ambient`.
     "urgency": str,
+    # The contract version this document was written against
+    # ([`OUTPUT_STATE_V`]). Information for a renderer, never a gate.
+    # wire uint32 · min 0
     "v": int,
 })
 
+# One (tenant, collection) overlay entry with content.
 OverlayRow = TypedDict("OverlayRow", {
+    # User band only (plugin overlays cannot add or remove records).
+    # wire uint · min 0
     "added": int,
     "collection": str,
+    # Which field of which record this tenant currently manages, and the
+    # decision that set it. Named for Kubernetes Server-Side Apply's
+    # `managedFields`, whose SHAPE this is — per-field ownership records —
+    # but deliberately not its vocabulary: SSA's `conflict` and `force` are
+    # answers to two managers claiming one field, and annotations are
+    # namespaced per tenant, so that situation does not arise here. Importing
+    # those names would name behaviour this platform does not have.
     "managed_fields": list["ManagedFieldRow"],
+    # Record ids this tenant patches — INCLUDING dangling ones whose record
+    # no longer exists. Annotations key on identity, so a patch survives its
+    # record being unpublished (and resurrects if the id returns); this list
+    # is how a tenant finds strays to `restore`.
     "patched_ids": list[str],
+    # wire uint · min 0
     "removed": int,
+    # Whose overlay: `"_user"` or a plugin id.
     "tenant": str,
 })
 
+# One (collection, group) pair the caller owns records in.
+#
+# (collection, group) PAIRS rather than bare collection names because
+# `(writer, group)` is already the ownership key everything else reasons in:
+# a plugin sweeping per-collection state wants the name, one managing named
+# replace-sets wants the group, and one surface serves both. A collection
+# holding both grouped and ungrouped records of the same writer yields one
+# row per distinct group.
 OwnedCollection = TypedDict("OwnedCollection", {
+    # How many of the caller's records carry this (collection, group).
+    #
+    # A count rather than a bare existence flag because it distinguishes
+    # "registered but empty" from "absent", which is what the sweeps
+    # actually want — wiping an already-empty collection is a wasted
+    # replace. Never zero: a group with no records yields no row.
+    # wire uint · min 0
     "count": int,
+    # The writer-chosen group label, or null for the ungrouped records —
+    # see `Record::group`. Null is the ungrouped bucket, not "any group".
     "group": NotRequired[str],
     "name": str,
+    # Who owns these records. Redundant on `collections.owned` (always the
+    # caller) but not on the unfiltered census the ownership diagnostics
+    # run, which is the same walk — so the row is self-describing either way.
     "writer": str,
 })
 
@@ -561,6 +1107,7 @@ PluginLogLevel = Literal["trace", "info", "warn", "error", "debug"]
 
 PoolStageStatusEntry = TypedDict("PoolStageStatusEntry", {
     "alive": bool,
+    # wire uint64 (64-bit) · min 0
     "generation": int,
     "leased": bool,
     "name": str,
@@ -572,41 +1119,72 @@ PrinterInfo = TypedDict("PrinterInfo", {
     "state": str,
 })
 
+# One privilege the caller declared, with its live state — what a plugin
+# needs to adapt its own UI ("this feature is pending your approval")
+# without waiting to hit a -32003.
 PrivilegeStatusEntry = TypedDict("PrivilegeStatusEntry", {
+    # The user dismissed a request for it; a grant clears this.
     "denied": bool,
+    # In the caller's effective set right now — calls gated on it succeed.
     "granted": bool,
+    # An allow-once grant is waiting: the next call gated on this
+    # privilege succeeds, then the grant is spent. Never reported in
+    # `granted` — a one-shot is not a standing grant.
+    # default false
     "one_shot": bool,
+    # A privileges.request for it is awaiting the user.
     "pending": bool,
     "privilege": str,
+    # Declared in `privileges` (true) vs `optional_privileges` (false).
     "required": bool,
 })
 
 ProcessInfo = TypedDict("ProcessInfo", {
+    # wire double
     "cpu_percent": NotRequired[float],
+    # wire uint64 (64-bit) · min 0
     "memory_bytes": NotRequired[int],
     "name": str,
     "path": NotRequired[str],
+    # wire int32
     "pid": int,
     "user": NotRequired[str],
 })
 
 RedecodeItem = TypedDict("RedecodeItem", {
+    # When set, the actuator stamps the live never-standalone Lever E penalty
+    # (`build_never_standalone_weights_inner`) onto this item so the re-decode
+    # reproduces the biased live behavior. The word set is the actuator's, not the
+    # caller's — the plugin only opts in. Off = unbiased decode.
+    # default false
     "apply_bias": NotRequired[bool],
+    # WAV path relative to the CALLER's own data dir (e.g.
+    # `calibration-capture/<game>/seg_0.wav`). Confined to that root.
     "audio": str,
+    # L2 strength sweep: when set, the actuator stamps the never-standalone word set
+    # at exactly this cost (instead of the configured live penalty), so the caller
+    # can probe the same clip across a ladder of strengths and find its flip
+    # threshold. The word set is still the actuator's — only the cost is requested.
+    # Takes precedence over `apply_bias`; <= 0 means unbiased.
+    # wire double · default null
     "bias_strength": NotRequired[float],
     "id": str,
     "noise": NotRequired["RedecodeNoise"],
+    # default []
     "words": NotRequired[list[str]],
 })
 
 RedecodeLine = TypedDict("RedecodeLine", {
     "error": str,
     "id": str,
+    # default ""
     "text": str,
 })
 
 RedecodeNoise = TypedDict("RedecodeNoise", {
+    # wire uint64 (64-bit) · min 0
     "seed": int,
+    # wire double
     "snr_db": float,
 })
 
@@ -614,6 +1192,7 @@ ReminderItem = TypedDict("ReminderItem", {
     "due_date": NotRequired[str],
     "is_completed": bool,
     "list_name": NotRequired[str],
+    # wire int32
     "priority": int,
     "title": str,
 })
@@ -639,34 +1218,54 @@ ReplaceScopeGroup = TypedDict("ReplaceScopeGroup", {
 })
 ReplaceScope = ReplaceScopeCollection | ReplaceScopeGroup
 
+# Serializable mirror of `crate::matching::MatchDecisionTelemetry`. The
+# internal type can't derive `Serialize`/`JsonSchema` because it lives in
+# the matching crate alongside non-serializable internals — this struct
+# is the wire shape exposed through `commands.resolve`.
 ResolveTelemetry = TypedDict("ResolveTelemetry", {
+    # True iff any gated command's Partial was observed during
+    # categorization. When `winner == Ungated` and this is `true`, the
+    # matcher's `suppress_ungated` propagation failed to fire.
     "gated_partial_seen": bool,
     "winner": "MatchWinner",
+    # The pattern that won (`None` when `winner == NoMatch`). Surfaces the
+    # internal `MatchDecisionTelemetry.winning_pattern` so a consumer can
+    # confirm *which* command resolved — e.g. calibration command-practice
+    # compares this against the enumerated command it asked the user to say.
     "winning_pattern": NotRequired[str],
 })
 
+# A running application as reported by the OS.
 RunningApp = TypedDict("RunningApp", {
     "bundle_id": NotRequired[str],
     "is_active": bool,
     "is_hidden": bool,
     "name": str,
+    # wire int32
     "pid": int,
 })
 
 ScreenshotRegion = TypedDict("ScreenshotRegion", {
+    # wire int32
     "h": int,
+    # wire int32
     "w": int,
+    # wire int32
     "x": int,
+    # wire int32
     "y": int,
 })
 
+# List schema info sent to plugins in render_settings (enriched with entry count + source).
 SettingsListSchemaInfo = TypedDict("SettingsListSchemaInfo", {
     "description": str,
+    # wire uint · min 0
     "entry_count": int,
     "label": str,
     "source_plugin": str,
 })
 
+# Tag schema info sent to plugins in render_settings.
 SettingsTagSchemaInfo = TypedDict("SettingsTagSchemaInfo", {
     "description": str,
     "label": str,
@@ -678,10 +1277,17 @@ ShortcutInfo = TypedDict("ShortcutInfo", {
     "name": str,
 })
 
+# Information about a macOS Space.
 SpaceInfo = TypedDict("SpaceInfo", {
+    # The display ID this space belongs to.
+    # wire uint32 · min 0
     "display_id": int,
+    # Whether this is the currently active space on its display.
     "is_active": bool,
+    # The Space ID (from CGS private APIs).
+    # wire uint64 (64-bit) · min 0
     "space_id": int,
+    # Space type: "user", "fullscreen", or "unknown".
     "space_type": str,
 })
 
@@ -691,11 +1297,18 @@ SpeechLocale = TypedDict("SpeechLocale", {
     "language": str,
 })
 
+# A Spotlight search result.
 SpotlightResult = TypedDict("SpotlightResult", {
+    # Content kind (e.g. "Document", "Image", "Folder").
     "kind": str,
+    # Last modified date (ISO 8601).
     "modified": str,
+    # File name.
     "name": str,
+    # File path.
     "path": str,
+    # File size in bytes, if available.
+    # wire uint64 (64-bit) · min 0
     "size": NotRequired[int],
 })
 
@@ -707,12 +1320,29 @@ SystemAppearance = TypedDict("SystemAppearance", {
     "reduce_transparency": bool,
 })
 
+# One entry in `ResolveResult.tied_candidates` — the dispatchable subset of a
+# resolved command, so a consumer can fire the chosen one directly after the
+# user picks. Mirrors the dispatch fields the single-winner envelope carries
+# (`action` is template-resolved; `args` is empty unless resolution failed),
+# plus a human-readable `label` for the disambiguation UI. See the tie-signal
+# protocol doc in branchkit-web.
 TiedCandidate = TypedDict("TiedCandidate", {
+    # Template-resolved action to dispatch if this candidate is chosen.
+    # `Action` is opaque to schemars (free-form JSON value), matching
+    # `ResolveResult.action`.
     "action": NotRequired[Any],
+    # Named captures, keyed by binding name. Empty when `action` is a
+    # fully-resolved template; populated only when resolution failed.
     "args": dict[str, Any],
     "clears_tags": list[str],
+    # wire uint · min 0
     "consumed_count": int,
+    # Human-readable label for a disambiguation UI — the command's
+    # description, falling back to a summary of its phrase pattern (and, when
+    # neither is set, to the owning plugin plus action type). Pair it with
+    # `owner_plugin` to render which command this candidate is.
     "label": str,
+    # The plugin that owns this command.
     "owner_plugin": str,
     "requires_tags": list[str],
     "sets_tags": list[str],
@@ -738,16 +1368,24 @@ UsbDevice = TypedDict("UsbDevice", {
     "vendor_id": NotRequired[str],
 })
 
+# Window bounds in screen coordinates.
 WindowBounds = TypedDict("WindowBounds", {
+    # wire int32
     "h": int,
+    # wire int32
     "w": int,
+    # wire int32
     "x": int,
+    # wire int32
     "y": int,
 })
 
+# Detailed info about a single window.
 WindowDetail = TypedDict("WindowDetail", {
+    # wire double
     "alpha": NotRequired[float],
     "bounds": "WindowBounds",
+    # wire uint32 · min 0
     "display_id": int,
     "is_focused": bool,
     "is_fullscreen": bool,
@@ -757,45 +1395,97 @@ WindowDetail = TypedDict("WindowDetail", {
     "window_id": str,
 })
 
+# A target frame for a window. Used for both `batch_set_frames` input
+# and its result (the result reuses the same shape so callers can compare
+# requested vs actual positions).
 WindowFrame = TypedDict("WindowFrame", {
+    # wire int32
     "h": int,
+    # wire int32
     "w": int,
     "window_id": str,
+    # wire int32
     "x": int,
+    # wire int32
     "y": int,
 })
 
 WindowInfo = TypedDict("WindowInfo", {
+    # default ""
     "app_id": str,
+    # default ""
     "app_name": str,
+    # Desk ordinal of the window's space: user spaces counted 1..N in
+    # managed-display order (on macOS, the Mission Control / Ctrl+N index —
+    # the same convention as `windows.desk_switch`). Absent when the window
+    # is not on exactly one user space: minimized (no space), fullscreen
+    # (its space is not a user desk), or pinned to multiple spaces.
+    # wire uint32 · default null · min 0
     "desk": NotRequired[int],
+    # wire int32 · default 0
     "h": int,
+    # default ""
     "id": str,
+    # "observed" = discovered via OS accessibility APIs.
+    # "managed" = HUD window created by actuator channel infrastructure.
+    # default "observed"
     "source": str,
+    # Space (virtual desktop) ids this window belongs to. Usually one;
+    # several when the window is pinned to multiple spaces; empty when the
+    # OS reports none (minimized windows) or the platform has no space
+    # support.
+    # default []
     "space_ids": list[int],
+    # default ""
     "title": str,
+    # wire int32 · default 0
     "w": int,
+    # wire int32 · default 0
     "x": int,
+    # wire int32 · default 0
     "y": int,
 })
 
+# One collection in the resolved wiring graph.
 WiringCollection = TypedDict("WiringCollection", {
     "access": str,
+    # Why the caller cannot reach it, when it cannot.
+    #
+    # Scoped to the caller's OWN denials, which is what keeps this method
+    # unprivileged. Reporting why some OTHER pair is denied would expose
+    # that pair's grant state, and no plugin-facing surface leaks that; the
+    # caller's own grant state is not a disclosure to the caller. So the
+    # teaching case is served and nothing else is.
     "deny_reason": NotRequired[str],
+    # Declared field keys, in declaration order. Empty when the introducer
+    # publishes no field schema — which is itself the answer to "can I bind
+    # a shape to this".
     "fields": list[str],
+    # Plugin id, `_platform`, or `_user`.
     "introducer": str,
     "merge": str,
     "name": str,
+    # Whether the CALLER can read it right now.
     "readable": bool,
+    # Whether the CALLER can write it right now.
     "writable": bool,
+    # Resolved, not declared: the preset's expansion is what actually
+    # governs, and a consumer reasoning about the declared value would be
+    # reasoning about the wrong thing.
     "writers": str,
 })
 
 WorldModel = TypedDict("WorldModel", {
+    # default null
     "active_app": NotRequired[str],
+    # default null
     "active_window_id": NotRequired[str],
+    # default []
     "displays": list["DisplayInfo"],
+    # Active keyboard layout ID (e.g. "com.apple.keylayout.US").
+    # default ""
     "keyboard_layout_id": str,
+    # default []
     "windows": list["WindowInfo"],
 })
 
@@ -814,21 +1504,32 @@ ArtifactDeleteResponse = TypedDict("ArtifactDeleteResponse", {
 })
 
 CollectionAppendRequest = TypedDict("CollectionAppendRequest", {
+    # Collection name. Must be a `kind: "log"` collection.
     "name": str,
+    # Entry payload — validated against the collection's `fields` schema.
     "payload": Any,
 })
 
 CollectionAppendResponse = TypedDict("CollectionAppendResponse", {
+    # The newly-appended entry, including its assigned ULID and timestamp.
     "entry": "LogEntry",
 })
 
 CollectionAppendKeyedRequest = TypedDict("CollectionAppendKeyedRequest", {
+    # The fold key — stamped into the payload's key field. Appending another
+    # record with the same key annotates the first (compacted-changelog
+    # shape); a compacted read folds them into one record.
     "key": str,
+    # Collection name. Must be a keyed (`id_strategy: by_field`) `log`
+    # collection.
     "name": str,
+    # Entry payload — validated against the collection's `fields` schema (the
+    # key field is supplied via `key`, not here).
     "payload": Any,
 })
 
 CollectionAppendKeyedResponse = TypedDict("CollectionAppendKeyedResponse", {
+    # The newly-appended entry, including its assigned ULID and timestamp.
     "entry": "LogEntry",
 })
 
@@ -837,16 +1538,24 @@ CollectionCountRequest = TypedDict("CollectionCountRequest", {
 })
 
 CollectionCountResponse = TypedDict("CollectionCountResponse", {
+    # wire uint · min 0
     "count": int,
 })
 
 CollectionDeleteRecordsRequest = TypedDict("CollectionDeleteRecordsRequest", {
+    # Record ids to remove. Always an array; single-record callers wrap
+    # one id. SDK helpers (`Delete` vs `DeleteMany`) hide the wrapping.
+    # default []
     "ids": NotRequired[list[str]],
     "name": str,
 })
 
 CollectionDeleteRecordsResponse = TypedDict("CollectionDeleteRecordsResponse", {
+    # Number of ids that were already absent (no-op).
+    # wire uint · min 0
     "already_absent": int,
+    # Number of records that existed and were removed.
+    # wire uint · min 0
     "deleted": int,
 })
 
@@ -856,6 +1565,7 @@ CollectionFetchRequest = TypedDict("CollectionFetchRequest", {
 })
 
 CollectionFetchResponse = TypedDict("CollectionFetchResponse", {
+    # The record, or null if no record with that id exists.
     "record": NotRequired["CollectionRecord"],
 })
 
@@ -865,6 +1575,7 @@ CollectionFetchCompactedRequest = TypedDict("CollectionFetchCompactedRequest", {
 })
 
 CollectionFetchCompactedResponse = TypedDict("CollectionFetchCompactedResponse", {
+    # The record, or null if no record with that id exists.
     "record": NotRequired["CollectionRecord"],
 })
 
@@ -874,6 +1585,9 @@ CollectionGetRequest = TypedDict("CollectionGetRequest", {
 
 CollectionGetResponse = TypedDict("CollectionGetResponse", {
     "data": Any,
+    # Derived flat map (key_field → value_field) for capture collections.
+    # Only present when the collection schema has key_field and value_field.
+    # Contains bare values — no provenance metadata.
     "entries": NotRequired[dict[str, Any]],
     "introducer": str,
     "merge": "MergeStrategy",
@@ -882,15 +1596,19 @@ CollectionGetResponse = TypedDict("CollectionGetResponse", {
 
 CollectionListRequest = TypedDict("CollectionListRequest", {
     "name": str,
+    # default {}
     "opts": NotRequired["ListOpts"],
 })
 
 CollectionListResponse = TypedDict("CollectionListResponse", {
     "records": list["CollectionRecord"],
+    # Total record count for the collection, independent of filter / limit.
+    # wire uint · min 0
     "total": int,
 })
 
 CollectionPatchRequest = TypedDict("CollectionPatchRequest", {
+    # Object of fields to merge over the existing record.
     "fields": Any,
     "id": str,
     "name": str,
@@ -901,43 +1619,101 @@ CollectionPatchResponse = TypedDict("CollectionPatchResponse", {
 })
 
 CollectionPutRequest = TypedDict("CollectionPutRequest", {
+    # Records to upsert. Always an array; single-record callers wrap one
+    # entry. The wire format is uniform across single and bulk callers;
+    # the SDK helpers (`Put` vs `PutMany`) hide the wrapping for the
+    # single-record case. See docs/design/DESIGN_BROWSER_HINT_SILENT_EVICTION.md
+    # for the rationale.
+    # default []
     "entries": NotRequired[list["CollectionPutEntry"]],
+    # Writer-chosen group label stamped on EVERY entry in this call — which
+    # of the caller's named replace-sets these records belong to. See the
+    # record envelope's `group`: last-write placement, meaningful only
+    # within a writer. Absent = ungrouped, the common case. Call-level
+    # rather than per-entry because a put that mixes groups is a caller
+    # composing two writes, not one write with two meanings.
     "group": NotRequired[str],
+    # Optional human-readable label for the collection as a whole — the
+    # friendly category name shown on the Discovery HUD's tag badge and in
+    # the Settings UI, in place of the raw collection id (`Badge` instead of
+    # `browser_hints_arch_strict`). This is the dynamic-collection counterpart
+    # to a manifest-declared collection's `schema.label`; a plugin creating a
+    # collection at runtime declares its label here. Same persistence
+    # semantics as `roles`: last-write-wins, and a put omitting `label`
+    # leaves the prior setting in place. See
+    # `docs/design/DESIGN_COLLECTION_FIELD_ROLES.md`.
     "label": NotRequired[str],
     "name": str,
+    # Optional per-payload-field display roles. Used by the Settings
+    # UI / discovery HUD to know which payload field is the primary
+    # label, which is the subtitle, etc. Equivalent to the `roles`
+    # argument on `collection.push`. Mostly meaningful for
+    # auto-registered dynamic collections — manifest-declared
+    # collections get their roles from the schema. On the first
+    # `collection.put` to a not-yet-registered name, the roles are
+    # stored alongside the auto-registered schema. Subsequent puts
+    # with `roles` overwrite the prior setting; puts omitting
+    # `roles` leave roles unchanged.
+    #
+    # Wire-lenient: an entry whose role string this host doesn't know
+    # binds nothing but does NOT fail the put — see `DisplayRoles`.
     "roles": NotRequired[dict[str, "FieldDisplay"]],
 })
 
 CollectionPutResponse = TypedDict("CollectionPutResponse", {
+    # Number of records upserted. Equals `entries.len()` on success.
+    # wire uint · min 0
     "count": int,
     "ok": bool,
 })
 
 CollectionReplaceRequest = TypedDict("CollectionReplaceRequest", {
+    # The desired set. After the call, the records in scope are exactly these.
+    # default []
     "entries": NotRequired[list["CollectionPutEntry"]],
+    # Same semantics as `collection.put`'s `label`.
     "label": NotRequired[str],
     "name": str,
+    # Same semantics as `collection.put`'s `roles`.
     "roles": NotRequired[dict[str, "FieldDisplay"]],
+    # What the call is allowed to delete. Required — see `ReplaceScope`.
     "scope": "ReplaceScope",
 })
 
 CollectionReplaceResponse = TypedDict("CollectionReplaceResponse", {
+    # Records removed because they were in scope but not in `entries`.
+    # wire uint · min 0
     "deleted": int,
+    # Records written — new, or whose payload differed.
+    # wire uint · min 0
     "put": int,
+    # Records left untouched because their payload was byte-identical.
+    #
+    # Load-bearing, not a statistic: skipping identical payloads is what keeps
+    # a periodic refresh from re-firing `_platform.collection.updated` for
+    # every record and waking every subscriber. It is the property that makes
+    # this a real verb rather than sugar for put-then-delete.
+    # wire uint · min 0
     "skipped": int,
 })
 
 CollectionsCreateUserRequest = TypedDict("CollectionsCreateUserRequest", {
+    # default ""
     "description": NotRequired[str],
+    # Collection name (lowercase, underscores).
     "name": str,
+    # default ""
     "words_text": NotRequired[str],
 })
 
 CollectionsCreateUserResponse = TypedDict("CollectionsCreateUserResponse", {
+    # The created collection's name (echoed so callers can select it).
     "name": str,
 })
 
 CollectionsListRequest = TypedDict("CollectionsListRequest", {
+    # Filter by collection kind: "entity", "data", "commands", "log". If omitted, returns all.
+    # default null
     "kind": NotRequired[str],
 })
 
@@ -960,7 +1736,12 @@ CommandsAddAliasResponse = TypedDict("CommandsAddAliasResponse", {
 })
 
 CommandsConfusabilityRequest = TypedDict("CommandsConfusabilityRequest", {
+    # The command's context (its `requires_tags`); empty = free context. Used by
+    # tier-2 so a warning only fires when the confuser is co-eligible here.
+    # default []
     "requires_tags": NotRequired[list[str]],
+    # The literal spoken words of the phrase being authored.
+    # default []
     "words": NotRequired[list[str]],
 })
 
@@ -995,11 +1776,36 @@ CommandsListOverridesResponse = TypedDict("CommandsListOverridesResponse", {
 })
 
 CommandsPushRequest = TypedDict("CommandsPushRequest", {
+    # Array of `CommandSpec` JSON objects to push to the matching
+    # engine. Replaces the current commands contributed by the
+    # calling plugin. Wire-level type is opaque
+    # (`serde_json::Value`) to keep the deserializer flexible; see
+    # `CommandSpec` for the canonical field list including
+    # `cancels_bridge`.
+    # default null
     "commands": NotRequired[Any],
+    # Optional named group this push owns. Absent replaces the plugin's
+    # ENTIRE command set (the original semantics, unchanged); present
+    # replaces only the records in that group and leaves the plugin's other
+    # groups intact.
+    #
+    # Exists because the single implicit slot is a race whenever a plugin has
+    # more than one command source. Browser has five (scroll, find,
+    # references, hint skeleton, palette) and each used to push
+    # independently — whichever landed last was the only set the matcher saw,
+    # and the hint skeleton routinely lost. Its workaround is a mutex plus
+    # rebuilding the union from every builder on each call. With groups each
+    # source owns its own, and dropping a source drops its group.
+    #
+    # See docs/design/PRINCIPLE_PLUGIN_HELD_STATE.md — this is the same
+    # "can two of these coexist?" failure that `collection.replace`'s scope
+    # fixes for records.
     "group": NotRequired[str],
 })
 
 CommandsPushResponse = TypedDict("CommandsPushResponse", {
+    # Number of commands registered with the matching engine.
+    # wire uint · min 0
     "count": int,
     "ok": bool,
 })
@@ -1012,6 +1818,7 @@ CommandsRemoveAliasRequest = TypedDict("CommandsRemoveAliasRequest", {
 
 CommandsRemoveAliasResponse = TypedDict("CommandsRemoveAliasResponse", {
     "ok": bool,
+    # Whether an alias actually matched and was removed.
     "removed": bool,
 })
 
@@ -1030,39 +1837,115 @@ CommandsResetOverrideRequest = TypedDict("CommandsResetOverrideRequest", {
 
 CommandsResetOverrideResponse = TypedDict("CommandsResetOverrideResponse", {
     "ok": bool,
+    # Whether an override actually matched and was removed.
     "removed": bool,
 })
 
 CommandsResolveRequest = TypedDict("CommandsResolveRequest", {
+    # Active tags for tag-based scoping. If None, uses the state's active_tags.
+    # default null
     "active_tags": NotRequired[list[str]],
+    # Narrow completions to commands contributed by these collections'
+    # contributors. None or empty = all.
+    # default null
     "collections": NotRequired[list[str]],
+    # Tiebreak hint for a genuine tie. When resolution reduces to 2+ equally-
+    # eligible commands the matcher cannot separate, and exactly one of them
+    # is owned by this plugin, that candidate is dispatched as a normal single
+    # winner instead of the tie being surfaced. It selects *only* among the
+    # already-tied candidates — it never overrides normal precedence
+    # (longest-match, gated-over-ungated, scope) and has no effect when there
+    # is no tie or when zero/multiple tied candidates match. Transient and
+    # per-resolve; the caller supplies it for one call, it is not a stored
+    # preference.
     "prefer_owner": NotRequired[str],
+    # Dry-run / verify-don't-execute mode. When true, the matcher computes
+    # the full decision (winner, completions, telemetry) but commits
+    # nothing: no tag writes are applied, no `sets_on_partial` bridge is
+    # seeded, and no `command_matched`/`command_no_match` telemetry is
+    # emitted. The action is never dispatched by `resolve` in either mode —
+    # `preview` additionally suppresses the *side effects* of resolution so
+    # a consumer (e.g. calibration command-practice) can score "would this
+    # fire the right command?" without mutating live state or polluting the
+    # no-match dashboards. Default false: normal resolve commits as before.
+    # default false
     "preview": NotRequired[bool],
+    # Restrict completions to commands requiring this tag.
+    # default null
     "require_tag": NotRequired[str],
+    # Audio session ID from the Swift shell. Informational — links audio
+    # lifecycle events to command matches.
     "session_id": NotRequired[str],
+    # Input source: "command_hold", "continuous", "selection", "api".
     "source": NotRequired[str],
+    # Words to match against the command registry.
+    # default []
     "words": NotRequired[list[str]],
 })
 
 CommandsResolveResponse = TypedDict("CommandsResolveResponse", {
+    # Opaque to schemars: `Action` is a large enum whose schema is treated
+    # as a free-form JSON value in OpenAPI. The inventory closure still
+    # produces a fully-typed Action.
     "action": NotRequired[Any],
+    # All currently-active gates from `plugin.<X>.*` namespaces other than
+    # the resolving caller's own (`plugin.<caller>.*`). Lets the caller
+    # make session-end cleanup decisions ("is any other plugin's mode
+    # active?") without maintaining a parallel local view of state. Host
+    # callers see all plugin gates.
     "active_plugin_gates": NotRequired[list[str]],
+    # Named captures, keyed by binding name. Empty when the matched action
+    # is a template the platform has already resolved into the concrete
+    # `action`; populated only when template resolution failed.
     "args": dict[str, Any],
+    # True when an active `PendingPartial` bridge survived this resolve
+    # (either advanced one token, or rejected the new utterance without
+    # dropping). Tells the voice plugin to leave the discovery HUD as-is
+    # — the bridge's previously-rendered items are still the correct view
+    # of what completes the in-progress capture. Without this flag the
+    # voice plugin would either replace the HUD with empty/AIR content
+    # (because `items` is empty under bridge survival) or close it via
+    # the "no match, no partial" branch. See actuator commit history for
+    # the matching `capture.progress` suppression. False by
+    # default; only true when the bridge survived.
     "bridge_active": NotRequired[bool],
     "clears_tags": list[str],
+    # wire uint · min 0
     "consumed_count": int,
+    # The winning command's dictated-argument descriptor, if declared: the
     "has_completions": bool,
     "items": list["DiscoverItem"],
     "matched": bool,
     "next_words": list[str],
     "owner_plugin": NotRequired[str],
     "requires_tags": list[str],
+    # Platform-wide list of namespace prefixes that mark a tag as
+    # "scoped." Voice plugin uses this to classify `sets_tags` entries
+    # from a matched command as scoped mode tags without shadowing the
+    # configuration locally.
     "scoped_prefixes": NotRequired[list[str]],
+    # Currently active scoped tags at match time.
     "scoped_tags": NotRequired[list[str]],
     "sets_tags": list[str],
     "telemetry": "ResolveTelemetry",
+    # The genuinely-tied candidate set, populated only when resolution
+    # reduced to 2+ equally-eligible commands the matcher could not
+    # separate (same gating + scope, same winning length). When non-empty,
+    # `matched` is `false`, NO tag writes were applied, and `command_no_match`
+    # was suppressed: rather than arbitrarily pick an iteration-order winner,
+    # the platform hands the consuming plugin the full set to disambiguate.
+    # The signal is generic — any plugin can read it and resolve the tie
+    # however its surface allows. Additive — a non-tie-aware consumer sees an
+    # empty list and a normal single-winner response.
     "tied_candidates": NotRequired[list["TiedCandidate"]],
     "title": str,
+    # Trace ID generated by the actuator for causal correlation. Links
+    # this resolve result to downstream dispatch, state writes, and HUD
+    # events. Per-match — bridge-driven multi-utterance completions
+    # produce different trace_ids for seed and completion. Cross-
+    # resolve threading for the same push-to-talk hold goes through
+    # the ambient `correlation_id` derived from `session_id`. See
+    # `MatchCommandsResult.trace_id` for the full discussion.
     "trace_id": NotRequired[str],
 })
 
@@ -1077,6 +1960,8 @@ CommandsSetOverrideResponse = TypedDict("CommandsSetOverrideResponse", {
 })
 
 ControlSignalRequest = TypedDict("ControlSignalRequest", {
+    # Raw control-stream signal string (e.g. "open hud", "hide discovery").
+    # Forwarded verbatim to the Swift shell via the actuator's control stream.
     "signal": str,
 })
 
@@ -1089,49 +1974,107 @@ DiscoveryClosedResponse = TypedDict("DiscoveryClosedResponse", {
 })
 
 DispatchRequest = TypedDict("DispatchRequest", {
+    # Typed `Action` variant to dispatch. Schema is loose
+    # (`serde_json::Value`) — see module-level docs for the rationale.
+    # The runtime closure still deserializes the typed
+    # `crate::actions::Action` from this field.
     "action": Any,
 })
 
 DispatchResponse = TypedDict("DispatchResponse", {
+    # Control message to forward to the Swift host (if any).
+    # Present on `status == "ok"`; absent on `status == "error"`.
     "control_message": NotRequired[str],
+    # Plugin that handled the action. Present on `status == "ok"`.
     "handler": NotRequired[str],
+    # Error or denial message. Omitted on success.
     "message": NotRequired[str],
+    # Structured result payload from the handling plugin's action handler.
+    # Opaque to the actuator — piped through from the plugin's response.
     "result": NotRequired[Any],
+    # `"ok"` for success, `"denied"` if the caller lacks dispatch
+    # permission, `"error"` for an internal panic captured by
+    # `std::panic::catch_unwind`.
     "status": str,
 })
 
 EffectsAssertRequest = TypedDict("EffectsAssertRequest", {
+    # Registered effect name (e.g. `suppress_notifications`). Must be
+    # declared in the plugin's manifest `consumes.effects.asserts` and
+    # match an entry in the closed `effects::REGISTERED_EFFECTS` registry.
     "name": str,
 })
 
 EffectsAssertResponse = TypedDict("EffectsAssertResponse", {
+    # True when this plugin already held an active assertion for this
+    # effect — assert is idempotent. Implies `granted=true`.
     "already_held": bool,
+    # When the assertion displaced an existing top-of-stack owner, this
+    # names that plugin. The displaced plugin should receive an
+    # `effect_displaced` notification (section 10.2). Notification path is
+    # stubbed in v1 — see registered handler.
     "displaced": NotRequired[str],
+    # True when the platform actually delivers this effect's semantics
+    # while you hold ownership. Signal-shape effects (whose entire
+    # meaning is the queryable ownership stack, e.g.
+    # `signal_recording_active`) are always enforced. False means the
+    # OS/platform handler for this effect is not implemented yet: you
+    # get ownership bookkeeping, displacement events, and `is_active`
+    # queries, but the OS-level behavior (actual notification muting,
+    # focus-steal blocking, …) does NOT happen. Always serialized —
+    # this field is the honesty fence for the stub-handler era.
     "enforced": bool,
+    # True when the assertion is now top-of-stack and effective.
+    # False when the user has revoked consent for this effect on this
+    # plugin (fail-next-assertion semantics per section 10.3) or when the
+    # effect name is unknown.
     "granted": bool,
 })
 
 EffectsIsActiveRequest = TypedDict("EffectsIsActiveRequest", {
+    # Registered effect name to query.
     "name": str,
 })
 
 EffectsIsActiveResponse = TypedDict("EffectsIsActiveResponse", {
+    # True when the calling plugin currently holds top-of-stack
+    # (i.e. is the effective owner) for this effect. False otherwise —
+    # including when the plugin has a frame underneath someone else's,
+    # when the stack is empty, or when the effect name is unknown.
     "active": bool,
+    # The current effective owner, if any. Useful for plugins that
+    # want to surface "Meeting Mode is overriding Focus Mode" UI.
     "current_owner": NotRequired[str],
 })
 
 EffectsRetractRequest = TypedDict("EffectsRetractRequest", {
+    # Registered effect name to retract. The plugin's frame is removed
+    # from this effect's ownership stack. If no frame exists, the call
+    # is a no-op (`retracted=false`, no error).
     "name": str,
 })
 
 EffectsRetractResponse = TypedDict("EffectsRetractResponse", {
+    # Effective owner after the retract — `None` when the stack is
+    # now empty. Equal to the previous top when the retract removed
+    # a non-top frame (current top unchanged).
     "new_owner": NotRequired[str],
+    # True when a frame was actually removed. False when this plugin
+    # held no assertion (idempotent retract) or when the effect name
+    # is unknown.
     "retracted": bool,
 })
 
 EventsAppendRequest = TypedDict("EventsAppendRequest", {
+    # Free-form event payload. Stored as a raw JSON object on the event
+    # log line.
+    # default null
     "data": NotRequired[Any],
+    # Event type discriminator (e.g. "session_start", "match", "miss").
     "event_type": str,
+    # Logical session id this event belongs to (8-char prefix used by
+    # the event-stream tooling). Defaults to "?" if absent.
+    # default "?"
     "session_id": NotRequired[str],
 })
 
@@ -1140,8 +2083,16 @@ EventsAppendResponse = TypedDict("EventsAppendResponse", {
 })
 
 EventsEmitRequest = TypedDict("EventsEmitRequest", {
+    # Optional correlation id linking related events together for
+    # debugging. Auto-generated by the platform when omitted and the
+    # emitting plugin is processing an event that already carried one.
+    # default null · pattern ^tr_[0-9A-Za-z]{11}$
     "correlation_id": NotRequired[str],
+    # Free-form event payload published to subscribers.
+    # default null
     "data": NotRequired[Any],
+    # Convention-based event type (e.g. "clipboard.copied"). The
+    # `_platform.*` namespace is reserved for the actuator.
     "event_type": str,
 })
 
@@ -1150,16 +2101,50 @@ EventsEmitResponse = TypedDict("EventsEmitResponse", {
 })
 
 HUDCreateChannelRequest = TypedDict("HUDCreateChannelRequest", {
+    # Whether the channel's window receives keyboard/mouse input.
+    # Defaults to false.
+    # default false
     "accepts_input": NotRequired[bool],
+    # Anchor position on screen (`Anchor` enum, kebab-case strings:
+    # `"top-left"`, `"top-right"`, `"bottom-left"`, `"bottom-right"`,
+    # `"bottom-center"`, `"center"`). Defaults to `"top-right"`.
+    # default null
     "anchor": NotRequired[Any],
+    # Channel name. Must be unique across all plugins.
     "channel": str,
+    # Optional human-readable description shown in dev tooling.
+    # default ""
     "description": NotRequired[str],
+    # Whether the shell lets the user drag this window and remembers its
+    # position. Draggable windows should also set `follows_focus: false`.
+    # Defaults to false.
+    # default false
     "draggable": NotRequired[bool],
+    # Whether this channel follows the active display on focus changes.
+    # Defaults to true. Set to false for user-initiated HUDs that should
+    # stay pinned to the display where they were opened.
+    # default true
     "follows_focus": NotRequired[bool],
+    # Minimum window height in points. Defaults to 100.
+    # wire uint32 · default 100 · min 0
     "min_height": NotRequired[int],
+    # Pointer-dodge behavior: "none" (default) or "fade" (dodge the mouse —
+    # fade to near-transparent while the pointer is inside the frame).
+    # default "none"
     "on_pointer": NotRequired["OnPointer"],
+    # Stack position among windows sharing this anchor: offsets ascend from the
+    # anchor edge, so the lowest pins at the corner (a persistent status window)
+    # and higher values stack away (transient toasts). Ties broken by channel
+    # name. Defaults to 0.
+    # wire int32 · default 0
     "stack_order": NotRequired[int],
+    # Fully transparent window — the shell skips its frosted vibrancy panel
+    # and window shadow, so only the plugin's own markup paints. Defaults
+    # to false (frosted).
+    # default false
     "transparent": NotRequired[bool],
+    # Window width in points. Defaults to 320.
+    # wire uint32 · default 320 · min 0
     "width": NotRequired[int],
 })
 
@@ -1168,6 +2153,8 @@ HUDCreateChannelResponse = TypedDict("HUDCreateChannelResponse", {
 })
 
 HUDHideRequest = TypedDict("HUDHideRequest", {
+    # Channel name to hide. Sends a `close <channel>` (or
+    # `hide <channel>` for built-in channels) to the Swift shell.
     "channel": str,
 })
 
@@ -1176,7 +2163,11 @@ HUDHideResponse = TypedDict("HUDHideResponse", {
 })
 
 HUDPushRequest = TypedDict("HUDPushRequest", {
+    # Name of the HUD channel to push fragments into. Must be owned by
+    # the calling plugin (verified via
+    # `HudChannelRegistry::verify_owner`).
     "channel": str,
+    # Array of `HudFragment` objects: `{ target_id, html, raw? }`.
     "fragments": Any,
 })
 
@@ -1185,16 +2176,23 @@ HUDPushResponse = TypedDict("HUDPushResponse", {
 })
 
 HUDRemoveChannelRequest = TypedDict("HUDRemoveChannelRequest", {
+    # Channel name to remove. Must be owned by the calling plugin.
     "channel": str,
 })
 
 HUDRemoveChannelResponse = TypedDict("HUDRemoveChannelResponse", {
     "ok": bool,
+    # Whether a channel was actually removed (false if it was already
+    # absent).
     "removed": bool,
 })
 
 HUDSetSizeRequest = TypedDict("HUDSetSizeRequest", {
+    # Channel name whose actual rendered size is being reported.
     "channel": str,
+    # Actual rendered height in points (used by world-model entries
+    # instead of `min_height` when known).
+    # wire uint32 · min 0
     "height": int,
 })
 
@@ -1203,6 +2201,8 @@ HUDSetSizeResponse = TypedDict("HUDSetSizeResponse", {
 })
 
 HUDShowRequest = TypedDict("HUDShowRequest", {
+    # Channel name to show. Sends an `open <channel>` message to the
+    # Swift shell.
     "channel": str,
 })
 
@@ -1211,6 +2211,8 @@ HUDShowResponse = TypedDict("HUDShowResponse", {
 })
 
 InputClickRequest = TypedDict("InputClickRequest", {
+    # Mouse button: "left", "right", or "middle". Defaults to "left".
+    # default "left"
     "button": NotRequired[str],
 })
 
@@ -1219,7 +2221,10 @@ InputClickResponse = TypedDict("InputClickResponse", {
 })
 
 InputClipboardActionRequest = TypedDict("InputClipboardActionRequest", {
+    # Action: "copy", "paste", or "set".
     "action": str,
+    # Text to set (only used by `action: "set"`).
+    # default null
     "text": NotRequired[str],
 })
 
@@ -1265,6 +2270,7 @@ InputClipboardWriteResponse = TypedDict("InputClipboardWriteResponse", {
 })
 
 InputClipboardWriteItemsRequest = TypedDict("InputClipboardWriteItemsRequest", {
+    # default []
     "items": NotRequired[list["ClipboardWriteItem"]],
 })
 
@@ -1273,7 +2279,9 @@ InputClipboardWriteItemsResponse = TypedDict("InputClipboardWriteItemsResponse",
 })
 
 InputDoubleClickRequest = TypedDict("InputDoubleClickRequest", {
+    # wire int32 · default null
     "x": NotRequired[int],
+    # wire int32 · default null
     "y": NotRequired[int],
 })
 
@@ -1282,10 +2290,15 @@ InputDoubleClickResponse = TypedDict("InputDoubleClickResponse", {
 })
 
 InputDragRequest = TypedDict("InputDragRequest", {
+    # wire uint64 (64-bit) · default 0 · min 0
     "duration_ms": NotRequired[int],
+    # wire int32
     "from_x": int,
+    # wire int32
     "from_y": int,
+    # wire int32
     "to_x": int,
+    # wire int32
     "to_y": int,
 })
 
@@ -1298,7 +2311,13 @@ InputListInputSourcesResponse = TypedDict("InputListInputSourcesResponse", {
 })
 
 InputMouseButtonRequest = TypedDict("InputMouseButtonRequest", {
+    # Button: "left", "right", or "middle". Defaults to "left".
+    # default "left"
     "button": NotRequired[str],
+    # Direction: "press", "release", or "drag". "drag" posts a
+    # zero-distance dragged event at the current cursor position — macOS
+    # only treats a window as grabbed once a dragged event follows the
+    # press, so drag-based operations need it between press and release.
     "direction": str,
 })
 
@@ -1307,25 +2326,46 @@ InputMouseButtonResponse = TypedDict("InputMouseButtonResponse", {
 })
 
 InputParseKeyEventRequest = TypedDict("InputParseKeyEventRequest", {
+    # default false
     "alt": NotRequired[bool],
+    # `KeyboardEvent.code` — the physical key, layout-independent.
+    # default ""
     "code": NotRequired[str],
+    # default false
     "ctrl": NotRequired[bool],
+    # `KeyboardEvent.key` — used only to spot a bare modifier press.
+    # default ""
     "key": NotRequired[str],
+    # default false
     "meta": NotRequired[bool],
+    # default false
     "shift": NotRequired[bool],
 })
 
 InputParseKeyEventResponse = TypedDict("InputParseKeyEventResponse", {
+    # `cmd+shift+k`, or the bare key name when no modifier is held. Empty
+    # when the event is not a binding (a bare modifier, escape, or a physical
+    # key the platform has no name for).
     "combo": str,
     "has_modifiers": bool,
+    # A modifier pressed on its own. A capture UI waits rather than binding.
     "is_bare_modifier": bool,
+    # Escape, which capture UIs conventionally treat as cancel.
     "is_escape": bool,
+    # The key name alone, resolvable through `_platform.key_names`.
     "key_name": str,
 })
 
 InputPressKeyRequest = TypedDict("InputPressKeyRequest", {
+    # Raw keycode (takes priority over `name` if both are present).
+    # wire uint16 · default null · min 0 · max 65535
     "code": NotRequired[int],
+    # Modifier keys to hold during the tap (e.g. "command", "shift").
+    # default []
     "modifiers": NotRequired[list[str]],
+    # Named key (e.g. "return", "tab"). Resolved via `resolve_key_name`.
+    # Required if `code` is absent.
+    # default null
     "name": NotRequired[str],
 })
 
@@ -1334,7 +2374,10 @@ InputPressKeyResponse = TypedDict("InputPressKeyResponse", {
 })
 
 InputRawKeyRequest = TypedDict("InputRawKeyRequest", {
+    # Raw macOS keycode.
+    # wire uint16 · min 0 · max 65535
     "code": int,
+    # One of "press", "release", or "click".
     "direction": str,
 })
 
@@ -1343,7 +2386,9 @@ InputRawKeyResponse = TypedDict("InputRawKeyResponse", {
 })
 
 InputRightClickRequest = TypedDict("InputRightClickRequest", {
+    # wire int32 · default null
     "x": NotRequired[int],
+    # wire int32 · default null
     "y": NotRequired[int],
 })
 
@@ -1352,8 +2397,14 @@ InputRightClickResponse = TypedDict("InputRightClickResponse", {
 })
 
 InputScrollRequest = TypedDict("InputScrollRequest", {
+    # Amount in pixels/units. Defaults to 5.
+    # wire int32 · default 5
     "amount": NotRequired[int],
+    # Direction: "up", "down", "left", or "right".
     "direction": str,
+    # Scroll unit: "line" (discrete, default) or "pixel" (continuous/smooth).
+    # Pixel units are needed for horizontal scroll in most browsers.
+    # default "line"
     "unit": NotRequired[str],
 })
 
@@ -1374,7 +2425,9 @@ InputSwitchInputSourceResponse = TypedDict("InputSwitchInputSourceResponse", {
 })
 
 InputTripleClickRequest = TypedDict("InputTripleClickRequest", {
+    # wire int32 · default null
     "x": NotRequired[int],
+    # wire int32 · default null
     "y": NotRequired[int],
 })
 
@@ -1383,6 +2436,7 @@ InputTripleClickResponse = TypedDict("InputTripleClickResponse", {
 })
 
 InputTypeTextRequest = TypedDict("InputTypeTextRequest", {
+    # Text to type into the active application.
     "text": str,
 })
 
@@ -1391,10 +2445,14 @@ InputTypeTextResponse = TypedDict("InputTypeTextResponse", {
 })
 
 KeybindsRegisterRequest = TypedDict("KeybindsRegisterRequest", {
+    # `RegistrySnapshot` JSON: `{ entries: [...], listen_up: [...] }`.
+    # Each entry is `{ combo, action, source }`.
     "snapshot": Any,
 })
 
 KeybindsRegisterResponse = TypedDict("KeybindsRegisterResponse", {
+    # Number of entries cached after the registration.
+    # wire uint · min 0
     "count": int,
     "ok": bool,
 })
@@ -1412,6 +2470,7 @@ NativeAccessibilityEnabledResponse = TypedDict("NativeAccessibilityEnabledRespon
 })
 
 NativeActivateAppRequest = TypedDict("NativeActivateAppRequest", {
+    # default false
     "all_windows": NotRequired[bool],
     "bundle_id": str,
 })
@@ -1466,11 +2525,14 @@ NativeAppFocusedWindowIDRequest = TypedDict("NativeAppFocusedWindowIDRequest", {
 
 NativeAppIconRequest = TypedDict("NativeAppIconRequest", {
     "bundle_id": str,
+    # wire uint32 · default 64 · min 0
     "size": NotRequired[int],
 })
 
 NativeAppIconResponse = TypedDict("NativeAppIconResponse", {
+    # Always `"png"` -- exposed for forward compatibility.
     "format": str,
+    # Base64-encoded PNG bytes.
     "image_base64": str,
 })
 
@@ -1558,6 +2620,7 @@ NativeAudioDeviceVolumeRequest = TypedDict("NativeAudioDeviceVolumeRequest", {
 
 NativeAudioDeviceVolumeResponse = TypedDict("NativeAudioDeviceVolumeResponse", {
     "is_muted": bool,
+    # wire double
     "volume": float,
 })
 
@@ -1602,14 +2665,18 @@ NativeAutomationPermissionResponse = TypedDict("NativeAutomationPermissionRespon
 })
 
 NativeAxElementAtPointRequest = TypedDict("NativeAxElementAtPointRequest", {
+    # wire int32
     "pid": int,
+    # wire int32
     "x": int,
+    # wire int32
     "y": int,
 })
 
 NativeAxElementAtPointResponse = TypedDict("NativeAxElementAtPointResponse", {
     "actions": list[str],
     "attributes": list[str],
+    # wire uint32 · min 0
     "children_count": int,
     "description": NotRequired[str],
     "enabled": bool,
@@ -1624,12 +2691,15 @@ NativeAxElementAtPointResponse = TypedDict("NativeAxElementAtPointResponse", {
 })
 
 NativeAxElementTreeRequest = TypedDict("NativeAxElementTreeRequest", {
+    # wire uint32 · default 3 · min 0
     "depth": NotRequired[int],
     "element": "AXElementRef",
 })
 
 NativeAxObserveRequest = TypedDict("NativeAxObserveRequest", {
+    # default []
     "notifications": NotRequired[list[str]],
+    # wire int32
     "pid": int,
 })
 
@@ -1647,6 +2717,7 @@ NativeAxPerformActionResponse = TypedDict("NativeAxPerformActionResponse", {
 })
 
 NativeAxReadAttributesRequest = TypedDict("NativeAxReadAttributesRequest", {
+    # default []
     "attributes": NotRequired[list[str]],
     "element": "AXElementRef",
 })
@@ -1670,6 +2741,7 @@ NativeAxUnobserveResponse = TypedDict("NativeAxUnobserveResponse", {
 })
 
 NativeBatchIsTileableRequest = TypedDict("NativeBatchIsTileableRequest", {
+    # default []
     "window_ids": NotRequired[list[str]],
 })
 
@@ -1678,7 +2750,11 @@ NativeBatchIsTileableResponse = TypedDict("NativeBatchIsTileableResponse", {
 })
 
 NativeBatchSetFramesRequest = TypedDict("NativeBatchSetFramesRequest", {
+    # default []
     "frames": NotRequired[list["WindowFrame"]],
+    # If true, sleep 10ms after applying frames and read back the actual
+    # positions (defaults to true). Set false to skip the readback round-trip.
+    # default true
     "readback": NotRequired[bool],
 })
 
@@ -1687,10 +2763,17 @@ NativeBatchSetFramesResponse = TypedDict("NativeBatchSetFramesResponse", {
 })
 
 NativeBatteryResponse = TypedDict("NativeBatteryResponse", {
+    # Whether the battery is currently charging.
     "is_charging": bool,
+    # Whether the device is plugged in to external power.
     "is_plugged_in": bool,
+    # Whether a battery is present (false on desktops without a UPS).
     "is_present": bool,
+    # Battery level from 0.0 to 1.0.
+    # wire double
     "level": float,
+    # Estimated minutes until empty (or full if charging). None if unknown.
+    # wire int32
     "time_remaining_minutes": NotRequired[int],
 })
 
@@ -1699,6 +2782,9 @@ NativeBatteryHealthResponse = TypedDict("NativeBatteryHealthResponse", {
 })
 
 NativeBleDiscoverServicesRequest = TypedDict("NativeBleDiscoverServicesRequest", {
+    # Identifier for the paired BLE device. Accepts a CoreBluetooth
+    # peripheral UUID (e.g. "12345678-...") or a device name to match
+    # among connected BLE HID peripherals (e.g. "Shortcut Remote").
     "device_identifier": str,
 })
 
@@ -1707,8 +2793,11 @@ NativeBleDiscoverServicesResponse = TypedDict("NativeBleDiscoverServicesResponse
 })
 
 NativeBleSubscribeRequest = TypedDict("NativeBleSubscribeRequest", {
+    # GATT characteristic UUID to subscribe to (must support notify).
     "characteristic_uuid": str,
+    # CoreBluetooth peripheral UUID or device name.
     "device_identifier": str,
+    # GATT service UUID containing the characteristic.
     "service_uuid": str,
 })
 
@@ -1717,8 +2806,13 @@ NativeBleSubscribeResponse = TypedDict("NativeBleSubscribeResponse", {
 })
 
 NativeBleSubscribeAllThenWriteRequest = TypedDict("NativeBleSubscribeAllThenWriteRequest", {
+    # CoreBluetooth peripheral UUID or device name.
     "device_identifier": str,
+    # GATT service UUIDs to subscribe to all notify characteristics on.
+    # default []
     "subscribe_services": NotRequired[list[str]],
+    # Writes to perform after subscribing. The last `with_response` write
+    # determines when the operation completes.
     "writes": NotRequired[list["BleWriteEntry"]],
 })
 
@@ -1727,10 +2821,18 @@ NativeBleSubscribeAllThenWriteResponse = TypedDict("NativeBleSubscribeAllThenWri
 })
 
 NativeBleWriteRequest = TypedDict("NativeBleWriteRequest", {
+    # GATT characteristic UUID (e.g. "FFF1").
     "characteristic_uuid": str,
+    # Bytes to write to the characteristic.
+    # default []
     "data": NotRequired[list[int]],
+    # Identifier for the paired BLE device. Accepts a CoreBluetooth
+    # peripheral UUID or a device name (see ble_discover_services).
     "device_identifier": str,
+    # GATT service UUID (e.g. "FFF0").
     "service_uuid": str,
+    # Write type: "with_response" (default, reliable) or "without_response" (fire-and-forget).
+    # default "with_response"
     "write_type": NotRequired[str],
 })
 
@@ -1759,14 +2861,17 @@ NativeBordersResponse = TypedDict("NativeBordersResponse", {
 })
 
 NativeBrightnessRequest = TypedDict("NativeBrightnessRequest", {
+    # wire uint32 · default null · min 0
     "display_id": NotRequired[int],
 })
 
 NativeBrightnessResponse = TypedDict("NativeBrightnessResponse", {
+    # wire double
     "brightness": float,
 })
 
 NativeBundleForRemotePortRequest = TypedDict("NativeBundleForRemotePortRequest", {
+    # wire int32
     "remote_port": int,
 })
 
@@ -1808,7 +2913,9 @@ NativeCaptureWindowRequest = TypedDict("NativeCaptureWindowRequest", {
 })
 
 NativeCaptureWindowResponse = TypedDict("NativeCaptureWindowResponse", {
+    # Always `"png"`.
     "format": str,
+    # Base64-encoded PNG bytes.
     "image_base64": str,
 })
 
@@ -1854,7 +2961,9 @@ NativeClearNotificationsResponse = TypedDict("NativeClearNotificationsResponse",
 })
 
 NativeClickMenuItemRequest = TypedDict("NativeClickMenuItemRequest", {
+    # default []
     "path": NotRequired[list[str]],
+    # wire int32
     "pid": int,
 })
 
@@ -1863,6 +2972,7 @@ NativeClickMenuItemResponse = TypedDict("NativeClickMenuItemResponse", {
 })
 
 NativeClipboardChangeCountResponse = TypedDict("NativeClipboardChangeCountResponse", {
+    # wire uint64 (64-bit) · min 0
     "count": int,
 })
 
@@ -1907,6 +3017,7 @@ NativeClipboardSetTextResponse = TypedDict("NativeClipboardSetTextResponse", {
 })
 
 NativeClipboardTypesRequest = TypedDict("NativeClipboardTypesRequest", {
+    # default ""
     "pasteboard": NotRequired[str],
 })
 
@@ -1923,15 +3034,21 @@ NativeCloseWindowResponse = TypedDict("NativeCloseWindowResponse", {
 })
 
 NativeColorAtPointRequest = TypedDict("NativeColorAtPointRequest", {
+    # wire int32
     "x": int,
+    # wire int32
     "y": int,
 })
 
 NativeColorAtPointResponse = TypedDict("NativeColorAtPointResponse", {
+    # wire uint8 · min 0 · max 255
     "a": int,
+    # wire uint8 · min 0 · max 255
     "b": int,
+    # wire uint8 · min 0 · max 255
     "g": int,
     "hex": str,
+    # wire uint8 · min 0 · max 255
     "r": int,
 })
 
@@ -1991,13 +3108,20 @@ NativeCurrentWallpaperResponse = TypedDict("NativeCurrentWallpaperResponse", {
 })
 
 NativeCursorResponse = TypedDict("NativeCursorResponse", {
+    # wire int32
     "x": int,
+    # wire int32
     "y": int,
 })
 
 NativeCursorInfoResponse = TypedDict("NativeCursorInfoResponse", {
+    # Cursor type name (e.g. "arrow", "ibeam", "crosshair", "pointingHand").
     "cursor_type": str,
+    # Cursor X position in screen coordinates.
+    # wire int32
     "x": int,
+    # Cursor Y position in screen coordinates.
+    # wire int32
     "y": int,
 })
 
@@ -2066,6 +3190,7 @@ NativeDifferentiateWithoutColorResponse = TypedDict("NativeDifferentiateWithoutC
 })
 
 NativeDirectoryContentsRequest = TypedDict("NativeDirectoryContentsRequest", {
+    # default false
     "include_hidden": NotRequired[bool],
     "path": str,
 })
@@ -2075,13 +3200,17 @@ NativeDirectoryContentsResponse = TypedDict("NativeDirectoryContentsResponse", {
 })
 
 NativeDiskSpaceRequest = TypedDict("NativeDiskSpaceRequest", {
+    # default ""
     "path": NotRequired[str],
 })
 
 NativeDiskSpaceResponse = TypedDict("NativeDiskSpaceResponse", {
+    # wire uint64 (64-bit) · min 0
     "available_bytes": int,
     "mount_point": str,
+    # wire uint64 (64-bit) · min 0
     "total_bytes": int,
+    # wire uint64 (64-bit) · min 0
     "used_bytes": int,
 })
 
@@ -2106,6 +3235,7 @@ NativeDisplayColorProfilesResponse = TypedDict("NativeDisplayColorProfilesRespon
 })
 
 NativeDisplayCountResponse = TypedDict("NativeDisplayCountResponse", {
+    # wire uint64 (64-bit) · min 0
     "count": int,
 })
 
@@ -2114,6 +3244,7 @@ NativeDisplayMirroringResponse = TypedDict("NativeDisplayMirroringResponse", {
 })
 
 NativeDisplayRefreshRateRequest = TypedDict("NativeDisplayRefreshRateRequest", {
+    # wire uint32 · min 0
     "display_id": int,
 })
 
@@ -2122,6 +3253,7 @@ NativeDisplayRotationResponse = TypedDict("NativeDisplayRotationResponse", {
 })
 
 NativeDisplayScaleFactorRequest = TypedDict("NativeDisplayScaleFactorRequest", {
+    # wire uint32 · min 0
     "display_id": int,
 })
 
@@ -2134,7 +3266,9 @@ NativeDisplaysResponse = TypedDict("NativeDisplaysResponse", {
 })
 
 NativeDndResponse = TypedDict("NativeDndResponse", {
+    # Whether Do Not Disturb / Focus mode is enabled.
     "enabled": bool,
+    # Name of the active Focus mode, if available.
     "focus_name": NotRequired[str],
 })
 
@@ -2199,6 +3333,7 @@ NativeEnvVarResponse = TypedDict("NativeEnvVarResponse", {
 })
 
 NativeEpochTimeResponse = TypedDict("NativeEpochTimeResponse", {
+    # wire uint64 (64-bit) · min 0
     "seconds": int,
 })
 
@@ -2247,6 +3382,7 @@ NativeFileExtendedAttributesResponse = TypedDict("NativeFileExtendedAttributesRe
 })
 
 NativeFileHashRequest = TypedDict("NativeFileHashRequest", {
+    # default ""
     "algorithm": NotRequired[str],
     "path": str,
 })
@@ -2260,12 +3396,16 @@ NativeFileMetadataRequest = TypedDict("NativeFileMetadataRequest", {
 })
 
 NativeFileMetadataResponse = TypedDict("NativeFileMetadataResponse", {
+    # wire uint64 (64-bit) · min 0
     "accessed": NotRequired[int],
+    # wire uint64 (64-bit) · min 0
     "created": NotRequired[int],
     "is_dir": bool,
     "is_symlink": bool,
+    # wire uint64 (64-bit) · min 0
     "modified": NotRequired[int],
     "readonly": bool,
+    # wire uint64 (64-bit) · min 0
     "size": int,
 })
 
@@ -2299,6 +3439,7 @@ NativeFileSizeRequest = TypedDict("NativeFileSizeRequest", {
 
 NativeFileTagsRequest = TypedDict("NativeFileTagsRequest", {
     "path": str,
+    # default null
     "tags": NotRequired[list[str]],
 })
 
@@ -2420,8 +3561,10 @@ NativeGetWindowInfoRequest = TypedDict("NativeGetWindowInfoRequest", {
 })
 
 NativeGetWindowInfoResponse = TypedDict("NativeGetWindowInfoResponse", {
+    # wire double
     "alpha": NotRequired[float],
     "bounds": "WindowBounds",
+    # wire uint32 · min 0
     "display_id": int,
     "is_focused": bool,
     "is_fullscreen": bool,
@@ -2432,6 +3575,7 @@ NativeGetWindowInfoResponse = TypedDict("NativeGetWindowInfoResponse", {
 })
 
 NativeGlobFilesRequest = TypedDict("NativeGlobFilesRequest", {
+    # wire uint32 · default 0 · min 0
     "max_results": NotRequired[int],
     "pattern": str,
 })
@@ -2465,6 +3609,7 @@ NativeHardwareUuidResponse = TypedDict("NativeHardwareUuidResponse", {
 })
 
 NativeHidClaimRequest = TypedDict("NativeHidClaimRequest", {
+    # Device ID (e.g. "0x28bd:0x0202:0x48f42695").
     "device_id": str,
 })
 
@@ -2477,6 +3622,7 @@ NativeHidDevicesResponse = TypedDict("NativeHidDevicesResponse", {
 })
 
 NativeHidElementsRequest = TypedDict("NativeHidElementsRequest", {
+    # Device ID (e.g. "0x28bd:0x0202:0x48f42695").
     "device_id": str,
 })
 
@@ -2485,6 +3631,7 @@ NativeHidElementsResponse = TypedDict("NativeHidElementsResponse", {
 })
 
 NativeHidReleaseRequest = TypedDict("NativeHidReleaseRequest", {
+    # Device ID (e.g. "0x28bd:0x0202:0x48f42695").
     "device_id": str,
 })
 
@@ -2493,9 +3640,15 @@ NativeHidReleaseResponse = TypedDict("NativeHidReleaseResponse", {
 })
 
 NativeHidSendReportRequest = TypedDict("NativeHidSendReportRequest", {
+    # Raw report bytes to send.
+    # default []
     "data": NotRequired[list[int]],
+    # Device ID (e.g. "0x28bd:0x0202:0x48f42695").
     "device_id": str,
+    # HID report ID.
+    # wire uint32 · min 0
     "report_id": int,
+    # Report type: "output" or "feature".
     "report_type": str,
 })
 
@@ -2602,6 +3755,7 @@ NativeKernelVersionResponse = TypedDict("NativeKernelVersionResponse", {
 NativeKeyboardLayoutResponse = TypedDict("NativeKeyboardLayoutResponse", {
     "layout_id": str,
     "layout_name": str,
+    # Maps keycode (as string) → character produced on the current layout.
     "mappings": dict[str, str],
 })
 
@@ -2634,7 +3788,9 @@ NativeKeychainWriteResponse = TypedDict("NativeKeychainWriteResponse", {
 })
 
 NativeKillProcessRequest = TypedDict("NativeKillProcessRequest", {
+    # wire int32
     "pid": int,
+    # wire int32 · default 0
     "signal": NotRequired[int],
 })
 
@@ -2648,6 +3804,7 @@ NativeLastRebootResponse = TypedDict("NativeLastRebootResponse", {
 
 NativeLaunchAppRequest = TypedDict("NativeLaunchAppRequest", {
     "bundle_id": str,
+    # default false
     "new_instance": NotRequired[bool],
 })
 
@@ -2756,6 +3913,7 @@ NativeMemoryPressureResponse = TypedDict("NativeMemoryPressureResponse", {
 })
 
 NativeMenuBarRequest = TypedDict("NativeMenuBarRequest", {
+    # wire int32
     "pid": int,
 })
 
@@ -2796,8 +3954,11 @@ NativeMountPointsResponse = TypedDict("NativeMountPointsResponse", {
 })
 
 NativeMouseButtonClickRequest = TypedDict("NativeMouseButtonClickRequest", {
+    # wire uint32 · min 0
     "button": int,
+    # wire int32 · default null
     "x": NotRequired[int],
+    # wire int32 · default null
     "y": NotRequired[int],
 })
 
@@ -2815,6 +3976,7 @@ NativeMoveFileResponse = TypedDict("NativeMoveFileResponse", {
 })
 
 NativeMoveWindowToDisplayRequest = TypedDict("NativeMoveWindowToDisplayRequest", {
+    # wire uint32 · min 0
     "display_id": int,
     "window_id": str,
 })
@@ -2824,6 +3986,7 @@ NativeMoveWindowToDisplayResponse = TypedDict("NativeMoveWindowToDisplayResponse
 })
 
 NativeMoveWindowToSpaceRequest = TypedDict("NativeMoveWindowToSpaceRequest", {
+    # wire uint64 (64-bit) · min 0
     "space_id": int,
     "window_id": str,
 })
@@ -2889,8 +4052,11 @@ NativeNotificationSoundEnabledResponse = TypedDict("NativeNotificationSoundEnabl
 })
 
 NativeNotifyRequest = TypedDict("NativeNotifyRequest", {
+    # default null
     "body": NotRequired[str],
+    # default null
     "sound": NotRequired[str],
+    # default null
     "subtitle": NotRequired[str],
     "title": str,
 })
@@ -2908,6 +4074,7 @@ NativeNumberFormatDecimalResponse = TypedDict("NativeNumberFormatDecimalResponse
 })
 
 NativeObserveWindowsRequest = TypedDict("NativeObserveWindowsRequest", {
+    # wire int32
     "pid": int,
 })
 
@@ -2932,9 +4099,13 @@ NativeOcrScreenResponse = TypedDict("NativeOcrScreenResponse", {
 })
 
 NativeOcrScreenRegionRequest = TypedDict("NativeOcrScreenRegionRequest", {
+    # wire double
     "height": float,
+    # wire double
     "width": float,
+    # wire double
     "x": float,
+    # wire double
     "y": float,
 })
 
@@ -2943,6 +4114,7 @@ NativeOcrScreenRegionResponse = TypedDict("NativeOcrScreenRegionResponse", {
 })
 
 NativeOcrWindowRequest = TypedDict("NativeOcrWindowRequest", {
+    # wire uint32 · min 0
     "window_id": int,
 })
 
@@ -2967,6 +4139,7 @@ NativeOpenFinderWindowResponse = TypedDict("NativeOpenFinderWindowResponse", {
 })
 
 NativeOpenSystemSettingsRequest = TypedDict("NativeOpenSystemSettingsRequest", {
+    # default null
     "pane": NotRequired[str],
 })
 
@@ -3004,6 +4177,7 @@ NativeOptimizedChargingResponse = TypedDict("NativeOptimizedChargingResponse", {
 })
 
 NativePdfExtractTextRequest = TypedDict("NativePdfExtractTextRequest", {
+    # wire uint64 (64-bit) · default 0 · min 0
     "page": NotRequired[int],
     "path": str,
 })
@@ -3058,7 +4232,9 @@ NativePressAndHoldEnabledResponse = TypedDict("NativePressAndHoldEnabledResponse
 })
 
 NativePreventSleepRequest = TypedDict("NativePreventSleepRequest", {
+    # default null
     "assertion_id": NotRequired[str],
+    # default "BranchKit plugin"
     "reason": NotRequired[str],
 })
 
@@ -3071,6 +4247,7 @@ NativePrimaryDisplayResponse = TypedDict("NativePrimaryDisplayResponse", {
 })
 
 NativePrimaryDisplayIDResponse = TypedDict("NativePrimaryDisplayIDResponse", {
+    # wire uint64 (64-bit) · min 0
     "value": int,
 })
 
@@ -3083,14 +4260,17 @@ NativePrintersResponse = TypedDict("NativePrintersResponse", {
 })
 
 NativeProcessCountResponse = TypedDict("NativeProcessCountResponse", {
+    # wire uint64 (64-bit) · min 0
     "count": int,
 })
 
 NativeProcessCpuUsageRequest = TypedDict("NativeProcessCpuUsageRequest", {
+    # wire int32
     "pid": int,
 })
 
 NativeProcessExistsRequest = TypedDict("NativeProcessExistsRequest", {
+    # wire int32
     "pid": int,
 })
 
@@ -3099,14 +4279,18 @@ NativeProcessExistsResponse = TypedDict("NativeProcessExistsResponse", {
 })
 
 NativeProcessInfoRequest = TypedDict("NativeProcessInfoRequest", {
+    # wire int32
     "pid": int,
 })
 
 NativeProcessInfoResponse = TypedDict("NativeProcessInfoResponse", {
+    # wire double
     "cpu_percent": NotRequired[float],
+    # wire uint64 (64-bit) · min 0
     "memory_bytes": NotRequired[int],
     "name": str,
     "path": NotRequired[str],
+    # wire int32
     "pid": int,
     "user": NotRequired[str],
 })
@@ -3116,22 +4300,27 @@ NativeProcessListResponse = TypedDict("NativeProcessListResponse", {
 })
 
 NativeProcessMemoryUsageRequest = TypedDict("NativeProcessMemoryUsageRequest", {
+    # wire int32
     "pid": int,
 })
 
 NativeProcessNameRequest = TypedDict("NativeProcessNameRequest", {
+    # wire int32
     "pid": int,
 })
 
 NativeProcessParentPidRequest = TypedDict("NativeProcessParentPidRequest", {
+    # wire int32
     "pid": int,
 })
 
 NativeProcessPathRequest = TypedDict("NativeProcessPathRequest", {
+    # wire int32
     "pid": int,
 })
 
 NativeProcessStartTimeRequest = TypedDict("NativeProcessStartTimeRequest", {
+    # wire int32
     "pid": int,
 })
 
@@ -3149,11 +4338,14 @@ NativePurgeMemoryResponse = TypedDict("NativePurgeMemoryResponse", {
 
 NativeQuickLookRequest = TypedDict("NativeQuickLookRequest", {
     "path": str,
+    # wire uint32 · default 512 · min 0
     "size": NotRequired[int],
 })
 
 NativeQuickLookResponse = TypedDict("NativeQuickLookResponse", {
+    # Always `"png"`.
     "format": str,
+    # Base64-encoded PNG bytes.
     "image_base64": str,
 })
 
@@ -3191,6 +4383,7 @@ NativeReadFileResponse = TypedDict("NativeReadFileResponse", {
 })
 
 NativeReadFileBinaryRequest = TypedDict("NativeReadFileBinaryRequest", {
+    # wire uint64 (64-bit) · default null · min 0
     "max_bytes": NotRequired[int],
     "path": str,
 })
@@ -3241,9 +4434,13 @@ NativeRequestScreenCaptureResponse = TypedDict("NativeRequestScreenCaptureRespon
 })
 
 NativeResourceUsageResponse = TypedDict("NativeResourceUsageResponse", {
+    # wire double
     "cpu_usage_percent": float,
+    # wire double
     "memory_pressure_percent": float,
+    # wire uint64 (64-bit) · min 0
     "memory_total_bytes": int,
+    # wire uint64 (64-bit) · min 0
     "memory_used_bytes": int,
 })
 
@@ -3268,10 +4465,12 @@ NativeRosettaInstalledResponse = TypedDict("NativeRosettaInstalledResponse", {
 })
 
 NativeRunApplescriptRequest = TypedDict("NativeRunApplescriptRequest", {
+    # AppleScript source to execute via `osascript`.
     "script": str,
 })
 
 NativeRunApplescriptResponse = TypedDict("NativeRunApplescriptResponse", {
+    # wire int32
     "exit_code": int,
     "stderr": str,
     "stdout": str,
@@ -3286,6 +4485,7 @@ NativeRunJxaResponse = TypedDict("NativeRunJxaResponse", {
 })
 
 NativeRunShortcutRequest = TypedDict("NativeRunShortcutRequest", {
+    # default null
     "input": NotRequired[str],
     "name": str,
 })
@@ -3303,6 +4503,7 @@ NativeScreenCapturePermissionResponse = TypedDict("NativeScreenCapturePermission
 })
 
 NativeScreenCountResponse = TypedDict("NativeScreenCountResponse", {
+    # wire uint64 (64-bit) · min 0
     "count": int,
 })
 
@@ -3335,13 +4536,17 @@ NativeScreenSharingEnabledResponse = TypedDict("NativeScreenSharingEnabledRespon
 })
 
 NativeScreenshotRequest = TypedDict("NativeScreenshotRequest", {
+    # wire uint32 · default null · min 0
     "display_id": NotRequired[int],
     "region": NotRequired["ScreenshotRegion"],
+    # default null
     "window_id": NotRequired[str],
 })
 
 NativeScreenshotResponse = TypedDict("NativeScreenshotResponse", {
+    # Always `"png"`.
     "format": str,
+    # Base64-encoded PNG bytes.
     "image_base64": str,
 })
 
@@ -3411,6 +4616,7 @@ NativeSetAppHiddenResponse = TypedDict("NativeSetAppHiddenResponse", {
 })
 
 NativeSetAudioDeviceRequest = TypedDict("NativeSetAudioDeviceRequest", {
+    # "input" or "output".
     "device_type": str,
     "uid": str,
 })
@@ -3421,6 +4627,7 @@ NativeSetAudioDeviceResponse = TypedDict("NativeSetAudioDeviceResponse", {
 
 NativeSetAudioDeviceVolumeRequest = TypedDict("NativeSetAudioDeviceVolumeRequest", {
     "device_uid": str,
+    # wire double
     "volume": float,
 })
 
@@ -3461,7 +4668,9 @@ NativeSetBluetoothPowerResponse = TypedDict("NativeSetBluetoothPowerResponse", {
 })
 
 NativeSetBrightnessRequest = TypedDict("NativeSetBrightnessRequest", {
+    # wire double
     "brightness": float,
+    # wire uint32 · default null · min 0
     "display_id": NotRequired[int],
 })
 
@@ -3534,6 +4743,7 @@ NativeSetDockShowRecentsResponse = TypedDict("NativeSetDockShowRecentsResponse",
 })
 
 NativeSetDockSizeRequest = TypedDict("NativeSetDockSizeRequest", {
+    # wire double
     "size": float,
 })
 
@@ -3594,6 +4804,7 @@ NativeSetHighlightColorResponse = TypedDict("NativeSetHighlightColorResponse", {
 })
 
 NativeSetHotCornerRequest = TypedDict("NativeSetHotCornerRequest", {
+    # wire uint32 · min 0
     "action": int,
     "corner": str,
 })
@@ -3611,6 +4822,7 @@ NativeSetInputSourceResponse = TypedDict("NativeSetInputSourceResponse", {
 })
 
 NativeSetKeyRepeatDelayRequest = TypedDict("NativeSetKeyRepeatDelayRequest", {
+    # wire double
     "delay": float,
 })
 
@@ -3619,6 +4831,7 @@ NativeSetKeyRepeatDelayResponse = TypedDict("NativeSetKeyRepeatDelayResponse", {
 })
 
 NativeSetKeyRepeatRateRequest = TypedDict("NativeSetKeyRepeatRateRequest", {
+    # wire double
     "rate": float,
 })
 
@@ -3635,6 +4848,7 @@ NativeSetMenuBarAutoHideResponse = TypedDict("NativeSetMenuBarAutoHideResponse",
 })
 
 NativeSetMouseSpeedRequest = TypedDict("NativeSetMouseSpeedRequest", {
+    # wire double
     "speed": float,
 })
 
@@ -3683,6 +4897,7 @@ NativeSetScrollDirectionNaturalResponse = TypedDict("NativeSetScrollDirectionNat
 })
 
 NativeSetSidebarIconSizeRequest = TypedDict("NativeSetSidebarIconSizeRequest", {
+    # wire uint32 · min 0
     "size": int,
 })
 
@@ -3707,6 +4922,7 @@ NativeSetTapToClickResponse = TypedDict("NativeSetTapToClickResponse", {
 })
 
 NativeSetTrackpadSpeedRequest = TypedDict("NativeSetTrackpadSpeedRequest", {
+    # wire double
     "speed": float,
 })
 
@@ -3724,6 +4940,7 @@ NativeSetURLSchemeHandlerResponse = TypedDict("NativeSetURLSchemeHandlerResponse
 })
 
 NativeSetVolumeRequest = TypedDict("NativeSetVolumeRequest", {
+    # wire double
     "volume": float,
 })
 
@@ -3740,6 +4957,7 @@ NativeSetWallpaperResponse = TypedDict("NativeSetWallpaperResponse", {
 })
 
 NativeSetWindowAlphaRequest = TypedDict("NativeSetWindowAlphaRequest", {
+    # wire double
     "alpha": float,
     "window_id": str,
 })
@@ -3759,7 +4977,9 @@ NativeSetWindowLevelResponse = TypedDict("NativeSetWindowLevelResponse", {
 
 NativeSetWindowPositionRequest = TypedDict("NativeSetWindowPositionRequest", {
     "window_id": str,
+    # wire int32
     "x": int,
+    # wire int32
     "y": int,
 })
 
@@ -3777,7 +4997,9 @@ NativeSetWindowShadowResponse = TypedDict("NativeSetWindowShadowResponse", {
 })
 
 NativeSetWindowSizeRequest = TypedDict("NativeSetWindowSizeRequest", {
+    # wire int32
     "h": int,
+    # wire int32
     "w": int,
     "window_id": str,
 })
@@ -3840,8 +5062,10 @@ NativeSpacesSpanDisplaysResponse = TypedDict("NativeSpacesSpanDisplaysResponse",
 })
 
 NativeSpeakRequest = TypedDict("NativeSpeakRequest", {
+    # wire double · default null
     "rate": NotRequired[float],
     "text": str,
+    # default null
     "voice": NotRequired[str],
 })
 
@@ -3858,6 +5082,7 @@ NativeSpeechRecognitionAvailableResponse = TypedDict("NativeSpeechRecognitionAva
 })
 
 NativeSpeechRecognizeFileRequest = TypedDict("NativeSpeechRecognizeFileRequest", {
+    # default ""
     "locale": NotRequired[str],
     "path": str,
 })
@@ -3867,8 +5092,10 @@ NativeSpellingLanguageResponse = TypedDict("NativeSpellingLanguageResponse", {
 })
 
 NativeSpotlightRequest = TypedDict("NativeSpotlightRequest", {
+    # wire uint32 · default 20 · min 0
     "limit": NotRequired[int],
     "query": str,
+    # default null
     "scope": NotRequired[list[str]],
 })
 
@@ -3901,6 +5128,7 @@ NativeSwipeBetweenPagesResponse = TypedDict("NativeSwipeBetweenPagesResponse", {
 })
 
 NativeSwitchSpaceRequest = TypedDict("NativeSwitchSpaceRequest", {
+    # wire uint64 (64-bit) · min 0
     "space_id": int,
 })
 
@@ -3950,11 +5178,15 @@ NativeSystemSoundsResponse = TypedDict("NativeSystemSoundsResponse", {
 })
 
 NativeSystemUptimeResponse = TypedDict("NativeSystemUptimeResponse", {
+    # Human-readable uptime string.
     "formatted": str,
+    # Seconds since boot.
+    # wire double
     "uptime_seconds": float,
 })
 
 NativeSystemUptimeSecondsResponse = TypedDict("NativeSystemUptimeSecondsResponse", {
+    # wire uint64 (64-bit) · min 0
     "seconds": int,
 })
 
@@ -4117,6 +5349,7 @@ NativeVoiceoverEnabledResponse = TypedDict("NativeVoiceoverEnabledResponse", {
 
 NativeVolumeResponse = TypedDict("NativeVolumeResponse", {
     "is_muted": bool,
+    # wire double
     "volume": float,
 })
 
@@ -4125,7 +5358,9 @@ NativeVpnStatusResponse = TypedDict("NativeVpnStatusResponse", {
 })
 
 NativeWarpCursorRequest = TypedDict("NativeWarpCursorRequest", {
+    # wire int32
     "x": int,
+    # wire int32
     "y": int,
 })
 
@@ -4134,10 +5369,16 @@ NativeWarpCursorResponse = TypedDict("NativeWarpCursorResponse", {
 })
 
 NativeWifiResponse = TypedDict("NativeWifiResponse", {
+    # BSSID of the connected access point, if any.
     "bssid": NotRequired[str],
+    # Whether WiFi is currently connected to a network.
     "is_connected": bool,
+    # Whether the WiFi interface is powered on.
     "is_enabled": bool,
+    # Signal strength in dBm, if connected.
+    # wire int32
     "rssi": NotRequired[int],
+    # SSID of the connected network, if any.
     "ssid": NotRequired[str],
 })
 
@@ -4154,9 +5395,13 @@ NativeWindowBoundsRequest = TypedDict("NativeWindowBoundsRequest", {
 })
 
 NativeWindowBoundsResponse = TypedDict("NativeWindowBoundsResponse", {
+    # wire int32
     "h": int,
+    # wire int32
     "w": int,
+    # wire int32
     "x": int,
+    # wire int32
     "y": int,
 })
 
@@ -4185,6 +5430,7 @@ NativeWindowLayerRequest = TypedDict("NativeWindowLayerRequest", {
 })
 
 NativeWindowScreenshotRequest = TypedDict("NativeWindowScreenshotRequest", {
+    # wire uint32 · min 0
     "window_id": int,
 })
 
@@ -4197,6 +5443,8 @@ NativeWindowTitleRequest = TypedDict("NativeWindowTitleRequest", {
 })
 
 NativeWorldModelRequest = TypedDict("NativeWorldModelRequest", {
+    # If true, only return windows visible on screen.
+    # default false
     "on_screen": NotRequired[bool],
 })
 
@@ -4241,25 +5489,60 @@ NativeZoomEnabledResponse = TypedDict("NativeZoomEnabledResponse", {
 })
 
 OutputStateRequest = TypedDict("OutputStateRequest", {
+    # The document that becomes the channel's current state. Its `channel`
+    # must be owned by the calling plugin.
     "state": "OutputState",
 })
 
 OutputStateResponse = TypedDict("OutputStateResponse", {
+    # The generation the platform stamped on this state — monotonic, so a
+    # renderer can tell which of two states is newer.
+    # wire uint64 (64-bit) · min 0
     "generation": int,
     "ok": bool,
 })
 
 OverridesApplyRequest = TypedDict("OverridesApplyRequest", {
+    # Action: "add", "remove", "restore", "reset", "patch", "rename", or
+    # "revert".
     "action": str,
+    # Collection name to override.
     "collection": str,
+    # Field key for the "unpatch" action — removes ONE field from the
+    # tenant's patch of `id` (the per-field inverse of "patch"; the patch
+    # entry is dropped when its last field goes). The settings form's
+    # per-field revert: sparse by construction, so the reverted field
+    # resumes tracking the shipped default. Ignored by other actions.
+    # default null
     "field": NotRequired[str],
+    # Partial record fields for "patch", or complete record for "add".
+    # default null
     "fields": NotRequired[Any],
+    # Record ID (id_field value) for patch/remove/restore actions. For
+    # "rename" it is the entry's *current* key (surface form) to replace; for
+    # "revert" the current key of the entry to reset to its plugin default.
+    # default null
     "id": NotRequired[str],
+    # New key (id_field value) for the "rename" action — the entry is re-added
+    # under this key with every other field (value, aliases) preserved.
+    # Ignored by other actions.
+    # default null
     "new_id": NotRequired[str],
+    # Which overlay tenant this mutation targets — a writer-namespace value
+    # (`"_user"` or a plugin id). Defaults: a plugin caller targets its OWN
+    # overlay; a host caller targets `"_user"`. A plugin transporting a user
+    # gesture from its settings tab says `"_user"` explicitly; it may never
+    # target another plugin's overlay. Plugin overlays carry per-field
+    # patches only (`patch`/`restore`/`reset`) — annotation, not authorship
+    # (docs/design/DESIGN_WRITER_SCOPED_OVERLAY.md).
+    # default null
     "tenant": NotRequired[str],
 })
 
 OverridesApplyResponse = TypedDict("OverridesApplyResponse", {
+    # The entry's resulting key after the mutation, when the caller can't know
+    # it up front. Set by "revert" to the plugin-default key the entry fell
+    # back to (so a caller can re-point at it); None for other actions.
     "key": NotRequired[str],
     "ok": bool,
 })
@@ -4269,18 +5552,35 @@ OverridesListResponse = TypedDict("OverridesListResponse", {
 })
 
 PipelinesGrammarRequest = TypedDict("PipelinesGrammarRequest", {
+    # When true, also return the full `vocabulary_update` payload a starting
+    # recognition pipeline would be seeded with — words plus narrow_to,
+    # word_weights, and the structured grammar DAG. Read-only: exporting
+    # does not touch the committed-vocab accounting. Used by the
+    # voice-regress harness to decode against the exact live grammar.
+    # default false
     "full": NotRequired[bool],
 })
 
 PipelinesGrammarResponse = TypedDict("PipelinesGrammarResponse", {
+    # Full seed payload (only with `full: true`).
     "vocabulary_update": NotRequired[Any],
     "words": list[str],
 })
 
 PipelinesInjectRequest = TypedDict("PipelinesInjectRequest", {
+    # default null
     "data": NotRequired[Any],
+    # Must be a custom event type — `ext.<vendor>.<name>`. The typed families
+    # (`audio_*`, `transcript`, `vocabulary_update`) are the platform's to
+    # send; a plugin forging one into its own pipeline was previously
+    # unchecked here.
     "event_type": str,
+    # Pipeline to configure. The caller must have introduced it.
     "name": str,
+    # Stage within that pipeline, spelled as the pipeline definition spells
+    # it — a role like `_platform.stt` or a qualified stage name. Required:
+    # before per-stage channels existed this operation could only ever reach
+    # the terminal stage, and silently did nothing for any other.
     "stage": str,
 })
 
@@ -4289,8 +5589,10 @@ PipelinesInjectResponse = TypedDict("PipelinesInjectResponse", {
 })
 
 PipelinesRunRequest = TypedDict("PipelinesRunRequest", {
+    # default false
     "ephemeral": NotRequired[bool],
     "name": str,
+    # default {}
     "param_overrides": NotRequired[dict[str, Any]],
 })
 
@@ -4306,6 +5608,11 @@ PipelinesStatusResponse = TypedDict("PipelinesStatusResponse", {
 })
 
 PipelinesStopRequest = TypedDict("PipelinesStopRequest", {
+    # Shared-clock position (the AudioChunk timestamp_ms timebase) after
+    # which buffered audio must not be processed — e.g. the onset of a
+    # detected dictation stop phrase, from the transcript's word_onsets_ms.
+    # Absent = process everything.
+    # wire uint64 (64-bit) · default null · min 0
     "audio_cutoff_ms": NotRequired[int],
     "name": str,
 })
@@ -4316,6 +5623,10 @@ PipelinesStopResponse = TypedDict("PipelinesStopResponse", {
 
 PipelinesWarmRequest = TypedDict("PipelinesWarmRequest", {
     "name": str,
+    # Per-stage param overrides applied to the warmed consumer stages, mirroring
+    # `pipelines.run`. Lets a caller prewarm the model it will actually run (e.g.
+    # a user-selected STT model) instead of only the pipeline's default.
+    # default {}
     "param_overrides": NotRequired[dict[str, Any]],
 })
 
@@ -4324,18 +5635,39 @@ PipelinesWarmResponse = TypedDict("PipelinesWarmResponse", {
 })
 
 PluginDataExportRequest = TypedDict("PluginDataExportRequest", {
+    # Name to save it under. Defaults to the source file's name. A path
+    # separator here is refused rather than resolved — this names a file in
+    # Downloads, not a location.
+    # default null
     "filename": NotRequired[str],
+    # Path of the file to export, relative to the caller's data dir.
     "path": str,
 })
 
 PluginDataExportResponse = TypedDict("PluginDataExportResponse", {
+    # wire uint64 (64-bit) · min 0
     "bytes": int,
+    # Absolute path of the exported copy, for the caller to show the user.
     "path": str,
 })
 
 PluginDebugRequest = TypedDict("PluginDebugRequest", {
+    # Arbitrary JSON payload — serialized to one line in the log file
+    # so `tail -f` and `grep` work, while `jq` can still operate on
+    # the payload column.
+    # default null
     "data": NotRequired[Any],
+    # Severity level for the line. v1 callers omit this and the handler
+    # falls through to `Debug`; v2 callers pass one of
+    # `trace`/`debug`/`info`/`warn`/`error`. Lines below the per-plugin
+    # threshold are dropped at the handler; `warn`/`error` additionally
+    # cross-post to `actuator.log` via the `plugin.diagnostic` event.
     "level": NotRequired["PluginLogLevel"],
+    # Optional structural tag (e.g. `BK_ACTIVATE_PATH`, `STT_BATCH`).
+    # Renders between the timestamp and the payload in the per-plugin
+    # log file, matching the actuator log's `[TAG]` column convention.
+    # Empty/missing renders as `[<ts>] <payload>` with no tag bracket.
+    # default null
     "tag": NotRequired[str],
 })
 
@@ -4344,7 +5676,23 @@ PluginDebugResponse = TypedDict("PluginDebugResponse", {
 })
 
 PluginReportHealthRequest = TypedDict("PluginReportHealthRequest", {
+    # `true` when the plugin is running but cannot do its job — an external
+    # dependency it needs is gone, a device it drives is unplugged, a
+    # companion it talks to has disconnected. `false` clears the report.
+    #
+    # This is NOT for "something failed once": a failed call is a failed
+    # call. It is for a standing condition the user can act on and would
+    # otherwise have to guess at.
     "degraded": bool,
+    # One user-facing sentence saying what is wrong and, where possible, what
+    # to do about it — "Chrome — extension disconnected; reload it at
+    # chrome://extensions". The plugin owns this text; the platform invents
+    # no copy for a plugin's failure.
+    #
+    # Required when `degraded` is true and ignored otherwise. Truncated to
+    # 200 characters (one status line; a plugin with more to say has
+    # `plugin.debug`) and rendered as data, never markup.
+    # default null
     "reason": NotRequired[str],
 })
 
@@ -4357,6 +5705,8 @@ PrivacyGetRecordingRequest = TypedDict("PrivacyGetRecordingRequest", {
 })
 
 PrivacyGetRecordingResponse = TypedDict("PrivacyGetRecordingResponse", {
+    # Effective recording flag — the user override if set, otherwise the
+    # manifest's `default_recording_enabled`.
     "enabled": bool,
 })
 
@@ -4370,79 +5720,132 @@ PrivacySetRecordingResponse = TypedDict("PrivacySetRecordingResponse", {
 })
 
 PrivilegesListResponse = TypedDict("PrivilegesListResponse", {
+    # Required first, then optional, manifest order within each.
     "privileges": list["PrivilegeStatusEntry"],
 })
 
 PrivilegesRelinquishRequest = TypedDict("PrivilegesRelinquishRequest", {
+    # Privilege name — must appear in the calling plugin's
+    # `optional_privileges`.
     "privilege": str,
 })
 
 PrivilegesRelinquishResponse = TypedDict("PrivilegesRelinquishResponse", {
+    # "released" — a live grant was returned (effective + persisted).
+    # "withdrawn" — only a pending request existed; it was cleared.
+    # "noop" — neither granted nor pending.
     "status": str,
 })
 
 PrivilegesRequestRequest = TypedDict("PrivilegesRequestRequest", {
+    # Privilege name — must appear in the calling plugin's
+    # `optional_privileges`.
     "privilege": str,
+    # Short attributed reason shown to the user next to the Approve
+    # button (e.g. "script 'headphones' uses query:power"). Untrusted
+    # text; capped server-side.
+    # default ""
     "reason": NotRequired[str],
 })
 
 PrivilegesRequestResponse = TypedDict("PrivilegesRequestResponse", {
+    # "granted" — already effective, proceed (treat as a race won).
+    # "pending" — recorded as a to-do awaiting the user.
+    # "denied" — the user dismissed this request earlier; not re-asked.
     "status": str,
 })
 
 RecognitionBiasApplyRequest = TypedDict("RecognitionBiasApplyRequest", {
+    # Overwrite a manually-set value. Without it, `manual` provenance refuses
+    # (`applied: false`) so the caller can confirm with the user first — a
+    # calibration apply must never silently clobber a hand-set value.
+    # default false
     "force": NotRequired[bool],
+    # Strength to apply (> 0; the setting is also switched on).
+    # wire double
     "strength": float,
 })
 
 RecognitionBiasApplyResponse = TypedDict("RecognitionBiasApplyResponse", {
     "applied": bool,
+    # Provenance of the value in place before this call
+    # ("default" | "manual" | "calibration").
     "previous_provenance": str,
 })
 
 RecognitionBiasGetResponse = TypedDict("RecognitionBiasGetResponse", {
     "enabled": bool,
+    # "default" | "manual" | "calibration"
     "provenance": str,
+    # wire double
     "strength": float,
 })
 
 RecognitionBiasSetRequest = TypedDict("RecognitionBiasSetRequest", {
+    # Omitted = leave the on/off half unchanged.
+    # default null
     "enabled": NotRequired[bool],
+    # Omitted = leave the stored strength unchanged. Negative → 0.
+    # wire double · default null
     "strength": NotRequired[float],
 })
 
 RecognitionBiasSetResponse = TypedDict("RecognitionBiasSetResponse", {
     "enabled": bool,
+    # "default" | "manual" | "calibration"
     "provenance": str,
+    # wire double
     "strength": float,
 })
 
 RecognitionRedecodeRequest = TypedDict("RecognitionRedecodeRequest", {
     "items": list["RedecodeItem"],
+    # wire uint32 · default null · min 0
     "max_active": NotRequired[int],
+    # Model dir name under app-support `models/` (single component, no
+    # traversal), e.g. `"sherpa-offline-nemo"`.
     "model": str,
+    # Registered stage id whose binary's `probe` subcommand runs the re-decode,
+    # e.g. `"voice.sherpa_commands"`. Validated against the stage registry.
     "stage": str,
 })
 
 RecognitionRedecodeResponse = TypedDict("RecognitionRedecodeResponse", {
     "lines": list["RedecodeLine"],
+    # Stable content version of the acoustic model used for this re-decode — a
+    # hash of the model dir's `model.onnx`. Lets a per-clip fragility history
+    # distinguish re-probes across a model swap (a constant engine id can't).
+    # Empty when the model file is unreadable.
     "model_version": NotRequired[str],
 })
 
 SelectionPickRequest = TypedDict("SelectionPickRequest", {
+    # Zero-based index into the previously-set selection items array.
+    # wire uint64 (64-bit) · min 0
     "index": int,
 })
 
 SelectionPickResponse = TypedDict("SelectionPickResponse", {
+    # Control message to forward to the Swift host
+    # (always `"close hud"` here).
     "control_message": str,
+    # Id of the picked item (from the original `HUDItem.id`).
     "item_id": str,
     "ok": bool,
+    # Whether the input plugin should reset its recognition engine
+    # after the pick. Always `true` for `selection.pick`.
     "reset_engine": bool,
 })
 
 SelectionSetRequest = TypedDict("SelectionSetRequest", {
+    # HUD channel to show the selection in. Defaults to `"main"`.
+    # default null
     "channel": NotRequired[str],
+    # Array of `HUDItem` objects: `{ id, tag?, title, subtitle?, icon? }`.
+    # default null
     "items": NotRequired[Any],
+    # Optional title displayed at the top of the selection HUD.
+    # default null
     "title": NotRequired[str],
 })
 
@@ -4455,12 +5858,18 @@ SessionBoundaryResponse = TypedDict("SessionBoundaryResponse", {
 })
 
 SessionEndCleanupResponse = TypedDict("SessionEndCleanupResponse", {
+    # Control message to forward to the Swift host
+    # (e.g. "hide discovery", "hide hud"), if any.
     "control_message": NotRequired[str],
     "ok": bool,
+    # Whether the input plugin should reset its recognition engine after
+    # the session ends. Always `true` for `session.end_cleanup`.
     "reset_engine": bool,
 })
 
 SettingsPatchSignalsRequest = TypedDict("SettingsPatchSignalsRequest", {
+    # Datastar signal expression, e.g. `{activeGroup: 2, activeDialModeIndex: 1}`.
+    # Sent as a `datastar-patch-signals` SSE event to all active settings streams.
     "signals": str,
 })
 
@@ -4481,42 +5890,84 @@ SettingsRefreshResponse = TypedDict("SettingsRefreshResponse", {
 })
 
 SettingsRulesCreateRequest = TypedDict("SettingsRulesCreateRequest", {
+    # Raw JSON action body, used when `newruleactiontype = "json"`.
+    # default null
     "newruleactionjson": NotRequired[str],
+    # Action variant (dotted type like "system.volume_up", "sequence", "json", ...).
+    # Determines which other `newruleaction*` fields are consumed.
+    # default null
     "newruleactiontype": NotRequired[str],
+    # Action value used by simple action types (e.g. text for "input.type").
+    # default null
     "newruleactionval": NotRequired[str],
+    # Category bucket the rule belongs to. Defaults to "User".
+    # default null
     "newrulecategory": NotRequired[str],
+    # Comma-separated tags the rule clears when it fires.
+    # default null
     "newruleclearstags": NotRequired[str],
+    # Optional human-readable description shown in the rules table.
+    # default null
     "newruledescription": NotRequired[str],
+    # The phrase the user wants matched (with optional `<slot>` placeholders).
+    # Required — `build_command_from_signals` rejects an empty phrase.
+    # default null
     "newrulephrase": NotRequired[str],
+    # Comma-separated tags required for the rule to match.
+    # default null
     "newrulerequirestags": NotRequired[str],
+    # Comma-separated tags the rule sets when it fires.
+    # default null
     "newrulesetstags": NotRequired[str],
 })
 
 SettingsRulesCreateResponse = TypedDict("SettingsRulesCreateResponse", {
+    # Terminal-command-rule conflict report: a human-readable reason if this
+    # candidate command would make another command unreachable (or be
+    # unreachable itself). **Advisory only** — the actuator does NOT block the
+    # save; the caller decides what to do. Null when there's no conflict. With
+    # `check_only: true` in the request, the candidate is checked and reported
+    # but NOT saved. See docs/design/DESIGN_COMMAND_FINALIZATION_RULE.md.
     "conflict": NotRequired[str],
     "ok": bool,
 })
 
 SettingsRulesUpdateRequest = TypedDict("SettingsRulesUpdateRequest", {
+    # Existing canonical command id (the previous canonical phrase) of
+    # the rule being updated. Required.
     "canonical": str,
+    # default null
     "newruleactionjson": NotRequired[str],
+    # default null
     "newruleactiontype": NotRequired[str],
+    # default null
     "newruleactionval": NotRequired[str],
+    # default null
     "newrulecategory": NotRequired[str],
+    # default null
     "newruleclearstags": NotRequired[str],
+    # default null
     "newruledescription": NotRequired[str],
+    # default null
     "newrulephrase": NotRequired[str],
+    # default null
     "newrulerequirestags": NotRequired[str],
+    # default null
     "newrulesetstags": NotRequired[str],
 })
 
 SettingsRulesUpdateResponse = TypedDict("SettingsRulesUpdateResponse", {
+    # See `SettingsRulesCreateResult::conflict` — advisory conflict report;
+    # the actuator reports but never blocks.
     "conflict": NotRequired[str],
     "ok": bool,
 })
 
 SystemLaunchAppRequest = TypedDict("SystemLaunchAppRequest", {
+    # Bundle ID of the application to launch (e.g. "com.apple.Safari").
     "bundle_id": str,
+    # Whether to launch a fresh instance even if the app is already running.
+    # default false
     "new_instance": NotRequired[bool],
 })
 
@@ -4525,8 +5976,15 @@ SystemLaunchAppResponse = TypedDict("SystemLaunchAppResponse", {
 })
 
 SystemNotifyRequest = TypedDict("SystemNotifyRequest", {
+    # Notification body text (rendered inside `<div id="body-text">`).
     "body": str,
+    # Auto-dismiss duration in seconds. When absent, defaults to
+    # [`DEFAULT_NOTIFY_DURATION_SECS`] (5s). Pass `0` for a sticky
+    # notification that only closes when the user clicks Dismiss.
+    # Pass any positive integer for a custom duration.
+    # wire uint32 · default null · min 0
     "duration_secs": NotRequired[int],
+    # Notification title (rendered as `<h1 id="title">`).
     "title": str,
 })
 
@@ -4535,6 +5993,7 @@ SystemNotifyResponse = TypedDict("SystemNotifyResponse", {
 })
 
 SystemRunShellRequest = TypedDict("SystemRunShellRequest", {
+    # Shell command to execute via `/bin/bash -c`.
     "command": str,
 })
 
@@ -4551,17 +6010,32 @@ TrialEndRequest = TypedDict("TrialEndRequest", {
 })
 
 TrialEndResponse = TypedDict("TrialEndResponse", {
+    # Number of fixture-release RPCs spawned. Caller doesn't await them
+    # — best-effort cleanup that runs in the background.
+    # wire uint · min 0
     "released_handle_count": int,
 })
 
 TrialEnterContextRequest = TypedDict("TrialEnterContextRequest", {
+    # Command id from `commands.enumerate` — `<owner_plugin>:<pattern>`.
     "command_id": str,
     "trial_id": str,
 })
 
 TrialEnterContextResponse = TypedDict("TrialEnterContextResponse", {
+    # Fixture handle returned by a dynamic command's owner; empty for
+    # static tiers. The actuator already registered it under the trial.
     "fixture_handle": str,
+    # `"static"` (base / mode-gated / slotted) or `"dynamic"` (hints) —
+    # matches the host-side `ContextSpec.Kind`.
     "kind": str,
+    # Active-tag set the matcher sees during the trial: a mode-gated
+    # command's `requires_tags` (empty for base/slotted). Empty for the
+    # dynamic tier, whose tags are written plugin-side by the fixture.
+    # The actuator platform-wrote these and recorded them on the trial so
+    # `trial_end` clears them. The host passes them to
+    # `commands.resolve --preview` to compute the functional (Resolves)
+    # signal.
     "tags": list[str],
 })
 
@@ -4572,10 +6046,16 @@ TrialRegisterFixtureRequest = TypedDict("TrialRegisterFixtureRequest", {
 })
 
 TrialResolveSamplesRequest = TypedDict("TrialResolveSamplesRequest", {
+    # Command id from `commands.enumerate` — `<owner_plugin>:<pattern>`.
     "command_id": str,
 })
 
 TrialResolveSamplesResponse = TypedDict("TrialResolveSamplesResponse", {
+    # Concrete prompts to walk for this command, supplied by its owning
+    # plugin's `trial_samples` hook. Empty when the command's owner
+    # doesn't implement the (optional) hook or declines — the calibration
+    # host then falls back to its own default sample derivation (codewords
+    # for dynamic commands, the generic filler for free-text slots).
     "prompts": list[str],
 })
 
@@ -4590,76 +6070,151 @@ WiringDescribeResponse = TypedDict("WiringDescribeResponse", {
 # ===== Actuator → Plugin request/response types =====
 
 OnActionRequest = TypedDict("OnActionRequest", {
+    # Fully qualified action type (e.g., 'voice.dictation', 'windows.snap').
     "action": str,
+    # Active application bundle ID.
+    # default ""
     "active_app": NotRequired[str],
+    # default ""
     "active_window_id": NotRequired[str],
+    # Typed action parameters.
+    # default null
     "params": NotRequired[Any],
+    # Optional phase: `"start"` or `"stop"`. Empty for non-phased actions
+    # (single-fire keybinds, tap-mode voice commands).
+    # default ""
     "phase": NotRequired[str],
 })
 
 OnActionResponse = TypedDict("OnActionResponse", {
+    # Control message to forward to the Swift host (e.g., 'show commands').
+    # default ""
     "control_message": NotRequired[str],
+    # Structured result payload. Opaque to the actuator — piped through
+    # to the dispatch caller as-is. Plugins use this to return data from
+    # action handlers (e.g., computed values, confirmation details).
     "result": NotRequired[Any],
+    # `"ok"`, `"error"`, or `"not_handled"`.
     "status": "OnActionStatus",
 })
 
 OnCommandsChangedRequest = TypedDict("OnCommandsChangedRequest", {
+    # All commands grouped by plugin ID.
     "commands_by_plugin": Any,
+    # default []
     "user_commands": NotRequired[list[Any]],
 })
 
 OnCommandsChangedResponse = TypedDict("OnCommandsChangedResponse", {
+    # wire int64 (64-bit)
     "processed_count": int,
 })
 
 OnTranscriptRequest = TypedDict("OnTranscriptRequest", {
+    # Tags active when the transcript was received. Advisory: the matcher
+    # consults authoritative state during `commands.resolve`, so a tag
+    # absent here can still gate matching.
+    # default []
     "active_tags": NotRequired[list[str]],
+    # Mean per-word acoustic margin, when the stage carried one.
+    # wire float
     "confidence": NotRequired[float],
+    # What the active gates declare this utterance IS, if any declared one.
+    # Empty means none did, and the consumer's default stands.
+    # default ""
     "dictation_profile": NotRequired[str],
+    # Whether the recognition stage marked this segment final.
+    #
+    # Do not read this as "the utterance is over". Command recognizers
+    # finalize per utterance and emit their recognitions NON-final,
+    # signalling end-of-hold only by stopping the pipeline — so on the
+    # command path `is_final` marks an empty end-of-stream marker, not the
+    # content. The platform does not deliver empty-text transcripts here.
+    # default false
     "is_final": NotRequired[bool],
+    # Pipeline that produced this transcript. A plugin may own several.
     "pipeline": str,
+    # Recognized text.
     "text": str,
+    # Shared-clock onset of each word, aligned 1:1 with `text`'s words.
+    # default []
     "word_onsets_ms": NotRequired[list[int]],
+    # Per-word acoustic margin, aligned 1:1 with `text`'s words: positive =
+    # the audio supported the word, negative = the closed grammar coerced it.
+    # default []
     "word_scores": NotRequired[list[float]],
 })
 
 OnTranscriptResponse = TypedDict("OnTranscriptResponse", {
+    # Typed `Action` values. Loose in the schema for the same reason
+    # `dispatch`'s `action` is: the Action enum's wire shape is the
+    # dispatch contract, documented there rather than duplicated per
+    # method.
+    # default []
     "actions": NotRequired[list[Any]],
 })
 
 RenderSettingsRequest = TypedDict("RenderSettingsRequest", {
+    # Action type schemas (built-in + all plugin-declared) for editor rendering.
+    # Keyed by fully-qualified action type (e.g. "voice.dictate", "keyboard.press").
     "action_type_schemas": NotRequired[dict[str, "ActionTypeSchema"]],
+    # Collection data populated from the tab's `reads` declaration.
+    # Keyed by collection name, values are the raw collection data.
     "collection_data": NotRequired[dict[str, Any]],
+    # Filter string for the commands tab (e.g. plugin name or category).
     "command_filter": NotRequired[str],
+    # Command rows for plugins that render command editors.
     "commands": NotRequired[list["CommandRowData"]],
+    # Named list schemas from plugin manifests (list_name → schema info).
     "list_schemas": NotRequired[dict[str, "SettingsListSchemaInfo"]],
+    # Search query for filtering content (empty string when no search active).
     "search": str,
+    # Which settings tab to render (from manifest implements.settings_tabs[].key).
     "tab_key": str,
+    # Tag schemas from plugin manifests (tag_name → schema info).
     "tag_schemas": NotRequired[dict[str, "SettingsTagSchemaInfo"]],
 })
 
 RenderSettingsResponse = TypedDict("RenderSettingsResponse", {
+    # CSS styles scoped to this settings tab. Injected as an inline style element in the iframe.
+    # default ""
     "css": NotRequired[str],
+    # HTML content for the settings tab. May include Datastar attributes for reactivity.
     "html": str,
 })
 
 TrialApplyFixtureRequest = TypedDict("TrialApplyFixtureRequest", {
+    # The dynamic command being calibrated — formatted as
+    # `<owner_plugin>:<display_pattern>`, matching `commands.enumerate`'s
+    # `id` field. The plugin uses this to decide which fixture recipe to
+    # run (most owners have one canonical fixture per command).
     "command_id": str,
 })
 
 TrialApplyFixtureResponse = TypedDict("TrialApplyFixtureResponse", {
+    # Opaque, plugin-chosen handle. The actuator hands it back via
+    # `trial_release_fixture` so the plugin can reverse this
+    # specific fixture's writes without keeping ambient state.
     "fixture_handle": str,
 })
 
 TrialReleaseFixtureRequest = TypedDict("TrialReleaseFixtureRequest", {
+    # Handle previously returned by `trial_apply_fixture`.
     "fixture_handle": str,
 })
 
 TrialSamplesRequest = TypedDict("TrialSamplesRequest", {
+    # The command being calibrated — `<owner_plugin>:<display_pattern>`,
+    # matching `commands.enumerate`'s `id`.
     "command_id": str,
 })
 
 TrialSamplesResponse = TypedDict("TrialSamplesResponse", {
+    # Concrete phrases the calibration host should walk for this command —
+    # the owner's realistic sample of an otherwise un-derivable vocabulary
+    # (a runtime list, a dynamic hint cross-product, free-text examples).
+    # The owner owns the count and how slots combine; the host walks them
+    # as-is. An empty list declines — the host falls back to its own default.
     "prompts": list[str],
 })
 
@@ -4667,51 +6222,82 @@ TrialSamplesResponse = TypedDict("TrialSamplesResponse", {
 
 # Payload of the `_platform.action.executed` event.
 ActionExecutedEventParams = TypedDict("ActionExecutedEventParams", {
+    # Human-readable description of the executed action.
     "action": str,
 })
 
 # Payload of the `_platform.app.focused` event.
 AppFocusedEventParams = TypedDict("AppFocusedEventParams", {
+    # macOS bundle identifier (e.g., `com.google.Chrome`).
     "bundle_id": str,
 })
 
 # Payload of the `_platform.audio_devices.changed` event.
 AudioDevicesChangedEventParams = TypedDict("AudioDevicesChangedEventParams", {
+    # CoreAudio device id.
+    # wire uint32 · min 0
     "device_id": int,
+    # For kind="default_changed": which default moved ("input" or "output").
     "direction": NotRequired[str],
+    # For kind="added": whether the device has input streams.
     "is_input": NotRequired[bool],
+    # For kind="added": whether the device has output streams.
     "is_output": NotRequired[bool],
+    # What changed: "added", "removed", or "default_changed".
     "kind": str,
+    # Device name (e.g. "External Headphones").
     "name": str,
+    # CoreAudio device UID.
     "uid": str,
 })
 
 # Payload of the `_platform.ble.notification` event.
 BleNotificationEventParams = TypedDict("BleNotificationEventParams", {
+    # GATT characteristic UUID.
     "characteristic_uuid": str,
+    # Notification payload bytes.
     "data": list[int],
+    # CoreBluetooth peripheral UUID.
     "device_identifier": str,
+    # GATT service UUID.
     "service_uuid": str,
 })
 
 # Payload of the `_platform.capture.progress` event.
 CaptureProgressEventParams = TypedDict("CaptureProgressEventParams", {
+    # All captures bound by the partial match, keyed by binding name.
     "captured": dict[str, Any],
+    # Display form of the command's pattern (for log readability).
     "command_phrase": str,
+    # Capture name the dependent capture is waiting to fill
+    # (e.g. `"suffix"`).
     "next_capture": str,
+    # Collection name resolved by substituting bound captures into
+    # the dependent capture's template (e.g. `"browser_hints_arch"`).
     "next_collection": str,
+    # The plugin that owns the command being partially matched.
+    # Subscribers filter on this to receive only events for their
+    # own commands.
     "owner_plugin": str,
 })
 
 # Payload of the `_platform.clipboard.changed` event.
 ClipboardChangedEventParams = TypedDict("ClipboardChangedEventParams", {
+    # `NSPasteboard.changeCount` after the change. Monotonic per session;
+    # useful for deduping and for detecting missed changes.
+    # wire uint64 (64-bit) · min 0
     "change_count": int,
+    # Pasteboard type identifiers now available (e.g.
+    # `public.utf8-plain-text`, `public.png`). Enough to filter on without
+    # reading anything.
     "types": list[str],
 })
 
 # Payload of the `_platform.collection.updated` event.
 CollectionUpdatedEventParams = TypedDict("CollectionUpdatedEventParams", {
+    # Name of the collection that was updated.
     "collection": str,
+    # Plugin ID or `_platform` that wrote the update.
     "writer": str,
 })
 
@@ -4722,27 +6308,43 @@ DisplayChangedEventParams = TypedDict("DisplayChangedEventParams", {
 
 # Payload of the `_platform.effect.displaced` event.
 EffectDisplacedEventParams = TypedDict("EffectDisplacedEventParams", {
+    # Plugin id that lost top-of-stack ownership. Subscribers filter on
+    # this to know whether *they* are the displaced plugin (vs. another
+    # plugin's stack frame being overridden).
     "displaced_owner": str,
+    # The effect name that was displaced (e.g. "suppress_notifications").
     "effect": str,
+    # Plugin id that just took top-of-stack ownership of the effect.
     "new_owner": str,
 })
 
 # Payload of the `_platform.effect.ownership_changed` event.
 EffectOwnershipChangedEventParams = TypedDict("EffectOwnershipChangedEventParams", {
+    # The effect whose effective owner changed — a bare platform name or
+    # a qualified `<plugin_id>.<name>`.
     "effect": str,
+    # Plugin now holding the top of the stack. `None` means the effect
+    # went free — the transition a behaviour-applying provider unapplies
+    # on.
     "owner": NotRequired[str],
+    # Plugin that held the top before this change. `None` means the
+    # effect was previously free.
     "previous": NotRequired[str],
 })
 
 # Payload of the `_platform.hid.connected` event.
 HidConnectedEventParams = TypedDict("HidConnectedEventParams", {
+    # wire uint32 · min 0
     "axes": int,
     "ble_uuid": NotRequired[str],
+    # wire uint32 · min 0
     "buttons": int,
     "device_id": str,
     "product": str,
+    # wire uint32 · min 0
     "product_id": int,
     "transport": str,
+    # wire uint32 · min 0
     "vendor_id": int,
 })
 
@@ -4757,52 +6359,85 @@ HidDisconnectedEventParams = TypedDict("HidDisconnectedEventParams", {
 HidInputEventParams = TypedDict("HidInputEventParams", {
     "device_id": str,
     "product": str,
+    # wire uint64 (64-bit) · min 0
     "timestamp": int,
+    # HID usage code within the usage page.
+    # wire uint32 · min 0
     "usage": int,
+    # HID usage page (e.g. 0x09 = Button, 0x07 = Keyboard, 0x01 = Generic Desktop).
+    # wire uint32 · min 0
     "usage_page": int,
+    # The input value (e.g. 1 = pressed, 0 = released for buttons).
+    # wire int64 (64-bit)
     "value": int,
 })
 
 # Payload of the `_platform.hid.report` event.
 HidReportEventParams = TypedDict("HidReportEventParams", {
+    # Raw report bytes.
     "data": list[int],
     "device_id": str,
     "product": str,
+    # HID report ID.
+    # wire uint32 · min 0
     "report_id": int,
+    # IOHIDReportType (0 = input, 1 = output, 2 = feature).
+    # wire uint32 · min 0
     "report_type": int,
+    # wire uint64 (64-bit) · min 0
     "timestamp": int,
 })
 
 # Payload of the `_platform.keyboard.layout_changed` event.
 KeyboardLayoutChangedEventParams = TypedDict("KeyboardLayoutChangedEventParams", {
+    # New keyboard layout ID.
     "new_layout_id": str,
+    # Previous keyboard layout ID.
     "old_layout_id": str,
 })
 
 # Payload of the `_platform.memory_pressure.changed` event.
 MemoryPressureChangedEventParams = TypedDict("MemoryPressureChangedEventParams", {
+    # "nominal", "warn", or "critical".
     "level": str,
 })
 
 # Payload of the `_platform.network.changed` event.
 NetworkChangedEventParams = TypedDict("NetworkChangedEventParams", {
+    # The user asked for reduced data use (Low Data Mode).
     "constrained": bool,
+    # The path costs money or battery (cellular, personal hotspot).
     "expensive": bool,
+    # Interface carrying the path: "wifi", "ethernet", "cellular", "loopback",
+    # "other", or "none" when unreachable.
     "interface": str,
+    # Whether a usable network path exists right now.
     "reachable": bool,
 })
 
 # Payload of the `_platform.output.state` event.
 OutputStateEventParams = TypedDict("OutputStateEventParams", {
+    # The channel whose state changed.
     "channel": str,
+    # Monotonic across the actuator process. A renderer mid-utterance
+    # abandons what it is conveying when a newer generation arrives.
+    # wire uint64 (64-bit) · min 0
     "generation": int,
+    # The plugin that owns the channel and produced the state.
     "plugin_id": str,
+    # The new current state — the previous one is gone.
     "state": "OutputState",
 })
 
 # Payload of the `_platform.permission.changed` event.
 PermissionChangedEventParams = TypedDict("PermissionChangedEventParams", {
+    # Its state after the change.
     "granted": bool,
+    # Which permission moved: "accessibility", "microphone", "camera",
+    # "full_disk_access", "automation", "post_event" (the WindowServer
+    # accepts this process's synthesized keystrokes), "secure_input" (the
+    # keyboard is free of secure-input fields; `granted: true` = free).
+    # The shell reports every state once shortly after boot, then on change.
     "permission": str,
 })
 
@@ -4814,6 +6449,7 @@ PipelineErrorEventParams = TypedDict("PipelineErrorEventParams", {
 
 # Payload of the `_platform.pipeline.started` event.
 PipelineStartedEventParams = TypedDict("PipelineStartedEventParams", {
+    # default false
     "ephemeral": NotRequired[bool],
     "pipeline": str,
 })
@@ -4825,12 +6461,34 @@ PipelineStoppedEventParams = TypedDict("PipelineStoppedEventParams", {
 
 # Payload of the `_platform.pipeline.transcript` event.
 PipelineTranscriptEventParams = TypedDict("PipelineTranscriptEventParams", {
+    # Coarse scalar confidence. On the sherpa CTC command path this is the
+    # MEAN of `word_scores`; absent when the engine carries no confidence
+    # signal. A confidence gate must read `word_scores` (the min margin), not
+    # this — the mean hides a single deeply-coerced word. Display/logging only.
+    # wire float
     "confidence": NotRequired[float],
+    # What this utterance IS, per the modes active when it was emitted:
+    # `query` (a search box, a field name — prosody punctuation is noise) or
+    # `prose` (writing — punctuation is intended). Declared by a gate
+    # collection, carried verbatim; the platform never interprets it. Absent
+    # means no active mode declared one, and the engine owner's default
+    # (prose) stands. See `docs/design/DESIGN_DICTATION_PROFILES.md`.
     "dictation_profile": NotRequired[str],
     "is_final": bool,
     "pipeline": str,
     "text": str,
+    # Shared-clock onset (ms, the audio chunk timebase) of each word of
+    # `text`, aligned 1:1 with its whitespace-split words. Emitted by
+    # engines with time alignment (sherpa's CTC path); converts a word
+    # position into an audio position other pipelines understand — the
+    # dictation stop-phrase audio cutoff.
     "word_onsets_ms": NotRequired[list[int]],
+    # Per-word acoustic score, aligned 1:1 with `text`'s whitespace-split
+    # words (same alignment contract as `word_onsets_ms`). Engine-defined
+    # scale; on the closed-grammar CTC command engine this is the word's
+    # min token argmax-margin — positive means the audio supported the
+    # word, negative means the grammar coerced it. When present,
+    # `confidence` is the mean of these.
     "word_scores": NotRequired[list[float]],
 })
 
@@ -4841,8 +6499,16 @@ PipelineWarmedEventParams = TypedDict("PipelineWarmedEventParams", {
 
 # Payload of the `_platform.plugin.degraded` event.
 PluginDegradedEventParams = TypedDict("PluginDegradedEventParams", {
+    # How many consecutive RPC timeouts drove this. `0` when the plugin
+    # reported itself degraded — accurate, not a placeholder: nothing timed
+    # out.
+    # wire int64 (64-bit)
     "consecutive_timeouts": int,
     "plugin_id": str,
+    # The plugin's own sentence, present IFF this came from
+    # `plugin.report_health` rather than the timeout ladder — the
+    # discriminator between a plugin that stopped answering and one that
+    # answers fine but cannot reach something it needs.
     "reason": NotRequired[str],
 })
 
@@ -4858,27 +6524,41 @@ PluginEnabledEventParams = TypedDict("PluginEnabledEventParams", {
 
 # Payload of the `_platform.power.changed` event.
 PowerChangedEventParams = TypedDict("PowerChangedEventParams", {
+    # Battery charge percentage (0-100). Absent on machines with no battery.
+    # wire double
     "battery_level": NotRequired[float],
+    # Whether the battery is currently charging.
     "is_charging": bool,
+    # Power source: "battery", "ac", or "ups".
     "source": str,
+    # Estimated minutes until empty. Absent when unknown or on AC.
+    # wire int64 (64-bit)
     "time_to_empty": NotRequired[int],
+    # Estimated minutes until full. Absent when unknown or not charging.
+    # wire int64 (64-bit)
     "time_to_full": NotRequired[int],
 })
 
 # Payload of the `_platform.privilege.granted` event.
 PrivilegeGrantedEventParams = TypedDict("PrivilegeGrantedEventParams", {
+    # The plugin the grant landed on — consumers filter to their own id.
     "plugin_id": str,
+    # The privilege name that is now effective.
     "privilege": str,
 })
 
 # Payload of the `_platform.selection.picked` event.
 SelectionPickedEventParams = TypedDict("SelectionPickedEventParams", {
+    # ID of the selected item.
     "item_id": str,
+    # Phonetic tag used to select the item.
     "tag": str,
 })
 
 # Payload of the `_platform.thermal.changed` event.
 ThermalChangedEventParams = TypedDict("ThermalChangedEventParams", {
+    # "nominal", "fair", "serious", or "critical" — `ProcessInfo.ThermalState`
+    # in ascending severity.
     "state": str,
 })
 
@@ -4891,6 +6571,7 @@ WindowClosedEventParams = TypedDict("WindowClosedEventParams", {
 # Payload of the `_platform.window.created` event.
 WindowCreatedEventParams = TypedDict("WindowCreatedEventParams", {
     "app_id": str,
+    # default null
     "app_name": NotRequired[str],
     "frame": "Frame",
     "window_id": str,
@@ -4904,7 +6585,9 @@ WindowFocusedEventParams = TypedDict("WindowFocusedEventParams", {
 
 # Payload of the `_platform.window.frame_changed` event.
 WindowFrameChangedEventParams = TypedDict("WindowFrameChangedEventParams", {
+    # New frame.
     "new": "Frame",
+    # Previous frame.
     "old": "Frame",
     "window_id": str,
 })
@@ -4918,13 +6601,20 @@ WindowTitleChangedEventParams = TypedDict("WindowTitleChangedEventParams", {
 
 # Payload of the `_platform.workspace.changed` event.
 WorkspaceChangedEventParams = TypedDict("WorkspaceChangedEventParams", {
+    # Freeform reason hint from the host (e.g. "space_switched",
+    # "app_launched", "display_changed"). Optional — the host may
+    # not always have a specific reason.
     "reason": NotRequired[str],
 })
 
 # Payload of the `_platform.world.updated` event.
 WorldUpdatedEventParams = TypedDict("WorldUpdatedEventParams", {
+    # default null
     "active_app": NotRequired[str],
+    # default null
     "active_window_id": NotRequired[str],
+    # default null
     "displays": NotRequired[list["DisplayInfo"]],
+    # default null
     "windows": NotRequired[list["WindowInfo"]],
 })
