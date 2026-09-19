@@ -965,6 +965,14 @@ OutputAction = TypedDict("OutputAction", {
 OutputItem = TypedDict("OutputItem", {
     # What confirming this item does. Absent means information only.
     "action": NotRequired["OutputAction"],
+    # Other phrases that also confirm this item — a subtitle that is itself
+    # sayable, an alias. Meaning, not presentation: a renderer that shows
+    # the subtitle may mark it as a way in when it appears here; a speech
+    # renderer may accept any of them. Promoted into core 2026-09-19 from
+    # voice's `extra.voice.speakable_subtitles` — the first extension the
+    # platform's own renderer needed, which is the promotion rule in
+    # `DESIGN_SEMANTIC_OUTPUT_CHANNEL.md` ("The shape") working as written.
+    "alt_phrases": NotRequired[list[str]],
     # Open extension, namespaced by plugin id — see [`OutputState::extra`].
     "extra": NotRequired[dict[str, Any]],
     # Stable within the document — what a renderer reports back as chosen.
