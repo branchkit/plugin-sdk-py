@@ -1,6 +1,7 @@
-"""HUD push sugar — parity with hud.{go,ts}. The generated hud_push takes
-raw fragments, which proved awkward enough that callers hand-rolled the
-envelope; these cover the two real shapes."""
+"""HUD push sugar — parity with hud.{go,ts}. The generated hud_push used to
+take raw fragments, which proved awkward enough that callers hand-rolled
+the envelope; it takes `list[HudFragment]` now (2026-09-19), so these two
+stay for the lesson they carry, not the envelope they build."""
 
 from __future__ import annotations
 

@@ -631,6 +631,7 @@ if TYPE_CHECKING:
         Action,
         ActionsListResponse,
         ActiveSpace,
+        Anchor,
         AudioDevice,
         BarcodeResult,
         BleService,
@@ -671,9 +672,11 @@ if TYPE_CHECKING:
         EnumeratedCommand,
         ExternalDisk,
         FieldDisplay,
+        HUDItem,
         HUDRemoveChannelResponse,
         HidDeviceEntry,
         HidElementEntry,
+        HudFragment,
         InputClipboardReadFormatResponse,
         InputClipboardReadResponse,
         InputParseKeyEventResponse,
@@ -979,6 +982,7 @@ if TYPE_CHECKING:
         RecognitionBiasSetResponse,
         RecognitionRedecodeResponse,
         RedecodeItem,
+        RegistrySnapshot,
         ReminderItem,
         ReplaceScope,
         RunningApp,
@@ -1523,16 +1527,21 @@ class MethodsMixin:
             params["data"] = data
         await self.call(METHOD_EVENTS_EMIT, params)
 
-    async def hud_create_channel(self, channel: str, accepts_input: bool | None = None, anchor: Any | None = None, description: str | None = None, draggable: bool | None = None, follows_focus: bool | None = None, min_height: int | None = None, on_pointer: "OnPointer" | None = None, stack_order: int | None = None, transparent: bool | None = None, width: int | None = None) -> None:
+    async def hud_create_channel(self, channel: str, accepts_input: bool | None = None, anchor: "Anchor" | None = None, description: str | None = None, draggable: bool | None = None, follows_focus: bool | None = None, min_height: int | None = None, on_pointer: "OnPointer" | None = None, stack_order: int | None = None, transparent: bool | None = None, width: int | None = None) -> None:
         """Create a new HUD broadcast channel at runtime
 
         accepts_input: Whether the channel's window receives keyboard/mouse input.
             Defaults to false.
             default false
-        anchor: Anchor position on screen (`Anchor` enum, kebab-case strings:
-            `"top-left"`, `"top-right"`, `"bottom-left"`, `"bottom-right"`,
-            `"bottom-center"`, `"center"`). Defaults to `"top-right"`.
-            default null
+        anchor: Anchor position on screen. Defaults to `"top-right"`.
+
+            Declared 2026-09-19 (census) — the enum has existed all along and
+            the doc comment was spelling out its variants by hand. Note the
+            behaviour change that comes with it: an unrecognised anchor used to
+            fall back to the default SILENTLY (`unwrap_or_else`), putting the
+            window somewhere the caller did not ask for with nothing said; it
+            now fails the call by name. Absent still means the default.
+            default "top-right"
         channel: Channel name. Must be unique across all plugins.
         description: Optional human-readable description shown in dev tooling.
             default ""
@@ -1597,18 +1606,24 @@ class MethodsMixin:
         }
         await self.call(METHOD_HUD_HIDE, params)
 
-    async def hud_push(self, channel: str, fragments: Any) -> None:
+    async def hud_push(self, channel: str, fragments: list["HudFragment"] | None = None) -> None:
         """Push HTML fragments to a named HUD channel
 
         channel: Name of the HUD channel to push fragments into. Must be owned by
             the calling plugin (verified via
             `HudChannelRegistry::verify_owner`).
-        fragments: Array of `HudFragment` objects: `{ target_id, html, raw? }`.
+        fragments: The fragments to patch into the channel, in order.
+
+            Declared 2026-09-19 (census). The handler already deserialized
+            exactly `Vec<HudFragment>` and failed the call otherwise, so the
+            opaque schema described nothing the platform actually accepted.
+            default []
         """
         params: dict[str, Any] = {
             "channel": channel,
-            "fragments": fragments,
         }
+        if fragments is not None:
+            params["fragments"] = fragments
         await self.call(METHOD_HUD_PUSH, params)
 
     async def hud_remove_channel(self, channel: str) -> HUDRemoveChannelResponse:
@@ -1905,11 +1920,15 @@ class MethodsMixin:
         }
         await self.call(METHOD_INPUT_TYPE_TEXT, params)
 
-    async def keybinds_register(self, snapshot: Any) -> KeybindsRegisterResponse:
+    async def keybinds_register(self, snapshot: "RegistrySnapshot") -> KeybindsRegisterResponse:
         """Register keybind snapshot with the platform (caches and sends to Swift shell)
 
-        snapshot: `RegistrySnapshot` JSON: `{ entries: [...], listen_up: [...] }`.
-            Each entry is `{ combo, action, source }`.
+        snapshot: The full keybind registry to install, replacing what is there.
+
+            Declared 2026-09-19 (census). The handler already deserialized
+            exactly `RegistrySnapshot` and refused anything else; the doc
+            comment was transcribing the shape by hand, and had gone stale —
+            an entry is `{ combo, action, source, params? }`.
         """
         params: dict[str, Any] = {
             "snapshot": snapshot,
@@ -5711,13 +5730,17 @@ class MethodsMixin:
         result = await self.call(METHOD_SELECTION_PICK, params)
         return result
 
-    async def selection_set(self, channel: str | None = None, items: Any | None = None, title: str | None = None) -> None:
+    async def selection_set(self, channel: str | None = None, items: list["HUDItem"] | None = None, title: str | None = None) -> None:
         """Show the selection HUD with items for the user to pick from
 
         channel: HUD channel to show the selection in. Defaults to `"main"`.
             default null
-        items: Array of `HUDItem` objects: `{ id, tag?, title, subtitle?, icon? }`.
-            default null
+        items: The selectable items, in display order.
+
+            Declared 2026-09-19 (census). The handler already deserialized
+            exactly `Vec<HUDItem>`; the doc comment was listing the fields a
+            generated type can list itself.
+            default []
         title: Optional title displayed at the top of the selection HUD.
             default null
         """

@@ -137,6 +137,9 @@ ActiveSpace = TypedDict("ActiveSpace", {
     "space_id": int,
 })
 
+# Anchor position for a HUD window on screen.
+Anchor = Literal["top-left", "top-right", "bottom-left", "bottom-right", "bottom-center", "center"]
+
 # An audio input/output device.
 AudioDevice = TypedDict("AudioDevice", {
     # wire uint32 · min 0
@@ -629,12 +632,15 @@ EnumeratedCommand = TypedDict("EnumeratedCommand", {
     # spoken command with the action it triggers (the pattern is display text,
     # not an identifier).
     "action": str,
-    # The ready-to-store keybind value (`{"action": "<dotted.type>",
-    # "params": {…}}`) when the command's action is statically bindable —
-    # a concrete plugin action with no capture template, no sequence, and
-    # no intrinsic phase. Absent otherwise. This is what the Keybinds
-    # tab's bind-a-command flow copies.
-    "binding": NotRequired[Any],
+    # The ready-to-store keybind value when the command's action is
+    # statically bindable — a concrete plugin action with no capture
+    # template, no sequence, and no intrinsic phase. Absent otherwise.
+    # This is what the Keybinds tab's bind-a-command flow copies.
+    #
+    # Declared 2026-09-19 (census). It was built here as a two-key
+    # `serde_json::Map` and described in this comment; `KeybindBinding`
+    # is that shape, and `RegistryEntry` is it plus combo and source.
+    "binding": NotRequired["KeybindBinding"],
     # Optional grouping label from the command definition (e.g. "Navigation").
     "category": NotRequired[str],
     # Optional human-readable "what it does / use case" text from the command
@@ -699,6 +705,14 @@ Frame = TypedDict("Frame", {
     "y": int,
 })
 
+HUDItem = TypedDict("HUDItem", {
+    "icon": NotRequired[str],
+    "id": str,
+    "subtitle": NotRequired[str],
+    "tag": NotRequired[str],
+    "title": str,
+})
+
 HidDeviceEntry = TypedDict("HidDeviceEntry", {
     # wire uint32 · min 0
     "axes": int,
@@ -738,6 +752,16 @@ HidElementEntry = TypedDict("HidElementEntry", {
     "usage_page": int,
 })
 
+# An HTML fragment pushed to a HUD channel. The `target_id` is the DOM element
+# ID to patch (e.g. "content", "title"); `html` is the innerHTML replacement.
+# When `raw` is true, `html` is sent as-is (multiple elements, Datastar patches each by ID).
+HudFragment = TypedDict("HudFragment", {
+    "html": str,
+    # default false
+    "raw": NotRequired[bool],
+    "target_id": str,
+})
+
 # An available keyboard input source.
 InputSource = TypedDict("InputSource", {
     # Input source identifier (e.g. "com.apple.keylayout.US").
@@ -752,6 +776,23 @@ InputSource = TypedDict("InputSource", {
 InstalledApp = TypedDict("InstalledApp", {
     "bundle_id": str,
     "name": str,
+})
+
+# The stored value of one keybind: which action it fires and with what.
+#
+# This is what a `keybinds` collection record holds, and what the Keybinds
+# tab's bind-a-command flow copies out of `commands.enumerate`
+# (`EnumeratedCommand.binding`). A `RegistryEntry` is this plus the combo
+# and where it came from.
+KeybindBinding = TypedDict("KeybindBinding", {
+    # Exact dotted action type, e.g. `"voice.dictation"`.
+    "action": str,
+    # Params for the dispatch; absent means `{}`.
+    #
+    # Open by design: the receiving plugin's shape, typed per-plugin by
+    # `branchkit-gen` from that plugin's `action_types`, exactly like
+    # `Action::Plugin.params`.
+    "params": NotRequired[Any],
 })
 
 ListCommandItem = TypedDict("ListCommandItem", {
@@ -1237,6 +1278,25 @@ RedecodeNoise = TypedDict("RedecodeNoise", {
     "seed": int,
     # wire double
     "snr_db": float,
+})
+
+RegistryEntry = TypedDict("RegistryEntry", {
+    "action": str,
+    "combo": str,
+    # Params for the dispatch; absent means `{}`. Every fired bind
+    # executes `Action::Plugin { action_type, params, phase }` through the
+    # shared executor — the string-routing dialect is gone (2026-08-28).
+    #
+    # Open by design, and the only open field in this shape: it is the
+    # receiving plugin's params, typed per-plugin by `branchkit-gen` from
+    # that plugin's `action_types`, exactly like `Action::Plugin.params`.
+    "params": NotRequired[Any],
+    "source": str,
+})
+
+RegistrySnapshot = TypedDict("RegistrySnapshot", {
+    "entries": list["RegistryEntry"],
+    "listen_up": list[str],
 })
 
 ReminderItem = TypedDict("ReminderItem", {
@@ -2152,11 +2212,16 @@ HUDCreateChannelRequest = TypedDict("HUDCreateChannelRequest", {
     # Defaults to false.
     # default false
     "accepts_input": NotRequired[bool],
-    # Anchor position on screen (`Anchor` enum, kebab-case strings:
-    # `"top-left"`, `"top-right"`, `"bottom-left"`, `"bottom-right"`,
-    # `"bottom-center"`, `"center"`). Defaults to `"top-right"`.
-    # default null
-    "anchor": NotRequired[Any],
+    # Anchor position on screen. Defaults to `"top-right"`.
+    #
+    # Declared 2026-09-19 (census) — the enum has existed all along and
+    # the doc comment was spelling out its variants by hand. Note the
+    # behaviour change that comes with it: an unrecognised anchor used to
+    # fall back to the default SILENTLY (`unwrap_or_else`), putting the
+    # window somewhere the caller did not ask for with nothing said; it
+    # now fails the call by name. Absent still means the default.
+    # default "top-right"
+    "anchor": NotRequired["Anchor"],
     # Channel name. Must be unique across all plugins.
     "channel": str,
     # Optional human-readable description shown in dev tooling.
@@ -2214,8 +2279,13 @@ HUDPushRequest = TypedDict("HUDPushRequest", {
     # the calling plugin (verified via
     # `HudChannelRegistry::verify_owner`).
     "channel": str,
-    # Array of `HudFragment` objects: `{ target_id, html, raw? }`.
-    "fragments": Any,
+    # The fragments to patch into the channel, in order.
+    #
+    # Declared 2026-09-19 (census). The handler already deserialized
+    # exactly `Vec<HudFragment>` and failed the call otherwise, so the
+    # opaque schema described nothing the platform actually accepted.
+    # default []
+    "fragments": NotRequired[list["HudFragment"]],
 })
 
 HUDPushResponse = TypedDict("HUDPushResponse", {
@@ -2492,9 +2562,13 @@ InputTypeTextResponse = TypedDict("InputTypeTextResponse", {
 })
 
 KeybindsRegisterRequest = TypedDict("KeybindsRegisterRequest", {
-    # `RegistrySnapshot` JSON: `{ entries: [...], listen_up: [...] }`.
-    # Each entry is `{ combo, action, source }`.
-    "snapshot": Any,
+    # The full keybind registry to install, replacing what is there.
+    #
+    # Declared 2026-09-19 (census). The handler already deserialized
+    # exactly `RegistrySnapshot` and refused anything else; the doc
+    # comment was transcribing the shape by hand, and had gone stale —
+    # an entry is `{ combo, action, source, params? }`.
+    "snapshot": "RegistrySnapshot",
 })
 
 KeybindsRegisterResponse = TypedDict("KeybindsRegisterResponse", {
@@ -5905,9 +5979,13 @@ SelectionSetRequest = TypedDict("SelectionSetRequest", {
     # HUD channel to show the selection in. Defaults to `"main"`.
     # default null
     "channel": NotRequired[str],
-    # Array of `HUDItem` objects: `{ id, tag?, title, subtitle?, icon? }`.
-    # default null
-    "items": NotRequired[Any],
+    # The selectable items, in display order.
+    #
+    # Declared 2026-09-19 (census). The handler already deserialized
+    # exactly `Vec<HUDItem>`; the doc comment was listing the fields a
+    # generated type can list itself.
+    # default []
+    "items": NotRequired[list["HUDItem"]],
     # Optional title displayed at the top of the selection HUD.
     # default null
     "title": NotRequired[str],
