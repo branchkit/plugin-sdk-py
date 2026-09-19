@@ -95,3 +95,42 @@ FaultData = TypedDict("FaultData", {
     "op": NotRequired[str],
     "privilege": NotRequired[str],
 })
+
+# OUTPUT_KIND_* are the closed-vocabulary `kind` values of a semantic
+# output document (`output.state`): what a person needs in order to
+# act. A plugin never invents a kind — the actuator renders an
+# unknown one as OUTPUT_KIND_OUTCOME. `OutputKind` is `str`, not a
+# Literal, for the same reason ErrorKind is. Source of truth:
+# `actuator/src/output_state.rs::OutputKind`.
+OutputKind = str
+OUTPUT_KIND_CHOICES = "choices"
+OUTPUT_KIND_MODE = "mode"
+OUTPUT_KIND_OUTCOME = "outcome"
+OUTPUT_KIND_PROBLEM = "problem"
+OUTPUT_KIND_PROGRESS = "progress"
+
+# KNOWN_OUTPUT_KINDS lists the full closed-vocabulary set, in the
+# platform's own order.
+KNOWN_OUTPUT_KINDS = (
+    "choices",
+    "mode",
+    "outcome",
+    "problem",
+    "progress",
+)
+
+# OUTPUT_URGENCY_* are the closed-vocabulary `urgency` values of a
+# semantic output document — the producer's claim; what it means is
+# each renderer's policy. Unknown degrades to OUTPUT_URGENCY_AMBIENT.
+# Source of truth: `actuator/src/output_state.rs::OutputUrgency`.
+OutputUrgency = str
+OUTPUT_URGENCY_AMBIENT = "ambient"
+OUTPUT_URGENCY_NOTABLE = "notable"
+OUTPUT_URGENCY_INTERRUPT = "interrupt"
+
+# KNOWN_OUTPUT_URGENCIES lists the full closed-vocabulary set.
+KNOWN_OUTPUT_URGENCIES = (
+    "ambient",
+    "notable",
+    "interrupt",
+)

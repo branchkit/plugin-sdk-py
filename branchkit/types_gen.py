@@ -497,6 +497,45 @@ OnActionStatus = Literal["ok", "error", "not_handled"]
 # What a HUD window does when the pointer moves into its frame.
 OnPointer = Literal["none", "fade"]
 
+OutputAction = TypedDict("OutputAction", {
+    "dispatch": NotRequired[str],
+    "params": NotRequired[Any],
+    "say": NotRequired[str],
+})
+
+OutputItem = TypedDict("OutputItem", {
+    "action": NotRequired[Any],
+    "extra": NotRequired[Any],
+    "id": str,
+    "phrase": str,
+    "subtitle": NotRequired[str],
+    "title": str,
+})
+
+OutputProgress = TypedDict("OutputProgress", {
+    "remaining_ms": int,
+    "total_ms": int,
+})
+
+OutputSection = TypedDict("OutputSection", {
+    "items": list["OutputItem"],
+    "title": str,
+})
+
+OutputState = TypedDict("OutputState", {
+    "channel": str,
+    "extra": NotRequired[Any],
+    "footer": NotRequired[str],
+    "kind": str,
+    "locale": str,
+    "phrase": str,
+    "progress": NotRequired[Any],
+    "sections": list["OutputSection"],
+    "title": str,
+    "urgency": str,
+    "v": int,
+})
+
 OverlayRow = TypedDict("OverlayRow", {
     "added": int,
     "collection": str,
@@ -4180,6 +4219,15 @@ NativeZoomEnabledResponse = TypedDict("NativeZoomEnabledResponse", {
     "enabled": bool,
 })
 
+OutputStateRequest = TypedDict("OutputStateRequest", {
+    "state": "OutputState",
+})
+
+OutputStateResponse = TypedDict("OutputStateResponse", {
+    "generation": int,
+    "ok": bool,
+})
+
 OverridesApplyRequest = TypedDict("OverridesApplyRequest", {
     "action": str,
     "collection": str,
@@ -4721,6 +4769,14 @@ NetworkChangedEventParams = TypedDict("NetworkChangedEventParams", {
     "expensive": bool,
     "interface": str,
     "reachable": bool,
+})
+
+# Payload of the `_platform.output.state` event.
+OutputStateEventParams = TypedDict("OutputStateEventParams", {
+    "channel": str,
+    "generation": int,
+    "plugin_id": str,
+    "state": "OutputState",
 })
 
 # Payload of the `_platform.permission.changed` event.

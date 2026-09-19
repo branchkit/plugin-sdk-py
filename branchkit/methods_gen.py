@@ -578,6 +578,7 @@ from .contracts_gen import (
     METHOD_NATIVE_XCODE_VERSION,
     METHOD_NATIVE_ZIP,
     METHOD_NATIVE_ZOOM_ENABLED,
+    METHOD_OUTPUT_STATE,
     METHOD_OVERRIDES_APPLY,
     METHOD_OVERRIDES_LIST,
     METHOD_PIPELINES_GRAMMAR,
@@ -947,6 +948,8 @@ if TYPE_CHECKING:
         NetworkInterface,
         OcrRegion,
         OnPointer,
+        OutputState,
+        OutputStateResponse,
         OverlayRow,
         OverridesApplyResponse,
         OwnedCollection,
@@ -4171,6 +4174,13 @@ class MethodsMixin:
 
     async def native_zoom_enabled(self) -> NativeZoomEnabledResponse:
         result = await self.call(METHOD_NATIVE_ZOOM_ENABLED)
+        return result
+
+    async def output_state(self, state: "OutputState") -> OutputStateResponse:
+        params: dict[str, Any] = {
+            "state": state,
+        }
+        result = await self.call(METHOD_OUTPUT_STATE, params)
         return result
 
     async def overrides_apply(self, action: str, collection: str, field: str | None = None, fields: Any | None = None, id: str | None = None, new_id: str | None = None, tenant: str | None = None) -> OverridesApplyResponse:
