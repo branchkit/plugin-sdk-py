@@ -39,7 +39,7 @@ AXPathSegment = TypedDict("AXPathSegment", {
 ActionFieldSchema = TypedDict("ActionFieldSchema", {
     "default": NotRequired[Any],
     "description": str,
-    "display": NotRequired[Any],
+    "display": NotRequired["FieldDisplay"],
     "enum_values": list[str],
     "field_type": "FieldType",
     "fields": list["ActionFieldSchema"],
@@ -504,7 +504,7 @@ OutputAction = TypedDict("OutputAction", {
 })
 
 OutputItem = TypedDict("OutputItem", {
-    "action": NotRequired[Any],
+    "action": NotRequired["OutputAction"],
     "extra": NotRequired[Any],
     "id": str,
     "phrase": str,
@@ -529,7 +529,7 @@ OutputState = TypedDict("OutputState", {
     "kind": str,
     "locale": str,
     "phrase": str,
-    "progress": NotRequired[Any],
+    "progress": NotRequired["OutputProgress"],
     "sections": list["OutputSection"],
     "title": str,
     "urgency": str,
@@ -595,7 +595,7 @@ RedecodeItem = TypedDict("RedecodeItem", {
     "audio": str,
     "bias_strength": NotRequired[float],
     "id": str,
-    "noise": NotRequired[Any],
+    "noise": NotRequired["RedecodeNoise"],
     "words": list[str],
 })
 
@@ -835,7 +835,7 @@ CollectionFetchRequest = TypedDict("CollectionFetchRequest", {
 })
 
 CollectionFetchResponse = TypedDict("CollectionFetchResponse", {
-    "record": NotRequired[Any],
+    "record": NotRequired["CollectionRecord"],
 })
 
 CollectionFetchCompactedRequest = TypedDict("CollectionFetchCompactedRequest", {
@@ -844,7 +844,7 @@ CollectionFetchCompactedRequest = TypedDict("CollectionFetchCompactedRequest", {
 })
 
 CollectionFetchCompactedResponse = TypedDict("CollectionFetchCompactedResponse", {
-    "record": NotRequired[Any],
+    "record": NotRequired["CollectionRecord"],
 })
 
 CollectionGetRequest = TypedDict("CollectionGetRequest", {
@@ -1932,7 +1932,7 @@ NativeCopyFileResponse = TypedDict("NativeCopyFileResponse", {
 })
 
 NativeCpuInfoResponse = TypedDict("NativeCpuInfoResponse", {
-    "cpu": NotRequired[Any],
+    "cpu": NotRequired["CpuInfo"],
 })
 
 NativeCreateDirectoryRequest = TypedDict("NativeCreateDirectoryRequest", {
@@ -2346,7 +2346,7 @@ NativeFocusModesResponse = TypedDict("NativeFocusModesResponse", {
 })
 
 NativeFocusedElementResponse = TypedDict("NativeFocusedElementResponse", {
-    "element": NotRequired[Any],
+    "element": NotRequired["AXElementInfo"],
 })
 
 NativeFocusedWindowIDResponse = TypedDict("NativeFocusedWindowIDResponse", {
@@ -2366,7 +2366,7 @@ NativeForceQuitAppResponse = TypedDict("NativeForceQuitAppResponse", {
 })
 
 NativeFrontmostAppResponse = TypedDict("NativeFrontmostAppResponse", {
-    "app": NotRequired[Any],
+    "app": NotRequired["RunningApp"],
 })
 
 NativeFullDiskAccessResponse = TypedDict("NativeFullDiskAccessResponse", {
@@ -2727,7 +2727,7 @@ NativeMediaPreviousTrackResponse = TypedDict("NativeMediaPreviousTrackResponse",
 })
 
 NativeMemoryInfoResponse = TypedDict("NativeMemoryInfoResponse", {
-    "memory": NotRequired[Any],
+    "memory": NotRequired["MemoryInfo"],
 })
 
 NativeMemoryPressureResponse = TypedDict("NativeMemoryPressureResponse", {
@@ -2879,7 +2879,7 @@ NativeNotifyResponse = TypedDict("NativeNotifyResponse", {
 })
 
 NativeNowPlayingResponse = TypedDict("NativeNowPlayingResponse", {
-    "info": NotRequired[Any],
+    "info": NotRequired["NowPlayingInfo"],
 })
 
 NativeNumberFormatDecimalResponse = TypedDict("NativeNumberFormatDecimalResponse", {
@@ -3046,7 +3046,7 @@ NativePreventSleepResponse = TypedDict("NativePreventSleepResponse", {
 })
 
 NativePrimaryDisplayResponse = TypedDict("NativePrimaryDisplayResponse", {
-    "display": NotRequired[Any],
+    "display": NotRequired["DisplayMetadata"],
 })
 
 NativePrimaryDisplayIDResponse = TypedDict("NativePrimaryDisplayIDResponse", {
@@ -3315,7 +3315,7 @@ NativeScreenSharingEnabledResponse = TypedDict("NativeScreenSharingEnabledRespon
 
 NativeScreenshotRequest = TypedDict("NativeScreenshotRequest", {
     "display_id": NotRequired[int],
-    "region": NotRequired[Any],
+    "region": NotRequired["ScreenshotRegion"],
     "window_id": NotRequired[str],
 })
 
@@ -3901,7 +3901,7 @@ NativeSymlinkResponse = TypedDict("NativeSymlinkResponse", {
 })
 
 NativeSystemAppearanceResponse = TypedDict("NativeSystemAppearanceResponse", {
-    "appearance": NotRequired[Any],
+    "appearance": NotRequired["SystemAppearance"],
 })
 
 NativeSystemInfoResponse = TypedDict("NativeSystemInfoResponse", {
@@ -4314,7 +4314,7 @@ PluginDataExportResponse = TypedDict("PluginDataExportResponse", {
 
 PluginDebugRequest = TypedDict("PluginDebugRequest", {
     "data": NotRequired[Any],
-    "level": NotRequired[Any],
+    "level": NotRequired["PluginLogLevel"],
     "tag": NotRequired[str],
 })
 

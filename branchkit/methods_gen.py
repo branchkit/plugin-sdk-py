@@ -960,6 +960,7 @@ if TYPE_CHECKING:
         PipelinesStopResponse,
         PipelinesWarmResponse,
         PluginDataExportResponse,
+        PluginLogLevel,
         PrinterInfo,
         PrivacyGetRecordingResponse,
         PrivilegeStatusEntry,
@@ -973,6 +974,7 @@ if TYPE_CHECKING:
         RedecodeItem,
         ReminderItem,
         RunningApp,
+        ScreenshotRegion,
         SelectionPickResponse,
         SessionEndCleanupResponse,
         SettingsRulesCreateResponse,
@@ -3380,7 +3382,7 @@ class MethodsMixin:
         result = await self.call(METHOD_NATIVE_SCREEN_SHARING_ENABLED)
         return result
 
-    async def native_screenshot(self, display_id: int | None = None, region: Any | None = None, window_id: str | None = None) -> NativeScreenshotResponse:
+    async def native_screenshot(self, display_id: int | None = None, region: "ScreenshotRegion" | None = None, window_id: str | None = None) -> NativeScreenshotResponse:
         params: dict[str, Any] = {
         }
         if display_id is not None:
@@ -4266,7 +4268,7 @@ class MethodsMixin:
         result = await self.call(METHOD_PLUGIN_DATA_EXPORT, params)
         return result
 
-    async def plugin_debug(self, data: Any | None = None, level: Any | None = None, tag: str | None = None) -> None:
+    async def plugin_debug(self, data: Any | None = None, level: "PluginLogLevel" | None = None, tag: str | None = None) -> None:
         params: dict[str, Any] = {
         }
         if data is not None:
