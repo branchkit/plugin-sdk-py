@@ -13,9 +13,9 @@ AXElementInfo = TypedDict("AXElementInfo", {
     "enabled": bool,
     "focused": bool,
     "path": list["AXPathSegment"],
-    "position": NotRequired[Any],
+    "position": NotRequired[list[Any]],
     "role": str,
-    "size": NotRequired[Any],
+    "size": NotRequired[list[Any]],
     "subrole": NotRequired[str],
     "title": NotRequired[str],
     "value": NotRequired[Any],
@@ -27,7 +27,7 @@ AXElementNode = TypedDict("AXElementNode", {
 })
 
 AXElementRef = TypedDict("AXElementRef", {
-    "path": list["AXPathSegment"],
+    "path": NotRequired[list["AXPathSegment"]],
     "pid": int,
 })
 
@@ -91,9 +91,9 @@ BleService = TypedDict("BleService", {
 
 BleWriteEntry = TypedDict("BleWriteEntry", {
     "characteristic_uuid": str,
-    "data": list[int],
+    "data": NotRequired[list[int]],
     "service_uuid": str,
-    "write_type": str,
+    "write_type": NotRequired[str],
 })
 
 BluetoothDevice = TypedDict("BluetoothDevice", {
@@ -123,14 +123,14 @@ CameraDevice = TypedDict("CameraDevice", {
 ClipboardContents = TypedDict("ClipboardContents", {
     "available_types": list[str],
     "content_type": str,
-    "file_urls": NotRequired[Any],
+    "file_urls": NotRequired[list[str]],
     "image_base64": NotRequired[str],
     "text": NotRequired[str],
 })
 
 ClipboardWriteItem = TypedDict("ClipboardWriteItem", {
     "content_type": str,
-    "file_urls": NotRequired[Any],
+    "file_urls": NotRequired[list[str]],
     "image_base64": NotRequired[str],
     "text": NotRequired[str],
 })
@@ -188,18 +188,18 @@ CommandRowData = TypedDict("CommandRowData", {
 })
 
 CommandSpec = TypedDict("CommandSpec", {
-    "action": NotRequired[Any],
-    "cancels_bridge": bool,
+    "action": Any,
+    "cancels_bridge": NotRequired[bool],
     "category": NotRequired[str],
-    "clears_tags": list[str],
+    "clears_tags": NotRequired[list[str]],
     "description": NotRequired[str],
     "discovery": NotRequired[str],
-    "display_sources": dict[str, str],
+    "display_sources": NotRequired[dict[str, str]],
     "pattern": list[Any],
-    "requires_tags": list[str],
-    "sets_on_partial": list[str],
-    "sets_tags": list[str],
-    "variants": list[Any],
+    "requires_tags": NotRequired[list[str]],
+    "sets_on_partial": NotRequired[list[str]],
+    "sets_tags": NotRequired[list[str]],
+    "variants": NotRequired[list[Any]],
 })
 
 ConfusabilityFinding = TypedDict("ConfusabilityFinding", {
@@ -505,7 +505,7 @@ OutputAction = TypedDict("OutputAction", {
 
 OutputItem = TypedDict("OutputItem", {
     "action": NotRequired["OutputAction"],
-    "extra": NotRequired[Any],
+    "extra": NotRequired[dict[str, Any]],
     "id": str,
     "phrase": str,
     "subtitle": NotRequired[str],
@@ -518,19 +518,19 @@ OutputProgress = TypedDict("OutputProgress", {
 })
 
 OutputSection = TypedDict("OutputSection", {
-    "items": list["OutputItem"],
+    "items": NotRequired[list["OutputItem"]],
     "title": str,
 })
 
 OutputState = TypedDict("OutputState", {
     "channel": str,
-    "extra": NotRequired[Any],
+    "extra": NotRequired[dict[str, Any]],
     "footer": NotRequired[str],
     "kind": str,
     "locale": str,
     "phrase": str,
     "progress": NotRequired["OutputProgress"],
-    "sections": list["OutputSection"],
+    "sections": NotRequired[list["OutputSection"]],
     "title": str,
     "urgency": str,
     "v": int,
@@ -591,12 +591,12 @@ ProcessInfo = TypedDict("ProcessInfo", {
 })
 
 RedecodeItem = TypedDict("RedecodeItem", {
-    "apply_bias": bool,
+    "apply_bias": NotRequired[bool],
     "audio": str,
     "bias_strength": NotRequired[float],
     "id": str,
     "noise": NotRequired["RedecodeNoise"],
-    "words": list[str],
+    "words": NotRequired[list[str]],
 })
 
 RedecodeLine = TypedDict("RedecodeLine", {
@@ -853,7 +853,7 @@ CollectionGetRequest = TypedDict("CollectionGetRequest", {
 
 CollectionGetResponse = TypedDict("CollectionGetResponse", {
     "data": Any,
-    "entries": NotRequired[Any],
+    "entries": NotRequired[dict[str, Any]],
     "introducer": str,
     "merge": "MergeStrategy",
     "name": str,
@@ -884,7 +884,7 @@ CollectionPutRequest = TypedDict("CollectionPutRequest", {
     "group": NotRequired[str],
     "label": NotRequired[str],
     "name": str,
-    "roles": NotRequired[Any],
+    "roles": NotRequired[dict[str, "FieldDisplay"]],
 })
 
 CollectionPutResponse = TypedDict("CollectionPutResponse", {
@@ -896,7 +896,7 @@ CollectionReplaceRequest = TypedDict("CollectionReplaceRequest", {
     "entries": NotRequired[list["CollectionPutEntry"]],
     "label": NotRequired[str],
     "name": str,
-    "roles": NotRequired[Any],
+    "roles": NotRequired[dict[str, "FieldDisplay"]],
     "scope": Any,
 })
 
@@ -1013,8 +1013,8 @@ CommandsResetOverrideResponse = TypedDict("CommandsResetOverrideResponse", {
 })
 
 CommandsResolveRequest = TypedDict("CommandsResolveRequest", {
-    "active_tags": NotRequired[Any],
-    "collections": NotRequired[Any],
+    "active_tags": NotRequired[list[str]],
+    "collections": NotRequired[list[str]],
     "prefer_owner": NotRequired[str],
     "preview": NotRequired[bool],
     "require_tag": NotRequired[str],
@@ -1217,7 +1217,7 @@ InputClipboardReadRequest = TypedDict("InputClipboardReadRequest", {
 InputClipboardReadResponse = TypedDict("InputClipboardReadResponse", {
     "available_types": list[str],
     "content_type": str,
-    "file_urls": NotRequired[Any],
+    "file_urls": NotRequired[list[str]],
     "image_base64": NotRequired[str],
     "text": NotRequired[str],
 })
@@ -1594,9 +1594,9 @@ NativeAxElementAtPointResponse = TypedDict("NativeAxElementAtPointResponse", {
     "enabled": bool,
     "focused": bool,
     "path": list["AXPathSegment"],
-    "position": NotRequired[Any],
+    "position": NotRequired[list[Any]],
     "role": str,
-    "size": NotRequired[Any],
+    "size": NotRequired[list[Any]],
     "subrole": NotRequired[str],
     "title": NotRequired[str],
     "value": NotRequired[Any],
@@ -2278,7 +2278,7 @@ NativeFileSizeRequest = TypedDict("NativeFileSizeRequest", {
 
 NativeFileTagsRequest = TypedDict("NativeFileTagsRequest", {
     "path": str,
-    "tags": NotRequired[Any],
+    "tags": NotRequired[list[str]],
 })
 
 NativeFileTypeRequest = TypedDict("NativeFileTypeRequest", {
@@ -3848,7 +3848,7 @@ NativeSpellingLanguageResponse = TypedDict("NativeSpellingLanguageResponse", {
 NativeSpotlightRequest = TypedDict("NativeSpotlightRequest", {
     "limit": NotRequired[int],
     "query": str,
-    "scope": NotRequired[Any],
+    "scope": NotRequired[list[str]],
 })
 
 NativeSpotlightResponse = TypedDict("NativeSpotlightResponse", {
@@ -4809,8 +4809,8 @@ PipelineTranscriptEventParams = TypedDict("PipelineTranscriptEventParams", {
     "is_final": bool,
     "pipeline": str,
     "text": str,
-    "word_onsets_ms": NotRequired[Any],
-    "word_scores": NotRequired[Any],
+    "word_onsets_ms": NotRequired[list[int]],
+    "word_scores": NotRequired[list[float]],
 })
 
 # Payload of the `_platform.pipeline.warmed` event.
@@ -4904,6 +4904,6 @@ WorkspaceChangedEventParams = TypedDict("WorkspaceChangedEventParams", {
 WorldUpdatedEventParams = TypedDict("WorldUpdatedEventParams", {
     "active_app": NotRequired[str],
     "active_window_id": NotRequired[str],
-    "displays": NotRequired[Any],
-    "windows": NotRequired[Any],
+    "displays": NotRequired[list["DisplayInfo"]],
+    "windows": NotRequired[list["WindowInfo"]],
 })

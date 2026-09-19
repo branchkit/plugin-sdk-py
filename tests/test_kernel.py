@@ -53,11 +53,18 @@ class TestCommandBuilder(unittest.TestCase):
         self.assertEqual(cmds.capture("", "apps"), "<apps>")
         self.assertEqual(cmds.text(), "<text>")
 
-    def test_normalize_coerces_null_array_fields(self):
+    def test_normalize_drops_null_array_fields(self):
+        # A file-loaded spec may carry an explicit null; the actuator rejects
+        # null but accepts absence, so the key goes rather than becoming [].
         spec = {"pattern": ["x"], "requires_tags": None, "variants": None}
         out = cmds._normalize_command_spec(spec)
-        self.assertEqual(out["requires_tags"], [])
-        self.assertEqual(out["variants"], [])
+        self.assertNotIn("requires_tags", out)
+        self.assertNotIn("variants", out)
+
+    def test_builder_omits_unset_fields(self):
+        spec = cmds.command(cmds.word("ping")).action("noop").build()
+        for k in ("requires_tags", "sets_tags", "clears_tags", "sets_on_partial", "variants", "cancels_bridge"):
+            self.assertNotIn(k, spec)
 
 
 class TestCommandLoaders(unittest.TestCase):

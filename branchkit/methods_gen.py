@@ -665,6 +665,7 @@ if TYPE_CHECKING:
         EffectsRetractResponse,
         EnumeratedCommand,
         ExternalDisk,
+        FieldDisplay,
         HUDRemoveChannelResponse,
         HidDeviceEntry,
         HidElementEntry,
@@ -1086,7 +1087,7 @@ class MethodsMixin:
         }
         await self.call(METHOD_COLLECTION_PATCH, params)
 
-    async def collection_put(self, name: str, entries: list["CollectionPutEntry"] | None = None, group: str | None = None, label: str | None = None, roles: Any | None = None) -> CollectionPutResponse:
+    async def collection_put(self, name: str, entries: list["CollectionPutEntry"] | None = None, group: str | None = None, label: str | None = None, roles: dict[str, "FieldDisplay"] | None = None) -> CollectionPutResponse:
         params: dict[str, Any] = {
             "name": name,
         }
@@ -1101,7 +1102,7 @@ class MethodsMixin:
         result = await self.call(METHOD_COLLECTION_PUT, params)
         return result
 
-    async def collection_replace(self, name: str, scope: Any, entries: list["CollectionPutEntry"] | None = None, label: str | None = None, roles: Any | None = None) -> CollectionReplaceResponse:
+    async def collection_replace(self, name: str, scope: Any, entries: list["CollectionPutEntry"] | None = None, label: str | None = None, roles: dict[str, "FieldDisplay"] | None = None) -> CollectionReplaceResponse:
         params: dict[str, Any] = {
             "name": name,
             "scope": scope,
@@ -1211,7 +1212,7 @@ class MethodsMixin:
         result = await self.call(METHOD_COMMANDS_RESET_OVERRIDE, params)
         return result
 
-    async def commands_resolve(self, active_tags: Any | None = None, collections: Any | None = None, prefer_owner: str | None = None, preview: bool | None = None, require_tag: str | None = None, session_id: str | None = None, source: str | None = None, words: list[str] | None = None) -> CommandsResolveResponse:
+    async def commands_resolve(self, active_tags: list[str] | None = None, collections: list[str] | None = None, prefer_owner: str | None = None, preview: bool | None = None, require_tag: str | None = None, session_id: str | None = None, source: str | None = None, words: list[str] | None = None) -> CommandsResolveResponse:
         params: dict[str, Any] = {
         }
         if active_tags is not None:
@@ -2390,7 +2391,7 @@ class MethodsMixin:
         }
         await self.call(METHOD_NATIVE_FILE_SIZE, params)
 
-    async def native_file_tags(self, path: str, tags: Any | None = None) -> None:
+    async def native_file_tags(self, path: str, tags: list[str] | None = None) -> None:
         params: dict[str, Any] = {
             "path": path,
         }
@@ -3822,7 +3823,7 @@ class MethodsMixin:
         result = await self.call(METHOD_NATIVE_SPELLING_LANGUAGE)
         return result
 
-    async def native_spotlight(self, query: str, limit: int | None = None, scope: Any | None = None) -> list[SpotlightResult]:
+    async def native_spotlight(self, query: str, limit: int | None = None, scope: list[str] | None = None) -> list[SpotlightResult]:
         params: dict[str, Any] = {
             "query": query,
         }

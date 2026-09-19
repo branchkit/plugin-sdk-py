@@ -17,10 +17,10 @@ import os
 from typing import Any
 
 # The actuator's command parser rejects an explicit JSON `null` for these
-# array fields (it accepts an array or an absent field). The builder
-# defaults them to [], but a spec from load_commands carries whatever the
-# file had — coerce None to [] before the wire. Mirrors Go's
-# normalizeCommandSpec.
+# array fields (it accepts an array or an absent field). The builder never
+# sets one it was not given, but a spec from load_commands carries whatever
+# the file had — drop a None before the wire so the actuator applies its
+# default, the same absent shape the Go and TS builders produce.
 _COMMAND_SPEC_ARRAY_FIELDS = (
     "requires_tags",
     "sets_tags",
@@ -56,16 +56,10 @@ class CommandBuilder:
     """Accumulates a CommandSpec via chained setters; finish with build()."""
 
     def __init__(self, slots: list):
-        self._spec: dict[str, Any] = {
-            "pattern": list(slots),
-            "cancels_bridge": False,
-            "requires_tags": [],
-            "sets_tags": [],
-            "clears_tags": [],
-            "sets_on_partial": [],
-            "display_sources": {},
-            "variants": [],
-        }
+        # Only the pattern: every other field is optional on the wire, and an
+        # unset one is simply absent — the actuator applies its default, and
+        # the Go and TS builders produce the same shape.
+        self._spec: dict[str, Any] = {"pattern": list(slots)}
 
     def action(self, type: str, params: dict | None = None) -> "CommandBuilder":
         """Set the action fired on match. `type` is the action's type (a
@@ -76,26 +70,26 @@ class CommandBuilder:
         return self
 
     def requires_tags(self, *tags: str) -> "CommandBuilder":
-        self._spec["requires_tags"].extend(tags)
+        self._spec.setdefault("requires_tags", []).extend(tags)
         return self
 
     def sets_tags(self, *tags: str) -> "CommandBuilder":
-        self._spec["sets_tags"].extend(tags)
+        self._spec.setdefault("sets_tags", []).extend(tags)
         return self
 
     def clears_tags(self, *tags: str) -> "CommandBuilder":
-        self._spec["clears_tags"].extend(tags)
+        self._spec.setdefault("clears_tags", []).extend(tags)
         return self
 
     def display_source(self, capture: str, collection: str) -> "CommandBuilder":
         """Discovery-HUD display override for one capture: enumerate
         `collection` in the HUD instead of the capture's matching
         collection. Matching is untouched."""
-        self._spec["display_sources"][capture] = collection
+        self._spec.setdefault("display_sources", {})[capture] = collection
         return self
 
     def sets_on_partial(self, *tags: str) -> "CommandBuilder":
-        self._spec["sets_on_partial"].extend(tags)
+        self._spec.setdefault("sets_on_partial", []).extend(tags)
         return self
 
     def cancels_bridge(self) -> "CommandBuilder":
@@ -181,8 +175,8 @@ def load_commands() -> list[dict]:
 def _normalize_command_spec(spec: dict) -> dict:
     out = dict(spec)
     for field in _COMMAND_SPEC_ARRAY_FIELDS:
-        if out.get(field) is None:
-            out[field] = []
+        if field in out and out[field] is None:
+            del out[field]
     return out
 
 
