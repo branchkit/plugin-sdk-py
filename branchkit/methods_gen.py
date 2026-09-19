@@ -653,6 +653,7 @@ if TYPE_CHECKING:
         CollectionsCreateUserResponse,
         CollectionsListSection,
         CommandOverride,
+        CommandSpec,
         CommandsListResponse,
         CommandsPushResponse,
         CommandsRemoveAliasResponse,
@@ -1296,15 +1297,24 @@ class MethodsMixin:
         result = await self.call(METHOD_COMMANDS_LIST_OVERRIDES)
         return (result or {}).get("overrides") or []
 
-    async def commands_push(self, commands: Any | None = None, group: str | None = None) -> CommandsPushResponse:
+    async def commands_push(self, commands: list["CommandSpec"] | None = None, group: str | None = None) -> CommandsPushResponse:
         """Register commands with the matching engine to the matching engine
 
-        commands: Array of `CommandSpec` JSON objects to push to the matching
-            engine. Replaces the current commands contributed by the
-            calling plugin. Wire-level type is opaque
-            (`serde_json::Value`) to keep the deserializer flexible; see
-            `CommandSpec` for the canonical field list including
-            `cancels_bridge`.
+        commands: The commands to push. Replaces the commands contributed by the
+            calling plugin (the whole set, or one `group`).
+
+            The RUNTIME type stays `serde_json::Value` deliberately: each entry
+            is parsed individually into `commands::PartialCommand` further in,
+            so one malformed command is reported as one malformed command
+            rather than failing the caller's whole push. The SCHEMA says what
+            the entries are (2026-09-19 census) — this is the one place
+            `#[schemars(with = ...)]` earns its keep, making the schema MORE
+            precise than the declaration rather than less, which is the exact
+            opposite of every other use of it this census deleted.
+
+            Until now the generated wrapper took raw JSON, which is why all
+            three SDKs hand-wrote a typed push beside it (Go's
+            `PushCommandSpecs`).
             default null
         group: Optional named group this push owns. Absent replaces the plugin's
             ENTIRE command set (the original semantics, unchanged); present

@@ -193,9 +193,9 @@ async def push_command_specs(plugin, specs: list[dict]) -> int:
     """Register a built/loaded set of commands via commands.push
     (replace-per-plugin semantics). Returns the number of command variants
     registered."""
-    resp = await plugin.call(
-        "commands.push", {"commands": [_normalize_command_spec(s) for s in specs]}
-    )
+    # Through the generated wrapper: `commands.push` declares
+    # `list[CommandSpec]` as of 2026-09-19. Parity with Go and TS.
+    resp = await plugin.commands_push([_normalize_command_spec(s) for s in specs])
     return (resp or {}).get("count") or 0
 
 
@@ -212,8 +212,7 @@ async def push_command_group(plugin, group: str, specs: list[dict]) -> int:
         raise ValueError(
             "push_command_group: group name is required (use push_command_specs to replace the whole set)"
         )
-    resp = await plugin.call(
-        "commands.push",
-        {"commands": [_normalize_command_spec(s) for s in specs], "group": group},
+    resp = await plugin.commands_push(
+        [_normalize_command_spec(s) for s in specs], group
     )
     return (resp or {}).get("count") or 0
