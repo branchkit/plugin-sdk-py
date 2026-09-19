@@ -34,7 +34,7 @@ class TestOutputHelpers(unittest.TestCase):
         async def fake_call(method, params=None, timeout=None):
             sent["method"] = method
             sent["params"] = params
-            return {"ok": True, "generation": 7}
+            return {"ok": True, "generation": 7, "meaning_changed": True}
 
         plugin.call = fake_call  # type: ignore[assignment]
         doc = {
@@ -57,7 +57,7 @@ class TestOutputHelpers(unittest.TestCase):
         res = asyncio.run(plugin.output_state(doc))
         self.assertEqual(sent["method"], "output.state")
         self.assertEqual(sent["params"], {"state": doc})
-        self.assertEqual(res, {"ok": True, "generation": 7})
+        self.assertEqual(res, {"ok": True, "generation": 7, "meaning_changed": True})
 
 
 if __name__ == "__main__":

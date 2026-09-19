@@ -5496,6 +5496,20 @@ NativeZoomEnabledResponse = TypedDict("NativeZoomEnabledResponse", {
     "enabled": bool,
 })
 
+OutputClearRequest = TypedDict("OutputClearRequest", {
+    # The channel on which nothing is true now. Must be owned by the
+    # calling plugin.
+    "channel": str,
+})
+
+OutputClearResponse = TypedDict("OutputClearResponse", {
+    # The generation stamped on the clear — newer than any state a renderer
+    # holds for the channel.
+    # wire uint64 (64-bit) · min 0
+    "generation": int,
+    "ok": bool,
+})
+
 OutputStateRequest = TypedDict("OutputStateRequest", {
     # The document that becomes the channel's current state. Its `channel`
     # must be owned by the calling plugin.
@@ -5507,6 +5521,9 @@ OutputStateResponse = TypedDict("OutputStateResponse", {
     # renderer can tell which of two states is newer.
     # wire uint64 (64-bit) · min 0
     "generation": int,
+    # Whether the push changed what the channel's state means (kind, title,
+    # phrase, items) rather than only its progress, footer or urgency.
+    "meaning_changed": bool,
     "ok": bool,
 })
 
@@ -6423,14 +6440,34 @@ NetworkChangedEventParams = TypedDict("NetworkChangedEventParams", {
     "reachable": bool,
 })
 
+# Payload of the `_platform.output.cleared` event.
+OutputClearedEventParams = TypedDict("OutputClearedEventParams", {
+    # The channel that was cleared.
+    "channel": str,
+    # Monotonic, shared with `_platform.output.state` — newer than any
+    # state the renderer holds for the channel.
+    # wire uint64 (64-bit) · min 0
+    "generation": int,
+    # The plugin that owns the channel and cleared it.
+    "plugin_id": str,
+})
+
 # Payload of the `_platform.output.state` event.
 OutputStateEventParams = TypedDict("OutputStateEventParams", {
     # The channel whose state changed.
     "channel": str,
     # Monotonic across the actuator process. A renderer mid-utterance
-    # abandons what it is conveying when a newer generation arrives.
+    # abandons what it is conveying when a newer generation arrives —
+    # but see `meaning_changed`.
     # wire uint64 (64-bit) · min 0
     "generation": int,
+    # Whether this push changed what the state MEANS — kind, title, phrase,
+    # the items and their actions — as opposed to only its progress,
+    # footer or urgency. A producer that re-pushes a countdown has not said
+    # anything new; a renderer mid-utterance keeps going when this is false
+    # and abandons the utterance when it is true. Computed by the platform
+    # so every renderer applies the same test.
+    "meaning_changed": bool,
     # The plugin that owns the channel and produced the state.
     "plugin_id": str,
     # The new current state — the previous one is gone.

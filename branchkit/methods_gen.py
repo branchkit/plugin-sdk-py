@@ -578,6 +578,7 @@ from .contracts_gen import (
     METHOD_NATIVE_XCODE_VERSION,
     METHOD_NATIVE_ZIP,
     METHOD_NATIVE_ZOOM_ENABLED,
+    METHOD_OUTPUT_CLEAR,
     METHOD_OUTPUT_STATE,
     METHOD_OVERRIDES_APPLY,
     METHOD_OVERRIDES_LIST,
@@ -949,6 +950,7 @@ if TYPE_CHECKING:
         NetworkInterface,
         OcrRegion,
         OnPointer,
+        OutputClearResponse,
         OutputState,
         OutputStateResponse,
         OverlayRow,
@@ -5340,6 +5342,18 @@ class MethodsMixin:
     async def native_zoom_enabled(self) -> NativeZoomEnabledResponse:
         """Check if Zoom accessibility is enabled"""
         result = await self.call(METHOD_NATIVE_ZOOM_ENABLED)
+        return result
+
+    async def output_clear(self, channel: str) -> OutputClearResponse:
+        """Nothing is true on one of your HUD channels now: clears its semantic state so every renderer stops conveying it; visibility stays yours (hud.hide)
+
+        channel: The channel on which nothing is true now. Must be owned by the
+            calling plugin.
+        """
+        params: dict[str, Any] = {
+            "channel": channel,
+        }
+        result = await self.call(METHOD_OUTPUT_CLEAR, params)
         return result
 
     async def output_state(self, state: "OutputState") -> OutputStateResponse:
