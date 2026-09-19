@@ -974,6 +974,7 @@ if TYPE_CHECKING:
         RecognitionRedecodeResponse,
         RedecodeItem,
         ReminderItem,
+        ReplaceScope,
         RunningApp,
         ScreenshotRegion,
         SelectionPickResponse,
@@ -1102,7 +1103,7 @@ class MethodsMixin:
         result = await self.call(METHOD_COLLECTION_PUT, params)
         return result
 
-    async def collection_replace(self, name: str, scope: Any, entries: list["CollectionPutEntry"] | None = None, label: str | None = None, roles: dict[str, "FieldDisplay"] | None = None) -> CollectionReplaceResponse:
+    async def collection_replace(self, name: str, scope: "ReplaceScope", entries: list["CollectionPutEntry"] | None = None, label: str | None = None, roles: dict[str, "FieldDisplay"] | None = None) -> CollectionReplaceResponse:
         params: dict[str, Any] = {
             "name": name,
             "scope": scope,

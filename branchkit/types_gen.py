@@ -13,9 +13,9 @@ AXElementInfo = TypedDict("AXElementInfo", {
     "enabled": bool,
     "focused": bool,
     "path": list["AXPathSegment"],
-    "position": NotRequired[list[Any]],
+    "position": NotRequired[tuple[int, int]],
     "role": str,
-    "size": NotRequired[list[Any]],
+    "size": NotRequired[tuple[int, int]],
     "subrole": NotRequired[str],
     "title": NotRequired[str],
     "value": NotRequired[Any],
@@ -618,6 +618,27 @@ ReminderItem = TypedDict("ReminderItem", {
     "title": str,
 })
 
+# Which of the CALLER'S OWN records `collection.replace` may delete — the
+# "complement" it is allowed to clear.
+#
+# The complement is always computed over records whose `writer` is the caller,
+# so no scope can reach another plugin's records or the user's. Scope chooses
+# among the caller's own; the worst a wrong one can do is clear too much of
+# what you yourself published.
+#
+# Still explicit and required, never inferred: "everything I own here" and
+# "the subset under this key space" are different intentions, and guessing
+# between them is how a refresh silently becomes a wipe. See
+# docs/design/DESIGN_RECORD_OWNERSHIP.md and docs/design/DESIGN_COLLECTION_REPLACE.md.
+ReplaceScopeCollection = TypedDict("ReplaceScopeCollection", {
+    "kind": Literal["collection"],
+})
+ReplaceScopeGroup = TypedDict("ReplaceScopeGroup", {
+    "kind": Literal["group"],
+    "value": str,
+})
+ReplaceScope = ReplaceScopeCollection | ReplaceScopeGroup
+
 ResolveTelemetry = TypedDict("ResolveTelemetry", {
     "gated_partial_seen": bool,
     "winner": "MatchWinner",
@@ -897,7 +918,7 @@ CollectionReplaceRequest = TypedDict("CollectionReplaceRequest", {
     "label": NotRequired[str],
     "name": str,
     "roles": NotRequired[dict[str, "FieldDisplay"]],
-    "scope": Any,
+    "scope": "ReplaceScope",
 })
 
 CollectionReplaceResponse = TypedDict("CollectionReplaceResponse", {
@@ -1594,9 +1615,9 @@ NativeAxElementAtPointResponse = TypedDict("NativeAxElementAtPointResponse", {
     "enabled": bool,
     "focused": bool,
     "path": list["AXPathSegment"],
-    "position": NotRequired[list[Any]],
+    "position": NotRequired[tuple[int, int]],
     "role": str,
-    "size": NotRequired[list[Any]],
+    "size": NotRequired[tuple[int, int]],
     "subrole": NotRequired[str],
     "title": NotRequired[str],
     "value": NotRequired[Any],
