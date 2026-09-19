@@ -48,6 +48,18 @@ AXPathSegment = TypedDict("AXPathSegment", {
     "role": str,
 })
 
+ActionPlugin = TypedDict("ActionPlugin", {
+    "type": Literal["plugin"],
+    "action_type": str,
+    "params": NotRequired[Any],
+    "phase": NotRequired[str],
+})
+ActionSequence = TypedDict("ActionSequence", {
+    "type": Literal["sequence"],
+    "actions": list["Action"],
+})
+Action = ActionPlugin | ActionSequence
+
 # Schema for a single field within an action type.
 ActionFieldSchema = TypedDict("ActionFieldSchema", {
     # Shipped default value. REQUIRED on every field of a
@@ -361,7 +373,20 @@ CommandOverride = TypedDict("CommandOverride", {
 
 CommandRowData = TypedDict("CommandRowData", {
     "action": str,
-    # Raw action JSON for editor decomposition (complements the display `action` string).
+    # Raw action JSON for editor decomposition (complements the display
+    # `action` string).
+    #
+    # OPEN BY DESIGN — do not declare this `Option<Action>`. It is built by
+    # `crate::actions::action_to_json`, which is NOT `serde::to_value`: for
+    # a parameterized command (`Action::Template` / `CompiledTemplate`, the
+    # shape every command with captures carries) it deliberately emits the
+    # AUTHORED dialect — a flat `{"type": "browser.scroll", …}` whose `type`
+    # is the dotted plugin action type, not the `Action` tag. That is the
+    # right thing for an editor, which decomposes and round-trips what the
+    # author wrote, but it is a superset of the `Action` wire shape and one
+    # generated type would lie about it. Same verdict, same reason, as
+    # `CommandSpec.action`. See the ledger in
+    # docs/design/DESIGN_SDK_GENERATION_FIDELITY.md.
     "action_json": NotRequired[Any],
     "canonical": str,
     "category": str,
@@ -385,8 +410,26 @@ CommandRowData = TypedDict("CommandRowData", {
 # value, so adding/removing a field here doesn't change runtime
 # behavior. Edit `commands::PartialCommand` first; mirror here.
 CommandSpec = TypedDict("CommandSpec", {
-    # Action fired on match. Plugin-typed: `{"type":"plugin", "action_type":"...","params":{...}}`
-    # or a built-in like `{"type":"key","code":36}`.
+    # Action fired on match.
+    #
+    # OPEN BY DESIGN — deliberately NOT declared `crate::actions::Action`,
+    # unlike `dispatch`'s `action` and `commands.resolve`'s, which are
+    # typed. What `commands.push` accepts is the AUTHORED dialect, and
+    # `crate::actions::parse_action_or_template` shows it is a strict
+    # superset of the `Action` wire shape: the tagged form
+    # (`{"type":"plugin","action_type":…,"params":{…}}`), the sequence
+    # envelope (`{"type":"sequence","actions":[…]}`) whose entries are
+    # themselves authored-dialect, AND the flat form
+    # (`{"type":"browser.click", …}`) where `type` carries a dotted plugin
+    # action type and the remaining keys are the params. Commands whose
+    # pattern has captures additionally carry `{N}` placeholders, which
+    # `templateify_commands` later turns into `Action::Template`.
+    #
+    # One generated type would have to lie about at least two of those, so
+    # this stays `Value` and is defended in the ledger in
+    # docs/design/DESIGN_SDK_GENERATION_FIDELITY.md rather than counted as
+    # a gap. `branchkit-gen` types the params per plugin from the plugin's
+    # own `action_types`, which is where an author actually gets checked.
     "action": Any,
     # When true, this gated command is allowed to win during a
     # mid-bridge restricted resolve. Default false: gated sibling
@@ -1336,9 +1379,8 @@ SystemAppearance = TypedDict("SystemAppearance", {
 # protocol doc in branchkit-web.
 TiedCandidate = TypedDict("TiedCandidate", {
     # Template-resolved action to dispatch if this candidate is chosen.
-    # `Action` is opaque to schemars (free-form JSON value), matching
-    # `ResolveResult.action`.
-    "action": NotRequired[Any],
+    # Typed, matching `ResolveResult.action`.
+    "action": NotRequired["Action"],
     # Named captures, keyed by binding name. Empty when `action` is a
     # fully-resolved template; populated only when resolution failed.
     "args": dict[str, Any],
@@ -1892,10 +1934,10 @@ CommandsResolveRequest = TypedDict("CommandsResolveRequest", {
 })
 
 CommandsResolveResponse = TypedDict("CommandsResolveResponse", {
-    # Opaque to schemars: `Action` is a large enum whose schema is treated
-    # as a free-form JSON value in OpenAPI. The inventory closure still
-    # produces a fully-typed Action.
-    "action": NotRequired[Any],
+    # The winning command's action, template-resolved. Typed in the schema
+    # since 2026-09-19 — it is the same `Action` `dispatch` takes, which is
+    # what a consumer does with it.
+    "action": NotRequired["Action"],
     # All currently-active gates from `plugin.<X>.*` namespaces other than
     # the resolving caller's own (`plugin.<caller>.*`). Lets the caller
     # make session-end cleanup decisions ("is any other plugin's mode
@@ -1982,11 +2024,8 @@ DiscoveryClosedResponse = TypedDict("DiscoveryClosedResponse", {
 })
 
 DispatchRequest = TypedDict("DispatchRequest", {
-    # Typed `Action` variant to dispatch. Schema is loose
-    # (`serde_json::Value`) — see module-level docs for the rationale.
-    # The runtime closure still deserializes the typed
-    # `crate::actions::Action` from this field.
-    "action": Any,
+    # The action to dispatch.
+    "action": "Action",
 })
 
 DispatchResponse = TypedDict("DispatchResponse", {
@@ -6196,12 +6235,18 @@ OnTranscriptRequest = TypedDict("OnTranscriptRequest", {
 })
 
 OnTranscriptResponse = TypedDict("OnTranscriptResponse", {
-    # Typed `Action` values. Loose in the schema for the same reason
-    # `dispatch`'s `action` is: the Action enum's wire shape is the
-    # dispatch contract, documented there rather than duplicated per
-    # method.
+    # The actions to run, in order. Same typed `Action` the `dispatch`
+    # op takes — a plugin that answers here and a plugin that calls
+    # `dispatch` are building the same value.
+    #
+    # Typed since 2026-09-19. Note the consequence: a reply carrying one
+    # action this build cannot parse now fails the whole reply rather than
+    # skipping that one entry, and the utterance is dropped with the parse
+    # error in the diagnostic. That is the honest reading of a typed
+    # contract, and the SDKs construct `Action` values, so it can only
+    # come from a hand-rolled wire implementation.
     # default []
-    "actions": NotRequired[list[Any]],
+    "actions": NotRequired[list["Action"]],
 })
 
 RenderSettingsRequest = TypedDict("RenderSettingsRequest", {

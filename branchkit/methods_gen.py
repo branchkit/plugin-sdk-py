@@ -628,6 +628,7 @@ if TYPE_CHECKING:
     from .types_gen import (
         AXElementNode,
         AXElementRef,
+        Action,
         ActionsListResponse,
         ActiveSpace,
         AudioDevice,
@@ -1433,13 +1434,10 @@ class MethodsMixin:
         """Notify that the discovery HUD closed; emits _platform.discovery.closed"""
         await self.call(METHOD_DISCOVERY_CLOSED)
 
-    async def dispatch(self, action: Any) -> DispatchResponse:
+    async def dispatch(self, action: "Action") -> DispatchResponse:
         """Dispatch a typed Action to a plugin or platform builtin
 
-        action: Typed `Action` variant to dispatch. Schema is loose
-            (`serde_json::Value`) — see module-level docs for the rationale.
-            The runtime closure still deserializes the typed
-            `crate::actions::Action` from this field.
+        action: The action to dispatch.
         """
         params: dict[str, Any] = {
             "action": action,
