@@ -2003,9 +2003,10 @@ class MethodsMixin:
         result = await self.call(METHOD_NATIVE_ALERT_SOUND)
         return result
 
-    async def native_alert_volume(self) -> None:
+    async def native_alert_volume(self) -> float:
         """Get the alert volume (0.0-1.0)"""
-        await self.call(METHOD_NATIVE_ALERT_VOLUME)
+        result = await self.call(METHOD_NATIVE_ALERT_VOLUME)
+        return result
 
     async def native_all_window_ids(self) -> list[str]:
         """List all on-screen window IDs"""
@@ -2025,12 +2026,13 @@ class MethodsMixin:
         result = await self.call(METHOD_NATIVE_APP_BUNDLE_PATH, params)
         return result
 
-    async def native_app_focused_window_id(self, bundle_id: str) -> None:
+    async def native_app_focused_window_id(self, bundle_id: str) -> str:
         """Get focused window ID for app by bundle ID"""
         params: dict[str, Any] = {
             "bundle_id": bundle_id,
         }
-        await self.call(METHOD_NATIVE_APP_FOCUSED_WINDOW_ID, params)
+        result = await self.call(METHOD_NATIVE_APP_FOCUSED_WINDOW_ID, params)
+        return result
 
     async def native_app_icon(self, bundle_id: str, size: int | None = None) -> NativeAppIconResponse:
         """Get app icon as PNG (base64)
@@ -2045,12 +2047,13 @@ class MethodsMixin:
         result = await self.call(METHOD_NATIVE_APP_ICON, params)
         return result
 
-    async def native_app_icon_path(self, bundle_id: str) -> None:
+    async def native_app_icon_path(self, bundle_id: str) -> str:
         """Get path to app icon"""
         params: dict[str, Any] = {
             "bundle_id": bundle_id,
         }
-        await self.call(METHOD_NATIVE_APP_ICON_PATH, params)
+        result = await self.call(METHOD_NATIVE_APP_ICON_PATH, params)
+        return result
 
     async def native_app_is_agent(self, bundle_id: str) -> NativeAppIsAgentResponse:
         """Check if app is an LSUIElement (agent/background)"""
@@ -2084,31 +2087,34 @@ class MethodsMixin:
         result = await self.call(METHOD_NATIVE_APP_METADATA, params)
         return result
 
-    async def native_app_path(self, bundle_id: str) -> None:
+    async def native_app_path(self, bundle_id: str) -> str:
         """Get an app path by bundle ID"""
         params: dict[str, Any] = {
             "bundle_id": bundle_id,
         }
-        await self.call(METHOD_NATIVE_APP_PATH, params)
+        result = await self.call(METHOD_NATIVE_APP_PATH, params)
+        return result
 
-    async def native_app_pid(self, bundle_id: str) -> None:
+    async def native_app_pid(self, bundle_id: str) -> int:
         """Get PID of running app by bundle ID"""
         params: dict[str, Any] = {
             "bundle_id": bundle_id,
         }
-        await self.call(METHOD_NATIVE_APP_PID, params)
+        result = await self.call(METHOD_NATIVE_APP_PID, params)
+        return result
 
     async def native_app_support_directory(self) -> NativeAppSupportDirectoryResponse:
         """Get the user's Application Support directory path"""
         result = await self.call(METHOD_NATIVE_APP_SUPPORT_DIRECTORY)
         return result
 
-    async def native_app_version(self, bundle_id: str) -> None:
+    async def native_app_version(self, bundle_id: str) -> str:
         """Get an app version by bundle ID"""
         params: dict[str, Any] = {
             "bundle_id": bundle_id,
         }
-        await self.call(METHOD_NATIVE_APP_VERSION, params)
+        result = await self.call(METHOD_NATIVE_APP_VERSION, params)
+        return result
 
     async def native_app_windows(self, bundle_id: str) -> list[WindowDetail]:
         """List all windows belonging to a specific app by bundle ID"""
@@ -2118,12 +2124,13 @@ class MethodsMixin:
         result = await self.call(METHOD_NATIVE_APP_WINDOWS, params)
         return (result or {}).get("windows") or []
 
-    async def native_app_windows_count(self, bundle_id: str) -> None:
+    async def native_app_windows_count(self, bundle_id: str) -> int:
         """Count windows for an app by bundle ID"""
         params: dict[str, Any] = {
             "bundle_id": bundle_id,
         }
-        await self.call(METHOD_NATIVE_APP_WINDOWS_COUNT, params)
+        result = await self.call(METHOD_NATIVE_APP_WINDOWS_COUNT, params)
+        return result
 
     async def native_apps_for_path(self, path: str) -> list[InstalledApp]:
         """Applications the OS registers as able to open a given file (Launch Services)"""
@@ -2151,9 +2158,10 @@ class MethodsMixin:
         result = await self.call(METHOD_NATIVE_AUDIO_INPUT_DEVICE)
         return result
 
-    async def native_audio_input_level(self) -> None:
+    async def native_audio_input_level(self) -> float:
         """Get the system audio input volume (0.0-1.0)"""
-        await self.call(METHOD_NATIVE_AUDIO_INPUT_LEVEL)
+        result = await self.call(METHOD_NATIVE_AUDIO_INPUT_LEVEL)
+        return result
 
     async def native_audio_output_device(self) -> NativeAudioOutputDeviceResponse:
         """Get the default audio output device name"""
@@ -2308,18 +2316,20 @@ class MethodsMixin:
         result = await self.call(METHOD_NATIVE_BATTERY)
         return result
 
-    async def native_battery_cycle_count(self) -> None:
+    async def native_battery_cycle_count(self) -> int:
         """Get battery cycle count"""
-        await self.call(METHOD_NATIVE_BATTERY_CYCLE_COUNT)
+        result = await self.call(METHOD_NATIVE_BATTERY_CYCLE_COUNT)
+        return result
 
     async def native_battery_health(self) -> NativeBatteryHealthResponse:
         """Get battery health status"""
         result = await self.call(METHOD_NATIVE_BATTERY_HEALTH)
         return result
 
-    async def native_battery_max_capacity(self) -> None:
+    async def native_battery_max_capacity(self) -> float:
         """Get battery maximum capacity percentage"""
-        await self.call(METHOD_NATIVE_BATTERY_MAX_CAPACITY)
+        result = await self.call(METHOD_NATIVE_BATTERY_MAX_CAPACITY)
+        return result
 
     async def native_ble_discover_services(self, device_identifier: str) -> list[BleService]:
         """Discover GATT services and characteristics on a paired BLE device
@@ -2624,9 +2634,10 @@ class MethodsMixin:
         result = await self.call(METHOD_NATIVE_COMPUTER_NAME)
         return result
 
-    async def native_computer_sleep_time(self) -> None:
+    async def native_computer_sleep_time(self) -> int:
         """Get computer sleep timeout in minutes, for the power source the machine is currently on"""
-        await self.call(METHOD_NATIVE_COMPUTER_SLEEP_TIME)
+        result = await self.call(METHOD_NATIVE_COMPUTER_SLEEP_TIME)
+        return result
 
     async def native_contacts_permission(self) -> NativeContactsPermissionResponse:
         """Check if contacts access is available"""
@@ -2646,13 +2657,15 @@ class MethodsMixin:
         result = await self.call(METHOD_NATIVE_CPU_INFO)
         return result
 
-    async def native_cpu_temperature(self) -> None:
+    async def native_cpu_temperature(self) -> float:
         """Get CPU temperature in Celsius. Requires the third-party `osx-cpu-temp`; a reading without an explicit scale marker is rejected rather than assumed"""
-        await self.call(METHOD_NATIVE_CPU_TEMPERATURE)
+        result = await self.call(METHOD_NATIVE_CPU_TEMPERATURE)
+        return result
 
-    async def native_cpu_usage(self) -> None:
+    async def native_cpu_usage(self) -> float:
         """Get current CPU usage percentage"""
-        await self.call(METHOD_NATIVE_CPU_USAGE)
+        result = await self.call(METHOD_NATIVE_CPU_USAGE)
+        return result
 
     async def native_create_directory(self, path: str) -> None:
         """Create a directory (with intermediate directories)"""
@@ -2814,9 +2827,10 @@ class MethodsMixin:
         }
         await self.call(METHOD_NATIVE_DISMISS_NOTIFICATION, params)
 
-    async def native_display_brightness(self) -> None:
+    async def native_display_brightness(self) -> float:
         """Get current display brightness (0.0-1.0)"""
-        await self.call(METHOD_NATIVE_DISPLAY_BRIGHTNESS)
+        result = await self.call(METHOD_NATIVE_DISPLAY_BRIGHTNESS)
+        return result
 
     async def native_display_color_profiles(self) -> list[DisplayColorProfile]:
         """Get color profile for each connected display"""
@@ -2833,7 +2847,7 @@ class MethodsMixin:
         result = await self.call(METHOD_NATIVE_DISPLAY_MIRRORING)
         return result
 
-    async def native_display_refresh_rate(self, display_id: int) -> None:
+    async def native_display_refresh_rate(self, display_id: int) -> float:
         """Get display refresh rate in Hz
 
         display_id: wire uint32 · min 0
@@ -2841,14 +2855,15 @@ class MethodsMixin:
         params: dict[str, Any] = {
             "display_id": display_id,
         }
-        await self.call(METHOD_NATIVE_DISPLAY_REFRESH_RATE, params)
+        result = await self.call(METHOD_NATIVE_DISPLAY_REFRESH_RATE, params)
+        return result
 
     async def native_display_rotation(self) -> list[DisplayRotation]:
         """Get rotation for each connected display"""
         result = await self.call(METHOD_NATIVE_DISPLAY_ROTATION)
         return (result or {}).get("rotations") or []
 
-    async def native_display_scale_factor(self, display_id: int) -> None:
+    async def native_display_scale_factor(self, display_id: int) -> float:
         """Get display scale factor
 
         display_id: wire uint32 · min 0
@@ -2856,16 +2871,18 @@ class MethodsMixin:
         params: dict[str, Any] = {
             "display_id": display_id,
         }
-        await self.call(METHOD_NATIVE_DISPLAY_SCALE_FACTOR, params)
+        result = await self.call(METHOD_NATIVE_DISPLAY_SCALE_FACTOR, params)
+        return result
 
     async def native_display_serial_number(self) -> NativeDisplaySerialNumberResponse:
         """Get primary display serial number"""
         result = await self.call(METHOD_NATIVE_DISPLAY_SERIAL_NUMBER)
         return result
 
-    async def native_display_sleep_time(self) -> None:
+    async def native_display_sleep_time(self) -> int:
         """Get display sleep timeout in minutes, for the power source the machine is currently on"""
-        await self.call(METHOD_NATIVE_DISPLAY_SLEEP_TIME)
+        result = await self.call(METHOD_NATIVE_DISPLAY_SLEEP_TIME)
+        return result
 
     async def native_displays(self) -> list[DisplayMetadata]:
         """Get metadata for all connected displays"""
@@ -2917,9 +2934,10 @@ class MethodsMixin:
         result = await self.call(METHOD_NATIVE_DOCK_SHOW_RECENTS)
         return result
 
-    async def native_dock_size(self) -> None:
+    async def native_dock_size(self) -> int:
         """Get the Dock tile size (0-128)"""
-        await self.call(METHOD_NATIVE_DOCK_SIZE)
+        result = await self.call(METHOD_NATIVE_DOCK_SIZE)
+        return result
 
     async def native_documents_directory(self) -> NativeDocumentsDirectoryResponse:
         """Get the user's Documents directory path"""
@@ -2982,19 +3000,21 @@ class MethodsMixin:
         result = await self.call(METHOD_NATIVE_FAST_USER_SWITCHING)
         return result
 
-    async def native_file_acl(self, path: str) -> None:
+    async def native_file_acl(self, path: str) -> str:
         """Get file ACL as string"""
         params: dict[str, Any] = {
             "path": path,
         }
-        await self.call(METHOD_NATIVE_FILE_ACL, params)
+        result = await self.call(METHOD_NATIVE_FILE_ACL, params)
+        return result
 
-    async def native_file_creation_date(self, path: str) -> None:
+    async def native_file_creation_date(self, path: str) -> str:
         """Get file creation date as ISO string"""
         params: dict[str, Any] = {
             "path": path,
         }
-        await self.call(METHOD_NATIVE_FILE_CREATION_DATE, params)
+        result = await self.call(METHOD_NATIVE_FILE_CREATION_DATE, params)
+        return result
 
     async def native_file_exists(self, path: str) -> NativeFileExistsResponse:
         """Check if a file or directory exists"""
@@ -3033,12 +3053,13 @@ class MethodsMixin:
         result = await self.call(METHOD_NATIVE_FILE_METADATA, params)
         return result
 
-    async def native_file_modification_date(self, path: str) -> None:
+    async def native_file_modification_date(self, path: str) -> str:
         """Get file modification date as ISO string"""
         params: dict[str, Any] = {
             "path": path,
         }
-        await self.call(METHOD_NATIVE_FILE_MODIFICATION_DATE, params)
+        result = await self.call(METHOD_NATIVE_FILE_MODIFICATION_DATE, params)
+        return result
 
     async def native_file_owner(self, path: str) -> NativeFileOwnerResponse:
         """Get the owner user and group of a file"""
@@ -3061,12 +3082,13 @@ class MethodsMixin:
         result = await self.call(METHOD_NATIVE_FILE_SHARING_ENABLED)
         return result
 
-    async def native_file_size(self, path: str) -> None:
+    async def native_file_size(self, path: str) -> int:
         """Get file size in bytes"""
         params: dict[str, Any] = {
             "path": path,
         }
-        await self.call(METHOD_NATIVE_FILE_SIZE, params)
+        result = await self.call(METHOD_NATIVE_FILE_SIZE, params)
+        return result
 
     async def native_file_tags(self, path: str, tags: list[str] | None = None) -> None:
         """Read or write Finder tags on a file
@@ -3088,12 +3110,13 @@ class MethodsMixin:
         result = await self.call(METHOD_NATIVE_FILE_TYPE, params)
         return result
 
-    async def native_file_uti(self, path: str) -> None:
+    async def native_file_uti(self, path: str) -> str:
         """Get the UTI (Uniform Type Identifier) for a file"""
         params: dict[str, Any] = {
             "path": path,
         }
-        await self.call(METHOD_NATIVE_FILE_UTI, params)
+        result = await self.call(METHOD_NATIVE_FILE_UTI, params)
+        return result
 
     async def native_filevault_status(self) -> NativeFilevaultStatusResponse:
         """Check if FileVault disk encryption is enabled"""
@@ -3145,9 +3168,10 @@ class MethodsMixin:
         result = await self.call(METHOD_NATIVE_FIREWALL_ENABLED)
         return result
 
-    async def native_first_day_of_week(self) -> None:
+    async def native_first_day_of_week(self) -> int:
         """Get the first day of the week (1=Sunday, 2=Monday)"""
-        await self.call(METHOD_NATIVE_FIRST_DAY_OF_WEEK)
+        result = await self.call(METHOD_NATIVE_FIRST_DAY_OF_WEEK)
+        return result
 
     async def native_flush_dns(self) -> None:
         """Flush DNS cache"""
@@ -3437,17 +3461,20 @@ class MethodsMixin:
         result = await self.call(METHOD_NATIVE_KERNEL_VERSION)
         return result
 
-    async def native_key_repeat_delay(self) -> None:
+    async def native_key_repeat_delay(self) -> float:
         """Get initial key repeat delay"""
-        await self.call(METHOD_NATIVE_KEY_REPEAT_DELAY)
+        result = await self.call(METHOD_NATIVE_KEY_REPEAT_DELAY)
+        return result
 
-    async def native_key_repeat_rate(self) -> None:
+    async def native_key_repeat_rate(self) -> float:
         """Get the keyboard repeat rate (keys per second)"""
-        await self.call(METHOD_NATIVE_KEY_REPEAT_RATE)
+        result = await self.call(METHOD_NATIVE_KEY_REPEAT_RATE)
+        return result
 
-    async def native_keyboard_brightness(self) -> None:
+    async def native_keyboard_brightness(self) -> float:
         """Get keyboard backlight brightness (0.0-1.0)"""
-        await self.call(METHOD_NATIVE_KEYBOARD_BRIGHTNESS)
+        result = await self.call(METHOD_NATIVE_KEYBOARD_BRIGHTNESS)
+        return result
 
     async def native_keyboard_layout(self) -> NativeKeyboardLayoutResponse:
         """Get the current keyboard layout and key mappings"""
@@ -3692,9 +3719,10 @@ class MethodsMixin:
             params["y"] = y
         await self.call(METHOD_NATIVE_MOUSE_BUTTON_CLICK, params)
 
-    async def native_mouse_speed(self) -> None:
+    async def native_mouse_speed(self) -> float:
         """Get the mouse tracking speed (0.0-3.0)"""
-        await self.call(METHOD_NATIVE_MOUSE_SPEED)
+        result = await self.call(METHOD_NATIVE_MOUSE_SPEED)
+        return result
 
     async def native_move_file(self, destination: str, source: str) -> None:
         """Move or rename a file or directory"""
@@ -3767,9 +3795,10 @@ class MethodsMixin:
         result = await self.call(METHOD_NATIVE_NETWORK_REACHABLE, params)
         return result
 
-    async def native_network_signal_strength(self) -> None:
+    async def native_network_signal_strength(self) -> float:
         """Get Wi-Fi signal strength in dBm"""
-        await self.call(METHOD_NATIVE_NETWORK_SIGNAL_STRENGTH)
+        result = await self.call(METHOD_NATIVE_NETWORK_SIGNAL_STRENGTH)
+        return result
 
     async def native_network_ssid(self) -> NativeNetworkSsidResponse:
         """Get currently connected Wi-Fi SSID"""
@@ -3931,7 +3960,7 @@ class MethodsMixin:
         result = await self.call(METHOD_NATIVE_OPTIMIZED_CHARGING)
         return result
 
-    async def native_pdf_extract_text(self, path: str, page: int | None = None) -> None:
+    async def native_pdf_extract_text(self, path: str, page: int | None = None) -> str:
         """Extract text from a PDF file
 
         page: wire uint64 (64-bit) · default 0 · min 0
@@ -3941,14 +3970,16 @@ class MethodsMixin:
         }
         if page is not None:
             params["page"] = page
-        await self.call(METHOD_NATIVE_PDF_EXTRACT_TEXT, params)
+        result = await self.call(METHOD_NATIVE_PDF_EXTRACT_TEXT, params)
+        return result
 
-    async def native_pdf_page_count(self, path: str) -> None:
+    async def native_pdf_page_count(self, path: str) -> int:
         """Get the page count of a PDF file"""
         params: dict[str, Any] = {
             "path": path,
         }
-        await self.call(METHOD_NATIVE_PDF_PAGE_COUNT, params)
+        result = await self.call(METHOD_NATIVE_PDF_PAGE_COUNT, params)
+        return result
 
     async def native_pin_window_above(self, pinned: bool, window_id: str) -> None:
         """Pin or unpin a window above all others"""
@@ -3963,12 +3994,13 @@ class MethodsMixin:
         result = await self.call(METHOD_NATIVE_PINCH_TO_ZOOM)
         return result
 
-    async def native_ping(self, host: str) -> None:
+    async def native_ping(self, host: str) -> float:
         """Ping a host and return latency in milliseconds"""
         params: dict[str, Any] = {
             "host": host,
         }
-        await self.call(METHOD_NATIVE_PING, params)
+        result = await self.call(METHOD_NATIVE_PING, params)
+        return result
 
     async def native_play_feedback_when_volume_changed(self) -> NativePlayFeedbackWhenVolumeChangedResponse:
         """Check if volume change feedback sound is enabled"""
@@ -4041,7 +4073,7 @@ class MethodsMixin:
         result = await self.call(METHOD_NATIVE_PROCESS_COUNT)
         return result
 
-    async def native_process_cpu_usage(self, pid: int) -> None:
+    async def native_process_cpu_usage(self, pid: int) -> float:
         """Get CPU usage for process by PID
 
         pid: wire int32
@@ -4049,7 +4081,8 @@ class MethodsMixin:
         params: dict[str, Any] = {
             "pid": pid,
         }
-        await self.call(METHOD_NATIVE_PROCESS_CPU_USAGE, params)
+        result = await self.call(METHOD_NATIVE_PROCESS_CPU_USAGE, params)
+        return result
 
     async def native_process_exists(self, pid: int) -> NativeProcessExistsResponse:
         """Check if a process with given PID exists
@@ -4078,7 +4111,7 @@ class MethodsMixin:
         result = await self.call(METHOD_NATIVE_PROCESS_LIST)
         return (result or {}).get("processes") or []
 
-    async def native_process_memory_usage(self, pid: int) -> None:
+    async def native_process_memory_usage(self, pid: int) -> int:
         """Get memory usage in bytes for process by PID
 
         pid: wire int32
@@ -4086,9 +4119,10 @@ class MethodsMixin:
         params: dict[str, Any] = {
             "pid": pid,
         }
-        await self.call(METHOD_NATIVE_PROCESS_MEMORY_USAGE, params)
+        result = await self.call(METHOD_NATIVE_PROCESS_MEMORY_USAGE, params)
+        return result
 
-    async def native_process_name(self, pid: int) -> None:
+    async def native_process_name(self, pid: int) -> str:
         """Get process name by PID
 
         pid: wire int32
@@ -4096,9 +4130,10 @@ class MethodsMixin:
         params: dict[str, Any] = {
             "pid": pid,
         }
-        await self.call(METHOD_NATIVE_PROCESS_NAME, params)
+        result = await self.call(METHOD_NATIVE_PROCESS_NAME, params)
+        return result
 
-    async def native_process_parent_pid(self, pid: int) -> None:
+    async def native_process_parent_pid(self, pid: int) -> int:
         """Get parent PID of a process
 
         pid: wire int32
@@ -4106,9 +4141,10 @@ class MethodsMixin:
         params: dict[str, Any] = {
             "pid": pid,
         }
-        await self.call(METHOD_NATIVE_PROCESS_PARENT_PID, params)
+        result = await self.call(METHOD_NATIVE_PROCESS_PARENT_PID, params)
+        return result
 
-    async def native_process_path(self, pid: int) -> None:
+    async def native_process_path(self, pid: int) -> str:
         """Get the executable path for a PID
 
         pid: wire int32
@@ -4116,9 +4152,10 @@ class MethodsMixin:
         params: dict[str, Any] = {
             "pid": pid,
         }
-        await self.call(METHOD_NATIVE_PROCESS_PATH, params)
+        result = await self.call(METHOD_NATIVE_PROCESS_PATH, params)
+        return result
 
-    async def native_process_start_time(self, pid: int) -> None:
+    async def native_process_start_time(self, pid: int) -> str:
         """Get process start time as ISO string
 
         pid: wire int32
@@ -4126,7 +4163,8 @@ class MethodsMixin:
         params: dict[str, Any] = {
             "pid": pid,
         }
-        await self.call(METHOD_NATIVE_PROCESS_START_TIME, params)
+        result = await self.call(METHOD_NATIVE_PROCESS_START_TIME, params)
+        return result
 
     async def native_proxy_settings(self) -> NativeProxySettingsResponse:
         """Get system proxy configuration"""
@@ -4142,9 +4180,10 @@ class MethodsMixin:
         """Purge inactive memory"""
         await self.call(METHOD_NATIVE_PURGE_MEMORY)
 
-    async def native_purgeable_space(self) -> None:
+    async def native_purgeable_space(self) -> int:
         """Get purgeable disk space in bytes"""
-        await self.call(METHOD_NATIVE_PURGEABLE_SPACE)
+        result = await self.call(METHOD_NATIVE_PURGEABLE_SPACE)
+        return result
 
     async def native_quick_look(self, path: str, size: int | None = None) -> NativeQuickLookResponse:
         """Generate Quick Look thumbnail as PNG (base64)
@@ -4346,9 +4385,10 @@ class MethodsMixin:
         result = await self.call(METHOD_NATIVE_SCREEN_SAVER_ASK_PASSWORD)
         return result
 
-    async def native_screen_saver_delay(self) -> None:
+    async def native_screen_saver_delay(self) -> int:
         """Get delay before password required after screen saver"""
-        await self.call(METHOD_NATIVE_SCREEN_SAVER_DELAY)
+        result = await self.call(METHOD_NATIVE_SCREEN_SAVER_DELAY)
+        return result
 
     async def native_screen_saver_start(self) -> None:
         """Start the screen saver"""
@@ -4919,7 +4959,7 @@ class MethodsMixin:
         result = await self.call(METHOD_NATIVE_SPEECH_RECOGNITION_AVAILABLE)
         return result
 
-    async def native_speech_recognize_file(self, path: str, locale: str | None = None) -> None:
+    async def native_speech_recognize_file(self, path: str, locale: str | None = None) -> str:
         """Recognize speech from an audio file (returns transcript)
 
         locale: default ""
@@ -4929,7 +4969,8 @@ class MethodsMixin:
         }
         if locale is not None:
             params["locale"] = locale
-        await self.call(METHOD_NATIVE_SPEECH_RECOGNIZE_FILE, params)
+        result = await self.call(METHOD_NATIVE_SPEECH_RECOGNIZE_FILE, params)
+        return result
 
     async def native_spelling_language(self) -> NativeSpellingLanguageResponse:
         """Get current spelling language"""
@@ -5095,9 +5136,10 @@ class MethodsMixin:
         result = await self.call(METHOD_NATIVE_TIME_MACHINE_STATUS)
         return result
 
-    async def native_time_on_battery(self) -> None:
+    async def native_time_on_battery(self) -> int:
         """Get time on battery in minutes since last unplug"""
-        await self.call(METHOD_NATIVE_TIME_ON_BATTERY)
+        result = await self.call(METHOD_NATIVE_TIME_ON_BATTERY)
+        return result
 
     async def native_timezone(self) -> NativeTimezoneResponse:
         """Get current system timezone identifier"""
@@ -5130,16 +5172,18 @@ class MethodsMixin:
         result = await self.call(METHOD_NATIVE_TOUCH_ID_AVAILABLE)
         return result
 
-    async def native_trackpad_speed(self) -> None:
+    async def native_trackpad_speed(self) -> float:
         """Get the trackpad tracking speed (0.0-3.0)"""
-        await self.call(METHOD_NATIVE_TRACKPAD_SPEED)
+        result = await self.call(METHOD_NATIVE_TRACKPAD_SPEED)
+        return result
 
-    async def native_transparency_consent(self, service: str) -> None:
+    async def native_transparency_consent(self, service: str) -> str:
         """Check TCC consent status for a service (e.g. kTCCServiceAccessibility)"""
         params: dict[str, Any] = {
             "service": service,
         }
-        await self.call(METHOD_NATIVE_TRANSPARENCY_CONSENT, params)
+        result = await self.call(METHOD_NATIVE_TRANSPARENCY_CONSENT, params)
+        return result
 
     async def native_trash(self, path: str) -> bool:
         """Move file to Trash"""
@@ -5259,12 +5303,13 @@ class MethodsMixin:
         result = await self.call(METHOD_NATIVE_WIFI_NETWORKS)
         return (result or {}).get("networks") or []
 
-    async def native_window_app(self, window_id: str) -> None:
+    async def native_window_app(self, window_id: str) -> str:
         """Get the owning app bundle ID for a window"""
         params: dict[str, Any] = {
             "window_id": window_id,
         }
-        await self.call(METHOD_NATIVE_WINDOW_APP, params)
+        result = await self.call(METHOD_NATIVE_WINDOW_APP, params)
+        return result
 
     async def native_window_bounds(self, window_id: str) -> NativeWindowBoundsResponse:
         """Get a window position and size by ID"""
@@ -5274,12 +5319,13 @@ class MethodsMixin:
         result = await self.call(METHOD_NATIVE_WINDOW_BOUNDS, params)
         return result
 
-    async def native_window_display_id(self, window_id: str) -> None:
+    async def native_window_display_id(self, window_id: str) -> int:
         """Get display ID for window"""
         params: dict[str, Any] = {
             "window_id": window_id,
         }
-        await self.call(METHOD_NATIVE_WINDOW_DISPLAY_ID, params)
+        result = await self.call(METHOD_NATIVE_WINDOW_DISPLAY_ID, params)
+        return result
 
     async def native_window_is_fullscreen(self, window_id: str) -> NativeWindowIsFullscreenResponse:
         """Check if window is fullscreen"""
@@ -5297,14 +5343,15 @@ class MethodsMixin:
         result = await self.call(METHOD_NATIVE_WINDOW_IS_MINIMIZED, params)
         return result
 
-    async def native_window_layer(self, window_id: str) -> None:
+    async def native_window_layer(self, window_id: str) -> int:
         """Get window layer level"""
         params: dict[str, Any] = {
             "window_id": window_id,
         }
-        await self.call(METHOD_NATIVE_WINDOW_LAYER, params)
+        result = await self.call(METHOD_NATIVE_WINDOW_LAYER, params)
+        return result
 
-    async def native_window_screenshot(self, window_id: int) -> None:
+    async def native_window_screenshot(self, window_id: int) -> str:
         """Take a screenshot of a specific window as base64 PNG
 
         window_id: wire uint32 · min 0
@@ -5312,21 +5359,24 @@ class MethodsMixin:
         params: dict[str, Any] = {
             "window_id": window_id,
         }
-        await self.call(METHOD_NATIVE_WINDOW_SCREENSHOT, params)
+        result = await self.call(METHOD_NATIVE_WINDOW_SCREENSHOT, params)
+        return result
 
-    async def native_window_subrole(self, window_id: str) -> None:
+    async def native_window_subrole(self, window_id: str) -> str:
         """Get window subrole"""
         params: dict[str, Any] = {
             "window_id": window_id,
         }
-        await self.call(METHOD_NATIVE_WINDOW_SUBROLE, params)
+        result = await self.call(METHOD_NATIVE_WINDOW_SUBROLE, params)
+        return result
 
-    async def native_window_title(self, window_id: str) -> None:
+    async def native_window_title(self, window_id: str) -> str:
         """Get a window title by ID"""
         params: dict[str, Any] = {
             "window_id": window_id,
         }
-        await self.call(METHOD_NATIVE_WINDOW_TITLE, params)
+        result = await self.call(METHOD_NATIVE_WINDOW_TITLE, params)
+        return result
 
     async def native_world_model(self, on_screen: bool | None = None) -> WorldModel:
         """Get a snapshot of all windows and displays (with managed HUD windows)
