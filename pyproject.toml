@@ -19,4 +19,13 @@ Homepage = "https://branchkit.dev"
 Repository = "https://github.com/branchkit/plugin-sdk-py"
 
 [tool.setuptools]
-packages = ["branchkit"]
+# Explicit, not auto-discovered — so a new subpackage must be added here or
+# it exists in the repo and is missing from the wheel. The pipeline tiers are
+# subpackages so `from branchkit.pipeline import ...` stays domain-free.
+packages = [
+    "branchkit",
+    "branchkit.pipeline",
+    "branchkit.pipeline.audio",
+    "branchkit.pipeline.recognition",
+    "branchkit.pipeline.monitors",
+]
