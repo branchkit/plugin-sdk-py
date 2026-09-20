@@ -2412,9 +2412,16 @@ class MethodsMixin:
         result = await self.call(METHOD_NATIVE_BOOT_VOLUME)
         return result
 
-    async def native_borders(self) -> None:
-        """Draw window border overlays (forwarded to Swift shell)"""
-        await self.call(METHOD_NATIVE_BORDERS)
+    async def native_borders(self, frames: list["WindowFrame"] | None = None) -> None:
+        """Draw window border overlays (forwarded to Swift shell)
+
+        frames: default []
+        """
+        params: dict[str, Any] = {
+        }
+        if frames is not None:
+            params["frames"] = frames
+        await self.call(METHOD_NATIVE_BORDERS, params)
 
     async def native_brightness(self, display_id: int | None = None) -> NativeBrightnessResponse:
         """Get display brightness (0.0-1.0)

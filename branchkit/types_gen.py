@@ -2997,6 +2997,11 @@ NativeBootVolumeResponse = TypedDict("NativeBootVolumeResponse", {
     "name": str,
 })
 
+NativeBordersRequest = TypedDict("NativeBordersRequest", {
+    # default []
+    "frames": NotRequired[list["WindowFrame"]],
+})
+
 NativeBordersResponse = TypedDict("NativeBordersResponse", {
     "ok": bool,
 })
