@@ -1,15 +1,53 @@
-"""The BranchKit pipeline wire vocabulary — the Python stage port.
+"""The BranchKit pipeline port — what a Python stage speaks.
 
-Hand-written, unlike the tier subpackages: the framing reader/writer lives
-here alongside the generated event vocabulary, mirroring `pipeline.go` and
-`pipeline.ts`. Today this re-exports the generated core tier; the framing
-lands next (DESIGN_BLOB_CHANNEL.md step 0 build item).
+A stage is a subprocess, not a plugin: it reads framed events on stdin,
+writes them on stdout, and logs structured diagnostics on stderr. This
+package is the Python equivalent of ``plugin-sdk-go/pipeline`` and
+``plugin-sdk-ts``'s ``pipeline.ts`` / ``stage.ts``.
 
 Tiers are subpackages so the default import stays domain-free — someone
-writing a foot pedal should not be handed a command-grammar DAG:
+writing a foot pedal should never be handed a command-grammar DAG:
 
-    from branchkit.pipeline import Capability          # core, always
-    from branchkit.pipeline.audio import AudioChunk    # opt in
+    from branchkit.pipeline import Reader, Writer, Event, Capability
+    from branchkit.pipeline.audio import AudioChunk       # opt in
+    from branchkit.pipeline.recognition import Transcript # opt in
+
+The event vocabulary (``events_gen.py`` and the tier subpackages) is
+GENERATED from ``contracts/pipeline.json``, itself generated from the
+stage-sdk Rust types; ``just check-stage-sdk-gen`` fails if it drifts.
+Framing is hand-written here, as it is in Go and TS, and the framing
+conformance suite compares the ports byte-for-byte.
 """
 
+from .credit import CreditGranter
 from .events_gen import *  # noqa: F401,F403
+from .stagelog import (
+    LOG_LINE_PREFIX,
+    clear_log_session,
+    log_debug,
+    log_error,
+    log_info,
+    log_trace,
+    log_warn,
+    set_log_session,
+    stage_log,
+)
+from .wire import MAX_PAYLOAD, Event, Reader, WireError, Writer
+
+__all__ = [  # noqa: F405 — the generated names come in via the star import
+    "CreditGranter",
+    "Event",
+    "LOG_LINE_PREFIX",
+    "MAX_PAYLOAD",
+    "Reader",
+    "WireError",
+    "Writer",
+    "clear_log_session",
+    "log_debug",
+    "log_error",
+    "log_info",
+    "log_trace",
+    "log_warn",
+    "set_log_session",
+    "stage_log",
+]
