@@ -142,3 +142,190 @@ class TestStageLog(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestAudioConsumerRuntime(unittest.TestCase):
+    """The obligations the runtime owns, each of which fails silently when a
+    stage hand-rolls it."""
+
+    def drive(self, events, policy, handler):
+        from branchkit.pipeline.stage import serve_audio_consumer_on
+        inb = io.BytesIO()
+        w = Writer(inb)
+        for e in events:
+            w.write_event(e)
+        inb.seek(0)
+        out = io.BytesIO()
+        serve_audio_consumer_on(inb, out, {"stage_type": "filter"},
+                                policy, handler)
+        out.seek(0)
+        return list(Reader(out))
+
+    def test_handshake_goes_out_first_and_unprompted(self):
+        from branchkit.pipeline.stage import AudioConsumer, NO_CREDIT
+        out = self.drive([], NO_CREDIT, AudioConsumer())
+        self.assertEqual(out[0].type, "capability")
+        self.assertEqual(out[0].data, {"stage_type": "filter"})
+
+    def test_initial_window_then_cadence(self):
+        from branchkit.pipeline.stage import (
+            AudioConsumer, CreditPolicy, InitialGrant)
+        out = self.drive(
+            [Event("audio_chunk", {"session_id": "s1"}, b"ab")] * 4,
+            CreditPolicy(initial=4, every=2, grant=8,
+                         when=InitialGrant.ON_START),
+            AudioConsumer())
+        self.assertEqual([e.data["frames"] for e in out[1:]], [4, 8, 8])
+
+    def test_session_start_grant_is_stamped_with_the_session(self):
+        from branchkit.pipeline.stage import (
+            AudioConsumer, CreditPolicy, InitialGrant)
+        out = self.drive([Event("audio_start", {"session_id": "s9"})],
+                         CreditPolicy(initial=3,
+                                      when=InitialGrant.ON_SESSION_START),
+                         AudioConsumer())
+        self.assertEqual(out[1].data, {"session_id": "s9", "frames": 3})
+
+    def test_no_credit_never_grants(self):
+        from branchkit.pipeline.stage import AudioConsumer, NO_CREDIT
+        out = self.drive([Event("audio_chunk", {"session_id": "s1"}, b"x")],
+                         NO_CREDIT, AudioConsumer())
+        self.assertEqual([e.type for e in out[1:]], [])
+
+    def test_dropped_chunk_does_not_count(self):
+        from branchkit.pipeline.stage import (
+            AudioConsumer, Chunk, CreditPolicy, InitialGrant)
+
+        class Dropper(AudioConsumer):
+            def on_audio_chunk(self, ev, payload, ctx):
+                return Chunk.DROPPED
+
+        out = self.drive(
+            [Event("audio_chunk", {"session_id": "s1"}, b"x")] * 5,
+            CreditPolicy(every=2, grant=8, when=InitialGrant.MANUAL),
+            Dropper())
+        self.assertEqual([e.type for e in out[1:]], [])
+
+    def test_unknown_events_are_tolerated(self):
+        # Wire leniency is contract, not courtesy.
+        from branchkit.pipeline.stage import AudioConsumer, NO_CREDIT
+
+        class Rec(AudioConsumer):
+            def __init__(self):
+                self.other = []
+
+            def on_other(self, ev, ctx):
+                from branchkit.pipeline.stage import Flow
+                self.other.append(ev.type)
+                return Flow.CONTINUE
+
+        h = Rec()
+        self.drive([Event("ext.vendor.weird", {"x": 1})], NO_CREDIT, h)
+        self.assertEqual(h.other, ["ext.vendor.weird"])
+
+    def test_flow_stop_ends_the_loop(self):
+        from branchkit.pipeline.stage import AudioConsumer, Flow, NO_CREDIT
+
+        class Stopper(AudioConsumer):
+            def __init__(self):
+                self.eof = False
+
+            def on_audio_stop(self, ev, ctx):
+                return Flow.STOP
+
+            def on_eof(self, ctx):
+                self.eof = True
+
+        h = Stopper()
+        self.drive([Event("audio_stop", {"session_id": "s1"}),
+                    Event("audio_chunk", {"session_id": "s1"}, b"never")],
+                   NO_CREDIT, h)
+        self.assertFalse(h.eof, "loop should have returned before EOF")
+
+
+class TestSourceRuntime(unittest.TestCase):
+    def serve(self, inbound_events, opts, body):
+        from branchkit.pipeline.stage import serve_source_on
+        inb = io.BytesIO()
+        w = Writer(inb)
+        for e in inbound_events:
+            w.write_event(e)
+        inb.seek(0)
+        out = io.BytesIO()
+        serve_source_on(inb, out, {"stage_type": "source"}, opts, body)
+        out.seek(0)
+        return list(Reader(out))
+
+    def test_handshake_then_body_owns_the_loop(self):
+        from branchkit.pipeline.stage import SourceOptions
+        ran = []
+        out = self.serve([], SourceOptions(), lambda sc: ran.append(True))
+        self.assertEqual(out[0].type, "capability")
+        self.assertTrue(ran)
+
+    def test_stop_request_carries_cutoff_for_verbatim_forwarding(self):
+        from branchkit.pipeline.stage import SourceOptions
+        got = {}
+
+        def body(sc):
+            sc.done().wait(timeout=2)
+            got["req"] = sc.stop_request()
+
+        self.serve([Event("audio_stop", {"session_id": "s1",
+                                         "cutoff_ms": 250})],
+                   SourceOptions(listen_for_stop=True), body)
+        self.assertEqual(got["req"]["cutoff_ms"], 250)
+
+    def test_listen_for_stop_off_ignores_the_same_bytes(self):
+        from branchkit.pipeline.stage import SourceOptions
+        got = {}
+
+        def body(sc):
+            got["stopped"] = sc.stopped()
+
+        self.serve([Event("audio_stop", {"session_id": "s1"})],
+                   SourceOptions(), body)
+        self.assertFalse(got["stopped"])
+
+    def test_internal_stop_records_no_request(self):
+        from branchkit.pipeline.stage import SourceOptions
+        got = {}
+
+        def body(sc):
+            sc.request_stop()
+            got["stopped"] = sc.stopped()
+            got["req"] = sc.stop_request()
+
+        self.serve([], SourceOptions(), body)
+        self.assertTrue(got["stopped"])
+        self.assertIsNone(got["req"])
+
+    def test_unrelated_inbound_events_do_not_stop_a_source(self):
+        # Needs a pipe that STAYS OPEN: EOF legitimately stops a source (the
+        # platform is gone), so a BytesIO of noise would stop it for the right
+        # reason and prove nothing about tolerance.
+        import os
+        import time
+
+        from branchkit.pipeline.stage import SourceOptions, serve_source_on
+
+        rfd, wfd = os.pipe()
+        r = os.fdopen(rfd, "rb", buffering=0)
+        w = os.fdopen(wfd, "wb", buffering=0)
+        self.addCleanup(r.close)
+        Writer(w).write_event(Event("ext.v.noise", {"a": 1}))
+
+        got = {}
+
+        def body(sc):
+            time.sleep(0.15)
+            got["running"] = not sc.stopped()
+            Writer(w).write_event(Event("audio_stop", {"session_id": "s1"}))
+            sc.done().wait(timeout=2)
+            got["stopped_after"] = sc.stopped()
+
+        serve_source_on(r, io.BytesIO(), {"stage_type": "source"},
+                        SourceOptions(listen_for_stop=True), body)
+        w.close()
+        self.assertTrue(got["running"], "noise must not stop a source")
+        self.assertTrue(got["stopped_after"], "the real stop must still land")

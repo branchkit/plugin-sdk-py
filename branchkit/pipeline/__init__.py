@@ -32,11 +32,36 @@ from .stagelog import (
     set_log_session,
     stage_log,
 )
+from .stage import (
+    NO_CREDIT,
+    AudioConsumer,
+    AudioCtx,
+    Chunk,
+    CreditPolicy,
+    Flow,
+    InitialGrant,
+    SourceCtx,
+    SourceOptions,
+    run,
+    serve_audio_consumer,
+    serve_audio_consumer_on,
+    serve_source,
+    serve_source_on,
+)
 from .wire import MAX_PAYLOAD, Event, Reader, WireError, Writer
 
 __all__ = [  # noqa: F405 — the generated names come in via the star import
+    "AudioConsumer",
+    "AudioCtx",
+    "Chunk",
     "CreditGranter",
+    "CreditPolicy",
     "Event",
+    "Flow",
+    "InitialGrant",
+    "NO_CREDIT",
+    "SourceCtx",
+    "SourceOptions",
     "LOG_LINE_PREFIX",
     "MAX_PAYLOAD",
     "Reader",
@@ -48,6 +73,11 @@ __all__ = [  # noqa: F405 — the generated names come in via the star import
     "log_info",
     "log_trace",
     "log_warn",
+    "run",
+    "serve_audio_consumer",
+    "serve_audio_consumer_on",
+    "serve_source",
+    "serve_source_on",
     "set_log_session",
     "stage_log",
 ]
