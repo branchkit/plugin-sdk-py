@@ -1557,6 +1557,13 @@ WindowInfo = TypedDict("WindowInfo", {
     "h": int,
     # default ""
     "id": str,
+    # The process that owns this window, where the platform can say.
+    #
+    # Advisory and often absent: on X11 it comes from `_NET_WM_PID`, which
+    # the client sets voluntarily. `None` rather than 0, because 0 is a
+    # real pid-shaped value that would read as an answer.
+    # wire int32
+    "pid": NotRequired[int],
     # "observed" = discovered via OS accessibility APIs.
     # "managed" = HUD window created by actuator channel infrastructure.
     # default "observed"
