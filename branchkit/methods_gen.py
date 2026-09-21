@@ -5779,9 +5779,22 @@ class MethodsMixin:
         result = await self.call(METHOD_SECRETS_LIST)
         return result
 
-    async def secrets_set(self, name: str, value: str) -> SecretsSetResponse:
+    async def secrets_set(self, name: str, value: str, host: str | None = None) -> SecretsSetResponse:
         """Store a credential for this plugin. Values are encrypted and can never be read back over the wire
 
+        host: The host this credential may be sent to, such as
+            `api.openweathermap.org`.
+
+            Recorded with the value and checked when the platform substitutes it
+            into a request. A caller that declares two hosts cannot get a secret
+            bound to one of them into a request to the other, which is what makes
+            storing a reference safer than holding the value: without it, a
+            credential that can never be read can still be sent to the wrong
+            place.
+
+            Optional today because substitution is not built yet, and a store
+            written before bindings existed holds none. An unbound secret is
+            refused at substitution rather than treated as usable anywhere.
         name: The secret's name within this plugin. What a manifest or a script
             header refers to.
         value: The value. This is the only direction a value travels over the wire.
@@ -5790,6 +5803,8 @@ class MethodsMixin:
             "name": name,
             "value": value,
         }
+        if host is not None:
+            params["host"] = host
         result = await self.call(METHOD_SECRETS_SET, params)
         return result
 
