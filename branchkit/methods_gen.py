@@ -3481,29 +3481,26 @@ class MethodsMixin:
         result = await self.call(METHOD_NATIVE_KEYBOARD_LAYOUT)
         return result
 
-    async def native_keychain_delete(self, account: str, service: str) -> None:
-        """Delete a keychain item by service and account"""
+    async def native_keychain_delete(self, account: str) -> None:
+        """Delete a password from this plugin's keychain drawer"""
         params: dict[str, Any] = {
             "account": account,
-            "service": service,
         }
         await self.call(METHOD_NATIVE_KEYCHAIN_DELETE, params)
 
-    async def native_keychain_read(self, account: str, service: str) -> NativeKeychainReadResponse:
-        """Read a password from the keychain by service and account"""
+    async def native_keychain_read(self, account: str) -> NativeKeychainReadResponse:
+        """Read a password from this plugin's keychain drawer"""
         params: dict[str, Any] = {
             "account": account,
-            "service": service,
         }
         result = await self.call(METHOD_NATIVE_KEYCHAIN_READ, params)
         return result
 
-    async def native_keychain_write(self, account: str, password: str, service: str) -> None:
-        """Store a password in the keychain for a service and account"""
+    async def native_keychain_write(self, account: str, password: str) -> None:
+        """Store a password in this plugin's keychain drawer"""
         params: dict[str, Any] = {
             "account": account,
             "password": password,
-            "service": service,
         }
         await self.call(METHOD_NATIVE_KEYCHAIN_WRITE, params)
 

@@ -2,7 +2,7 @@
 # Run: just contracts
 
 # BranchKit API version (from contracts/api-version.json).
-API_VERSION = "0.1.0"
+API_VERSION = "0.2.0"
 
 # RPC method names: plugin → actuator (use with plugin.call()).
 METHOD_ACTIONS_LIST = "actions.list"  # since 0.1.0

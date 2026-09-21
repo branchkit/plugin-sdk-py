@@ -3917,7 +3917,6 @@ NativeKeyboardLayoutResponse = TypedDict("NativeKeyboardLayoutResponse", {
 
 NativeKeychainDeleteRequest = TypedDict("NativeKeychainDeleteRequest", {
     "account": str,
-    "service": str,
 })
 
 NativeKeychainDeleteResponse = TypedDict("NativeKeychainDeleteResponse", {
@@ -3926,7 +3925,6 @@ NativeKeychainDeleteResponse = TypedDict("NativeKeychainDeleteResponse", {
 
 NativeKeychainReadRequest = TypedDict("NativeKeychainReadRequest", {
     "account": str,
-    "service": str,
 })
 
 NativeKeychainReadResponse = TypedDict("NativeKeychainReadResponse", {
@@ -3936,7 +3934,6 @@ NativeKeychainReadResponse = TypedDict("NativeKeychainReadResponse", {
 NativeKeychainWriteRequest = TypedDict("NativeKeychainWriteRequest", {
     "account": str,
     "password": str,
-    "service": str,
 })
 
 NativeKeychainWriteResponse = TypedDict("NativeKeychainWriteResponse", {
