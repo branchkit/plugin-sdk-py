@@ -7,6 +7,7 @@ API_VERSION = "0.2.0"
 # RPC method names: plugin → actuator (use with plugin.call()).
 METHOD_ACTIONS_LIST = "actions.list"  # since 0.1.0
 METHOD_ARTIFACT_DELETE = "artifact.delete"  # since 0.1.0
+METHOD_BLOB_PUBLISH = "blob.publish"  # stable, since 0.2.0
 METHOD_COLLECTION_APPEND = "collection.append"  # stable, since 0.1.0
 METHOD_COLLECTION_APPEND_KEYED = "collection.append_keyed"  # since 0.1.0
 METHOD_COLLECTION_COUNT = "collection.count"  # stable, since 0.1.0
@@ -636,6 +637,7 @@ EVENT_ACTION_EXECUTED = "_platform.action.executed"
 EVENT_APP_FOCUSED = "_platform.app.focused"
 EVENT_AUDIO_DEVICES_CHANGED = "_platform.audio_devices.changed"
 EVENT_BLE_NOTIFICATION = "_platform.ble.notification"
+EVENT_BLOB_UPDATED = "_platform.blob.updated"
 EVENT_CAPTURE_PROGRESS = "_platform.capture.progress"
 EVENT_CLIPBOARD_CHANGED = "_platform.clipboard.changed"
 EVENT_COLLECTION_UPDATED = "_platform.collection.updated"

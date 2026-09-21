@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING, Any
 from .contracts_gen import (
     METHOD_ACTIONS_LIST,
     METHOD_ARTIFACT_DELETE,
+    METHOD_BLOB_PUBLISH,
     METHOD_COLLECTIONS_CREATE_USER,
     METHOD_COLLECTIONS_LIST,
     METHOD_COLLECTIONS_OWNED,
@@ -636,6 +637,7 @@ if TYPE_CHECKING:
         BarcodeResult,
         BleService,
         BleWriteEntry,
+        BlobPublishResponse,
         BluetoothDevice,
         CalendarEvent,
         CameraDevice,
@@ -1027,6 +1029,36 @@ class MethodsMixin:
             "ref": ref,
         }
         await self.call(METHOD_ARTIFACT_DELETE, params)
+
+    async def blob_publish(self, length: int, name: str, hash: str | None = None, new_generation: bool | None = None) -> BlobPublishResponse:
+        """Announce that bytes up to `length` are complete on one of this plugin's declared blobs. Carries a length, never bytes.
+
+        hash: The hash of the appended range, when the provider declared
+            `hash: provider` and is supplying one itself. Ignored otherwise —
+            the platform hashes by default so a published length is unfakeable.
+        length: Total bytes now complete in the backing file, WITHIN the current
+            generation. Must be `>= ` the previous publish's: the channel is
+            append-only and a shrinking length would invalidate ranges consumers
+            already hold. The platform refuses otherwise (D4).
+            wire uint64 (64-bit) · min 0
+        name: The blob's name, as declared in this plugin's `provides.blobs`.
+        new_generation: Start a new generation instead of appending to the current one — the
+            way a provider shrinks. A new generation is a NEW backing file, so
+            offsets restart at zero and consumers reopen; `length` is then the
+            length of the new file. Compaction is an announced event rather than
+            a race (D4).
+            default false
+        """
+        params: dict[str, Any] = {
+            "length": length,
+            "name": name,
+        }
+        if hash is not None:
+            params["hash"] = hash
+        if new_generation is not None:
+            params["new_generation"] = new_generation
+        result = await self.call(METHOD_BLOB_PUBLISH, params)
+        return result
 
     async def collection_append(self, name: str, payload: Any) -> LogEntry | None:
         """Append an entry to a log-kind collection
