@@ -710,7 +710,7 @@ FieldDisplay = Literal["primary", "secondary", "group", "description", "payload"
 # `plugin.json` should surface at load time, not at dispatch. The `Json`
 # variant is the documented escape hatch for shapes too dynamic to
 # declare statically.
-FieldType = Literal["string", "int", "number", "boolean", "string[]", "enum", "object", "json"]
+FieldType = Literal["string", "int", "number", "boolean", "string[]", "enum", "object", "json", "secret_ref"]
 
 # Integer rectangle for window position and size. Mirrors the `Frame`
 # component in the Plugin RPC schema (used by `_platform.window.created` and
