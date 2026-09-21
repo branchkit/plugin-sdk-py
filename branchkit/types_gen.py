@@ -3181,53 +3181,8 @@ NativeClipboardChangeCountResponse = TypedDict("NativeClipboardChangeCountRespon
     "count": int,
 })
 
-NativeClipboardFileUrlsResponse = TypedDict("NativeClipboardFileUrlsResponse", {
-    "value": str,
-})
-
-NativeClipboardHasImageResponse = TypedDict("NativeClipboardHasImageResponse", {
-    "has_image": bool,
-})
-
-NativeClipboardHasTextResponse = TypedDict("NativeClipboardHasTextResponse", {
-    "has_text": bool,
-})
-
-NativeClipboardHTMLResponse = TypedDict("NativeClipboardHTMLResponse", {
-    "value": str,
-})
-
 NativeClipboardImageDimensionsResponse = TypedDict("NativeClipboardImageDimensionsResponse", {
     "value": str,
-})
-
-NativeClipboardRichTextResponse = TypedDict("NativeClipboardRichTextResponse", {
-    "value": str,
-})
-
-NativeClipboardSetHTMLRequest = TypedDict("NativeClipboardSetHTMLRequest", {
-    "html": str,
-})
-
-NativeClipboardSetHTMLResponse = TypedDict("NativeClipboardSetHTMLResponse", {
-    "ok": bool,
-})
-
-NativeClipboardSetTextRequest = TypedDict("NativeClipboardSetTextRequest", {
-    "text": str,
-})
-
-NativeClipboardSetTextResponse = TypedDict("NativeClipboardSetTextResponse", {
-    "ok": bool,
-})
-
-NativeClipboardTypesRequest = TypedDict("NativeClipboardTypesRequest", {
-    # default ""
-    "pasteboard": NotRequired[str],
-})
-
-NativeClipboardTypesResponse = TypedDict("NativeClipboardTypesResponse", {
-    "types": list[str],
 })
 
 NativeCloseWindowRequest = TypedDict("NativeCloseWindowRequest", {

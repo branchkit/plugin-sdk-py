@@ -149,15 +149,7 @@ from .contracts_gen import (
     METHOD_NATIVE_CLEAR_NOTIFICATIONS,
     METHOD_NATIVE_CLICK_MENU_ITEM,
     METHOD_NATIVE_CLIPBOARD_CHANGE_COUNT,
-    METHOD_NATIVE_CLIPBOARD_FILE_URLS,
-    METHOD_NATIVE_CLIPBOARD_HAS_IMAGE,
-    METHOD_NATIVE_CLIPBOARD_HAS_TEXT,
-    METHOD_NATIVE_CLIPBOARD_HTML,
     METHOD_NATIVE_CLIPBOARD_IMAGE_DIMENSIONS,
-    METHOD_NATIVE_CLIPBOARD_RICH_TEXT,
-    METHOD_NATIVE_CLIPBOARD_SET_HTML,
-    METHOD_NATIVE_CLIPBOARD_SET_TEXT,
-    METHOD_NATIVE_CLIPBOARD_TYPES,
     METHOD_NATIVE_CLOSE_WINDOW,
     METHOD_NATIVE_COLOR_AT_POINT,
     METHOD_NATIVE_COMPUTER_NAME,
@@ -733,12 +725,7 @@ if TYPE_CHECKING:
         NativeCaptureWindowResponse,
         NativeCheckPermissionResponse,
         NativeClipboardChangeCountResponse,
-        NativeClipboardFileUrlsResponse,
-        NativeClipboardHTMLResponse,
-        NativeClipboardHasImageResponse,
-        NativeClipboardHasTextResponse,
         NativeClipboardImageDimensionsResponse,
-        NativeClipboardRichTextResponse,
         NativeColorAtPointResponse,
         NativeComputerNameResponse,
         NativeContactsPermissionResponse,
@@ -2585,61 +2572,10 @@ class MethodsMixin:
         result = await self.call(METHOD_NATIVE_CLIPBOARD_CHANGE_COUNT)
         return result
 
-    async def native_clipboard_file_urls(self) -> NativeClipboardFileUrlsResponse:
-        """Get file URLs from clipboard as JSON array"""
-        result = await self.call(METHOD_NATIVE_CLIPBOARD_FILE_URLS)
-        return result
-
-    async def native_clipboard_has_image(self) -> NativeClipboardHasImageResponse:
-        """Check if clipboard contains an image"""
-        result = await self.call(METHOD_NATIVE_CLIPBOARD_HAS_IMAGE)
-        return result
-
-    async def native_clipboard_has_text(self) -> NativeClipboardHasTextResponse:
-        """Check if clipboard contains text"""
-        result = await self.call(METHOD_NATIVE_CLIPBOARD_HAS_TEXT)
-        return result
-
-    async def native_clipboard_html(self) -> NativeClipboardHTMLResponse:
-        """Get HTML content from clipboard"""
-        result = await self.call(METHOD_NATIVE_CLIPBOARD_HTML)
-        return result
-
     async def native_clipboard_image_dimensions(self) -> NativeClipboardImageDimensionsResponse:
         """Get dimensions of clipboard image as WxH"""
         result = await self.call(METHOD_NATIVE_CLIPBOARD_IMAGE_DIMENSIONS)
         return result
-
-    async def native_clipboard_rich_text(self) -> NativeClipboardRichTextResponse:
-        """Get rich text (RTF) from clipboard"""
-        result = await self.call(METHOD_NATIVE_CLIPBOARD_RICH_TEXT)
-        return result
-
-    async def native_clipboard_set_html(self, html: str) -> None:
-        """Set HTML content on clipboard"""
-        params: dict[str, Any] = {
-            "html": html,
-        }
-        await self.call(METHOD_NATIVE_CLIPBOARD_SET_HTML, params)
-
-    async def native_clipboard_set_text(self, text: str) -> None:
-        """Set clipboard text content"""
-        params: dict[str, Any] = {
-            "text": text,
-        }
-        await self.call(METHOD_NATIVE_CLIPBOARD_SET_TEXT, params)
-
-    async def native_clipboard_types(self, pasteboard: str | None = None) -> list[str]:
-        """List available pasteboard types on the clipboard
-
-        pasteboard: default ""
-        """
-        params: dict[str, Any] = {
-        }
-        if pasteboard is not None:
-            params["pasteboard"] = pasteboard
-        result = await self.call(METHOD_NATIVE_CLIPBOARD_TYPES, params)
-        return (result or {}).get("types") or []
 
     async def native_close_window(self, window_id: str) -> None:
         """Close a window by ID"""
