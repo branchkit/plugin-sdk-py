@@ -593,6 +593,10 @@ from .contracts_gen import (
     METHOD_RECOGNITION_BIAS_GET,
     METHOD_RECOGNITION_BIAS_SET,
     METHOD_RECOGNITION_REDECODE,
+    METHOD_SECRETS_DELETE,
+    METHOD_SECRETS_IS_SET,
+    METHOD_SECRETS_LIST,
+    METHOD_SECRETS_SET,
     METHOD_SELECTION_PICK,
     METHOD_SELECTION_SET,
     METHOD_SESSION_BOUNDARY,
@@ -977,6 +981,10 @@ if TYPE_CHECKING:
         ReplaceScope,
         RunningApp,
         ScreenshotRegion,
+        SecretsDeleteResponse,
+        SecretsIsSetResponse,
+        SecretsListResponse,
+        SecretsSetResponse,
         SelectionPickResponse,
         SessionEndCleanupResponse,
         SettingsRulesCreateResponse,
@@ -1018,7 +1026,7 @@ class MethodsMixin:
         await self.call(METHOD_ARTIFACT_DELETE, params)
 
     async def blob_publish(self, length: int, name: str, hash: str | None = None, new_generation: bool | None = None) -> BlobPublishResponse:
-        """Announce that bytes up to `length` are complete on one of this plugin's declared blobs. Carries a length, never bytes.
+        """Announce that bytes up to `length` are complete on one of this plugin's declared blobs. Carries a length, never bytes
 
         hash: The hash of the appended range, when the provider declared
             `hash: provider` and is supplying one itself. Ignored otherwise —
@@ -5748,6 +5756,41 @@ class MethodsMixin:
         if max_active is not None:
             params["max_active"] = max_active
         result = await self.call(METHOD_RECOGNITION_REDECODE, params)
+        return result
+
+    async def secrets_delete(self, name: str) -> SecretsDeleteResponse:
+        """Remove a stored credential. Deleting a name that was never set is not an error"""
+        params: dict[str, Any] = {
+            "name": name,
+        }
+        result = await self.call(METHOD_SECRETS_DELETE, params)
+        return result
+
+    async def secrets_is_set(self, name: str) -> SecretsIsSetResponse:
+        """Whether this plugin has stored a credential under this name. The only question askable about a value that cannot be read"""
+        params: dict[str, Any] = {
+            "name": name,
+        }
+        result = await self.call(METHOD_SECRETS_IS_SET, params)
+        return result
+
+    async def secrets_list(self) -> SecretsListResponse:
+        """The credential names this plugin has stored, and how they are protected on this machine"""
+        result = await self.call(METHOD_SECRETS_LIST)
+        return result
+
+    async def secrets_set(self, name: str, value: str) -> SecretsSetResponse:
+        """Store a credential for this plugin. Values are encrypted and can never be read back over the wire
+
+        name: The secret's name within this plugin. What a manifest or a script
+            header refers to.
+        value: The value. This is the only direction a value travels over the wire.
+        """
+        params: dict[str, Any] = {
+            "name": name,
+            "value": value,
+        }
+        result = await self.call(METHOD_SECRETS_SET, params)
         return result
 
     async def selection_pick(self, index: int) -> SelectionPickResponse:

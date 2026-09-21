@@ -5993,6 +5993,51 @@ RecognitionRedecodeResponse = TypedDict("RecognitionRedecodeResponse", {
     "model_version": NotRequired[str],
 })
 
+SecretsDeleteRequest = TypedDict("SecretsDeleteRequest", {
+    "name": str,
+})
+
+SecretsDeleteResponse = TypedDict("SecretsDeleteResponse", {
+    # False when there was nothing to delete. Deleting a name that was
+    # never set is not an error — it leaves the caller in the state it
+    # asked for.
+    "deleted": bool,
+})
+
+SecretsIsSetRequest = TypedDict("SecretsIsSetRequest", {
+    "name": str,
+})
+
+SecretsIsSetResponse = TypedDict("SecretsIsSetResponse", {
+    # Whether a value is stored. The only question askable about a value
+    # that cannot be read.
+    "is_set": bool,
+})
+
+SecretsListResponse = TypedDict("SecretsListResponse", {
+    # The names this plugin has set, sorted. Names only — a name is what a
+    # settings row renders and what a script header refers to.
+    "names": list[str],
+    # One sentence describing how these are protected on this machine, so a
+    # surface showing secrets can show the TRUE sentence rather than the
+    # flattering one. See `os`-agnostic `KeySource::describe`.
+    "protection": str,
+})
+
+SecretsSetRequest = TypedDict("SecretsSetRequest", {
+    # The secret's name within this plugin. What a manifest or a script
+    # header refers to.
+    "name": str,
+    # The value. This is the only direction a value travels over the wire.
+    "value": str,
+})
+
+SecretsSetResponse = TypedDict("SecretsSetResponse", {
+    # True when the name did not exist before, so a caller can tell a first
+    # write from an overwrite without reading anything back.
+    "created": bool,
+})
+
 SelectionPickRequest = TypedDict("SelectionPickRequest", {
     # Zero-based index into the previously-set selection items array.
     # wire uint64 (64-bit) · min 0
