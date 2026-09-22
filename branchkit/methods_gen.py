@@ -943,8 +943,6 @@ if TYPE_CHECKING:
         NativeVpnStatusResponse,
         NativeWifiResponse,
         NativeWindowBoundsResponse,
-        NativeWindowIsFullscreenResponse,
-        NativeWindowIsMinimizedResponse,
         NativeXcodePathResponse,
         NativeXcodeVersionResponse,
         NativeZoomEnabledResponse,
@@ -5300,7 +5298,7 @@ class MethodsMixin:
         result = await self.call(METHOD_NATIVE_WINDOW_DISPLAY_ID, params)
         return result
 
-    async def native_window_is_fullscreen(self, window_id: str) -> NativeWindowIsFullscreenResponse:
+    async def native_window_is_fullscreen(self, window_id: str) -> bool:
         """Check if window is fullscreen"""
         params: dict[str, Any] = {
             "window_id": window_id,
@@ -5308,7 +5306,7 @@ class MethodsMixin:
         result = await self.call(METHOD_NATIVE_WINDOW_IS_FULLSCREEN, params)
         return result
 
-    async def native_window_is_minimized(self, window_id: str) -> NativeWindowIsMinimizedResponse:
+    async def native_window_is_minimized(self, window_id: str) -> bool:
         """Check if window is minimized"""
         params: dict[str, Any] = {
             "window_id": window_id,
