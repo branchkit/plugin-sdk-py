@@ -2667,7 +2667,7 @@ class MethodsMixin:
         return result
 
     async def native_current_datetime(self) -> NativeCurrentDatetimeResponse:
-        """Get current date, time, and timezone in ISO 8601"""
+        """Get the user's current local date and time as an RFC 3339 ZONED timestamp (offset populated, e.g. 2026-09-22T17:32:29-04:00). Deliberately zoned, not UTC: this answers 'what time is it for the user', and the offset is lossless - UTC is derivable from it, while local time is NOT derivable from a UTC instant without separately knowing the zone. Pair with native.timezone for the IANA identifier when you need DST-correct arithmetic rather than the current wall clock. See DESIGN_TIME_AND_DATES.md."""
         result = await self.call(METHOD_NATIVE_CURRENT_DATETIME)
         return result
 
