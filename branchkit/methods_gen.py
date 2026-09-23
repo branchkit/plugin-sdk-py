@@ -3455,7 +3455,7 @@ class MethodsMixin:
         return result
 
     async def native_kernel_version(self) -> NativeKernelVersionResponse:
-        """Get the Darwin kernel version string"""
+        """Get the running kernel version as a bare version string"""
         result = await self.call(METHOD_NATIVE_KERNEL_VERSION)
         return result
 
