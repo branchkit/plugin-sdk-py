@@ -3126,12 +3126,12 @@ class MethodsMixin:
         return (result or {}).get("paths") or []
 
     async def native_finder_show_extensions(self) -> NativeFinderShowExtensionsResponse:
-        """Check if Finder shows file extensions"""
+        """Whether the file manager shows file extensions"""
         result = await self.call(METHOD_NATIVE_FINDER_SHOW_EXTENSIONS)
         return result
 
     async def native_finder_show_hidden(self) -> NativeFinderShowHiddenResponse:
-        """Check if Finder shows hidden files"""
+        """Whether the file manager shows hidden files"""
         result = await self.call(METHOD_NATIVE_FINDER_SHOW_HIDDEN)
         return result
 
@@ -3141,7 +3141,7 @@ class MethodsMixin:
         return result
 
     async def native_finder_show_status_bar(self) -> NativeFinderShowStatusBarResponse:
-        """Check if Finder shows status bar"""
+        """Whether the file manager shows a status bar"""
         result = await self.call(METHOD_NATIVE_FINDER_SHOW_STATUS_BAR)
         return result
 
@@ -3674,7 +3674,7 @@ class MethodsMixin:
         return result
 
     async def native_menu_bar_clock_format(self) -> NativeMenuBarClockFormatResponse:
-        """Get menu bar clock format string"""
+        """Whether the clock is 12-hour or 24-hour, as 12h or 24h"""
         result = await self.call(METHOD_NATIVE_MENU_BAR_CLOCK_FORMAT)
         return result
 
