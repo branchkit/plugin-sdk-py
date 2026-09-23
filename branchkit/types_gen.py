@@ -1640,7 +1640,19 @@ WorldModel = TypedDict("WorldModel", {
     "active_window_id": NotRequired[str],
     # default []
     "displays": list["DisplayInfo"],
-    # Active keyboard layout ID (e.g. "com.apple.keylayout.US").
+    # Active keyboard layout ID (e.g. "com.apple.keylayout.US"), or EMPTY
+    # when this platform cannot report one — today, anywhere but macOS.
+    #
+    # Empty is a sentinel, not a layout. The platform's own change
+    # detection already treats it that way (`world_poller` will not report a
+    # layout change into or out of it), and a plugin should do the same:
+    # branch on emptiness before comparing, or you will read "the layout
+    # changed" every time a machine that cannot answer starts or stops
+    # being able to.
+    #
+    # Its neighbours above are `Option<String>` for the same idea. This one
+    # is a bare `String` because it predates them on the wire; the sentinel
+    # is documented rather than changed so the field's JSON shape stays put.
     # default ""
     "keyboard_layout_id": str,
     # default []
