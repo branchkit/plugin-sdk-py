@@ -6476,7 +6476,9 @@ PermissionChangedEventParams = TypedDict("PermissionChangedEventParams", {
     # Which permission moved: "accessibility", "microphone", "camera",
     # "full_disk_access", "automation", "post_event" (the WindowServer
     # accepts this process's synthesized keystrokes), "secure_input" (the
-    # keyboard is free of secure-input fields; `granted: true` = free).
+    # keyboard is free of secure-input fields; `granted: true` = free),
+    # "screen_recording" (every capture path — screenshot, OCR, barcode,
+    # colour probe — returns nothing at all without it).
     # The shell reports every state once shortly after boot, then on change.
     "permission": str,
 })
