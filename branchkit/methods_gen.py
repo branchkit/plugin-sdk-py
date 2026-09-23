@@ -248,6 +248,7 @@ from .contracts_gen import (
     METHOD_NATIVE_FOCUS_MODES,
     METHOD_NATIVE_FONT_SMOOTHING,
     METHOD_NATIVE_FORCE_QUIT_APP,
+    METHOD_NATIVE_FORMAT_DATE,
     METHOD_NATIVE_FRONTMOST_APP,
     METHOD_NATIVE_FULL_DISK_ACCESS,
     METHOD_NATIVE_FUNCTION_KEYS_STANDARD,
@@ -791,6 +792,7 @@ if TYPE_CHECKING:
         NativeFocusedElementResponse,
         NativeFocusedWindowIDResponse,
         NativeFontSmoothingResponse,
+        NativeFormatDateResponse,
         NativeFrontmostAppResponse,
         NativeFullDiskAccessResponse,
         NativeFunctionKeysStandardResponse,
@@ -3195,6 +3197,15 @@ class MethodsMixin:
         }
         result = await self.call(METHOD_NATIVE_FORCE_QUIT_APP, params)
         return bool((result or {}).get("result", False))
+
+    async def native_format_date(self, style: str, when: str) -> NativeFormatDateResponse:
+        """Format an instant for the user, ON THE PLATFORM. `when` is an RFC 3339 instant; `style` is one of date, time, date_time. Rendered in the USER'S LOCAL ZONE and their locale's own conventions - including calendars and digits no format pattern can express: a Lao user correctly sees the Buddhist year 2569 where a caller formatting with a CLDR pattern would render 2026, and an Odia user sees Odia digits. Prefer this over native.date_format whenever you are DISPLAYING a date rather than inspecting the locale's format. Output is NOT byte-identical across operating systems and is not meant to be - each renders its own platform's conventions for that locale. See DESIGN_TIME_AND_DATES.md."""
+        params: dict[str, Any] = {
+            "style": style,
+            "when": when,
+        }
+        result = await self.call(METHOD_NATIVE_FORMAT_DATE, params)
+        return result
 
     async def native_frontmost_app(self) -> NativeFrontmostAppResponse:
         """Get the currently active (frontmost) application"""

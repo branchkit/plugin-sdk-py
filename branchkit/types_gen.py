@@ -3612,6 +3612,15 @@ NativeForceQuitAppResponse = TypedDict("NativeForceQuitAppResponse", {
     "result": bool,
 })
 
+NativeFormatDateRequest = TypedDict("NativeFormatDateRequest", {
+    "style": str,
+    "when": str,
+})
+
+NativeFormatDateResponse = TypedDict("NativeFormatDateResponse", {
+    "value": str,
+})
+
 NativeFrontmostAppResponse = TypedDict("NativeFrontmostAppResponse", {
     "app": NotRequired["RunningApp"],
 })

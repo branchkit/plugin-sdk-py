@@ -247,6 +247,7 @@ METHOD_NATIVE_FOCUSED_ELEMENT = "native.focused_element"  # since 0.1.0
 METHOD_NATIVE_FOCUSED_WINDOW_ID = "native.focused_window_id"  # since 0.1.0
 METHOD_NATIVE_FONT_SMOOTHING = "native.font_smoothing"  # since 0.1.0
 METHOD_NATIVE_FORCE_QUIT_APP = "native.force_quit_app"  # since 0.1.0
+METHOD_NATIVE_FORMAT_DATE = "native.format_date"  # since 0.1.0
 METHOD_NATIVE_FRONTMOST_APP = "native.frontmost_app"  # since 0.1.0
 METHOD_NATIVE_FULL_DISK_ACCESS = "native.full_disk_access"  # since 0.1.0
 METHOD_NATIVE_FUNCTION_KEYS_STANDARD = "native.function_keys_standard"  # since 0.1.0
