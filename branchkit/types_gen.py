@@ -779,6 +779,26 @@ HidElementEntry = TypedDict("HidElementEntry", {
     "usage_page": int,
 })
 
+# One request header. Either a literal `value`, or a `secret` the platform
+# substitutes — `prefix` + the stored value, e.g. `prefix: "Bearer "`.
+HttpHeader = TypedDict("HttpHeader", {
+    "name": str,
+    # Text placed before the substituted secret (`"Bearer "`, `"token "`).
+    "prefix": NotRequired[str],
+    # The name of one of THIS plugin's stored secrets. It is substituted
+    # only if the secret is bound to the request's host; an unbound secret
+    # is never sent.
+    "secret": NotRequired[str],
+    # A literal value. Exactly one of `value` / `secret`.
+    "value": NotRequired[str],
+})
+
+# One response header as received.
+HttpResponseHeader = TypedDict("HttpResponseHeader", {
+    "name": str,
+    "value": str,
+})
+
 # An HTML fragment pushed to a HUD channel. The `target_id` is the DOM element
 # ID to patch (e.g. "content", "title"); `html` is the innerHTML replacement.
 # When `raw` is true, `html` is sent as-is (multiple elements, Datastar patches each by ID).
@@ -2311,6 +2331,33 @@ EventsEmitRequest = TypedDict("EventsEmitRequest", {
     # Convention-based event type (e.g. "clipboard.copied"). The
     # `_platform.*` namespace is reserved for the actuator.
     "event_type": str,
+})
+
+HttpRequestRequest = TypedDict("HttpRequestRequest", {
+    # A UTF-8 body. Exactly one of `body` / `body_base64`, or neither.
+    "body": NotRequired[str],
+    # A binary body, base64.
+    "body_base64": NotRequired[str],
+    # default []
+    "headers": NotRequired[list["HttpHeader"]],
+    # `GET` when omitted.
+    "method": NotRequired[str],
+    # Overall deadline; default 30000, at most 120000.
+    # wire uint64 (64-bit) · min 0
+    "timeout_ms": NotRequired[int],
+    # `https://` only, to a host this plugin declares in `requires.network`
+    # and the user has allowed.
+    "url": str,
+})
+
+HttpRequestResponse = TypedDict("HttpRequestResponse", {
+    # The body as text when it is valid UTF-8.
+    "body": NotRequired[str],
+    # The body, base64. Always present.
+    "body_base64": str,
+    "headers": list["HttpResponseHeader"],
+    # wire uint16 · min 0 · max 65535
+    "status": int,
 })
 
 HUDCreateChannelRequest = TypedDict("HUDCreateChannelRequest", {

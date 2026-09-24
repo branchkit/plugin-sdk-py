@@ -45,6 +45,7 @@ from .contracts_gen import (
     METHOD_EFFECTS_RETRACT,
     METHOD_EVENTS_APPEND,
     METHOD_EVENTS_EMIT,
+    METHOD_HTTP_REQUEST,
     METHOD_HUD_CREATE_CHANNEL,
     METHOD_HUD_HIDE,
     METHOD_HUD_PUSH,
@@ -678,6 +679,8 @@ if TYPE_CHECKING:
         HUDRemoveChannelResponse,
         HidDeviceEntry,
         HidElementEntry,
+        HttpHeader,
+        HttpRequestResponse,
         HudFragment,
         InputClipboardReadFormatResponse,
         InputClipboardReadResponse,
@@ -1580,6 +1583,34 @@ class MethodsMixin:
         if data is not None:
             params["data"] = data
         await self.call(METHOD_EVENTS_EMIT, params)
+
+    async def http_request(self, url: str, body: str | None = None, body_base64: str | None = None, headers: list["HttpHeader"] | None = None, method: str | None = None, timeout_ms: int | None = None) -> HttpRequestResponse:
+        """Perform an HTTPS request to one of this plugin's allowed hosts, substituting the plugin's stored secrets into named headers. The plugin never sees the secret; redirects are returned, not followed
+
+        body: A UTF-8 body. Exactly one of `body` / `body_base64`, or neither.
+        body_base64: A binary body, base64.
+        headers: default []
+        method: `GET` when omitted.
+        timeout_ms: Overall deadline; default 30000, at most 120000.
+            wire uint64 (64-bit) · min 0
+        url: `https://` only, to a host this plugin declares in `requires.network`
+            and the user has allowed.
+        """
+        params: dict[str, Any] = {
+            "url": url,
+        }
+        if body is not None:
+            params["body"] = body
+        if body_base64 is not None:
+            params["body_base64"] = body_base64
+        if headers is not None:
+            params["headers"] = headers
+        if method is not None:
+            params["method"] = method
+        if timeout_ms is not None:
+            params["timeout_ms"] = timeout_ms
+        result = await self.call(METHOD_HTTP_REQUEST, params)
+        return result
 
     async def hud_create_channel(self, channel: str, accepts_input: bool | None = None, anchor: "Anchor" | None = None, description: str | None = None, draggable: bool | None = None, follows_focus: bool | None = None, min_height: int | None = None, on_pointer: "OnPointer" | None = None, stack_order: int | None = None, transparent: bool | None = None, width: int | None = None) -> None:
         """Create a new HUD broadcast channel at runtime

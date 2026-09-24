@@ -44,6 +44,7 @@ METHOD_EFFECTS_IS_ACTIVE = "effects.is_active"  # since 0.1.0
 METHOD_EFFECTS_RETRACT = "effects.retract"  # since 0.1.0
 METHOD_EVENTS_APPEND = "events.append"  # since 0.1.0
 METHOD_EVENTS_EMIT = "events.emit"  # since 0.1.0
+METHOD_HTTP_REQUEST = "http.request"  # since 0.2.0
 METHOD_HUD_CREATE_CHANNEL = "hud.create_channel"  # since 0.1.0
 METHOD_HUD_HIDE = "hud.hide"  # since 0.1.0
 METHOD_HUD_PUSH = "hud.push"  # since 0.1.0
