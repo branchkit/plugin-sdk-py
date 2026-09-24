@@ -18,7 +18,7 @@ import sys
 import threading
 from typing import Any, Callable
 
-from .closed_vocab_gen import ERROR_KIND_RECORDING_DISABLED
+from .closed_vocab_gen import ERROR_KIND_RECORDING_DISABLED, ERROR_KIND_UNSUPPORTED
 from .contracts_gen import API_VERSION as _COMPILED_API_VERSION
 from .contracts_gen import HOOK_ON_ACTION, HOOK_RENDER_SETTINGS
 
@@ -75,11 +75,32 @@ class RecordingDisabledError(RpcCallError):
     `errors.Is(err, ErrRecordingDisabled)` and TS's `instanceof`."""
 
 
+class UnsupportedError(RpcCallError):
+    """Sentinel subclass for an op this platform or desktop session cannot
+    run at all — a well-formed call to a capability absent here (kind
+    `unsupported`).
+
+    Branch on `reason`, never on the message: UNSUPPORTED_REASON_PLATFORM_NO_ANALOGUE
+    (not planned on this OS — design around it), UNSUPPORTED_REASON_PLATFORM_UNPORTED
+    (not written for this OS yet), UNSUPPORTED_REASON_SESSION_UNSUPPORTED (this
+    session cannot; `data["detail"]` says why). Parity with Go's
+    `errors.Is(err, ErrUnsupported)` + `UnsupportedReasonOf` and TS's
+    `UnsupportedError.reason`."""
+
+    def __init__(self, code: int, message: str, data: dict | None = None):
+        super().__init__(code, message, data)
+        # From `data.reason`; None only when the actuator sent none. A value
+        # newer than this SDK passes through as-is.
+        self.reason: str | None = data.get("reason") if isinstance(data, dict) else None
+
+
 def rpc_error_for(code: int, message: str, data: dict | None = None) -> RpcCallError:
     """Build the right error class for a wire error. Kind-driven, so a new
     sentinel subclass is a line here rather than a wrapper per call site."""
     if isinstance(data, dict) and data.get("kind") == ERROR_KIND_RECORDING_DISABLED:
         return RecordingDisabledError(code, message, data)
+    if isinstance(data, dict) and data.get("kind") == ERROR_KIND_UNSUPPORTED:
+        return UnsupportedError(code, message, data)
     return RpcCallError(code, message, data)
 
 

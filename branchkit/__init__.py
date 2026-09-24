@@ -27,6 +27,7 @@ from .plugin import (
     PluginCore,
     RecordingDisabledError,
     RpcCallError,
+    UnsupportedError,
     api_version,
     error_kind_of,
     artifacts_dir,

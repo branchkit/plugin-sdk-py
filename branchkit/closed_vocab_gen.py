@@ -54,6 +54,7 @@ ERROR_KIND_FORBIDDEN = "forbidden"
 ERROR_KIND_STORAGE = "storage"
 ERROR_KIND_METHOD_NOT_FOUND = "method_not_found"
 ERROR_KIND_INVALID_PARAMS = "invalid_params"
+ERROR_KIND_UNSUPPORTED = "unsupported"
 ERROR_KIND_INTERNAL = "internal"
 
 # ERROR_CODE_FOR maps a kind to the JSON-RPC error code the actuator
@@ -67,6 +68,7 @@ ERROR_CODE_FOR: dict[str, int] = {
     "storage": -32005,
     "method_not_found": -32601,
     "invalid_params": -32602,
+    "unsupported": -32007,
     "internal": -32603,
 }
 
@@ -80,6 +82,7 @@ KNOWN_ERROR_KINDS = (
     "storage",
     "method_not_found",
     "invalid_params",
+    "unsupported",
     "internal",
 )
 
@@ -94,7 +97,25 @@ FaultData = TypedDict("FaultData", {
     "id": NotRequired[str],
     "op": NotRequired[str],
     "privilege": NotRequired[str],
+    "reason": NotRequired[str],
 })
+
+# UNSUPPORTED_REASON_* are the closed-vocabulary `data.reason` values
+# of an ERROR_KIND_UNSUPPORTED error: why this platform or session
+# cannot run the op. Read one off UnsupportedError.reason.
+# `UnsupportedReason` is `str`, not a Literal, for the same reason
+# ErrorKind is. Source of truth: `actuator/src/fault.rs::UnsupportedReason`.
+UnsupportedReason = str
+UNSUPPORTED_REASON_PLATFORM_NO_ANALOGUE = "platform_no_analogue"
+UNSUPPORTED_REASON_PLATFORM_UNPORTED = "platform_unported"
+UNSUPPORTED_REASON_SESSION_UNSUPPORTED = "session_unsupported"
+
+# KNOWN_UNSUPPORTED_REASONS lists the full closed-vocabulary set.
+KNOWN_UNSUPPORTED_REASONS = (
+    "platform_no_analogue",
+    "platform_unported",
+    "session_unsupported",
+)
 
 # OUTPUT_KIND_* are the closed-vocabulary `kind` values of a semantic
 # output document (`output.state`): what a person needs in order to

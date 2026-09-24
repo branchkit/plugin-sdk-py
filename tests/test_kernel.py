@@ -20,6 +20,7 @@ from branchkit.plugin import (
     PluginCore,
     RecordingDisabledError,
     RpcCallError,
+    UnsupportedError,
     error_kind_of,
     matches_topic,
     rpc_error_for,
@@ -117,6 +118,21 @@ class TestErrors(unittest.TestCase):
         self.assertIsInstance(plain, RpcCallError)
         self.assertNotIsInstance(plain, RecordingDisabledError)
         self.assertIsNone(error_kind_of(ValueError("x")))
+
+    def test_unsupported_carries_reason(self):
+        e = rpc_error_for(
+            -32007,
+            "native.dock_position is not implemented on linux yet",
+            {"kind": "unsupported", "op": "native.dock_position", "reason": "platform_unported"},
+        )
+        self.assertIsInstance(e, UnsupportedError)
+        self.assertIsInstance(e, RpcCallError)
+        self.assertNotIsInstance(e, RecordingDisabledError)
+        self.assertEqual(e.reason, branchkit.UNSUPPORTED_REASON_PLATFORM_UNPORTED)
+        self.assertEqual(e.data["op"], "native.dock_position")
+        # Another kind carrying a reason-shaped field is not an UnsupportedError.
+        other = rpc_error_for(-32002, "no", {"kind": "not_permitted", "reason": "x"})
+        self.assertNotIsInstance(other, UnsupportedError)
 
     def test_missing_data_leaves_kind_none(self):
         e = rpc_error_for(-1, "old actuator")
