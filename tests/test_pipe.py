@@ -29,10 +29,12 @@ class _SockFile:
     def __init__(self, sock: socket.socket):
         self._s = sock
 
-    def read(self, n: int):
+    def read(self, n: int, timeout=None):
+        self._s.settimeout(timeout)
         return self._s.recv(n)
 
-    def write(self, b) -> int:
+    def write(self, b, timeout=None) -> int:
+        self._s.settimeout(timeout)
         return self._s.send(b)
 
     def close(self) -> None:
@@ -44,6 +46,7 @@ def _pipeconn_over(sock: socket.socket) -> "_pipe.PipeConn":
     pc = _pipe.PipeConn.__new__(_pipe.PipeConn)
     pc._f = _SockFile(sock)
     pc._closed = False
+    pc._timeout = None
     pc._io_refs = 0
     pc._close_requested = False
     return pc
@@ -252,6 +255,221 @@ class TestTlsPipeRefcount(unittest.TestCase):
         f.close()  # last stream -> real close, unwrap once
         f.close()  # double close: no second unwrap
         self.assertEqual(t._obj.unwrapped, 1, "unwrap() must run exactly once")
+
+
+class _FakeOv:
+    """A _winapi.Overlapped stand-in: completes with ``data`` when (if ever)
+    the fake kernel finishes it, or with ERROR_OPERATION_ABORTED on cancel."""
+
+    def __init__(self, data=b"", completes=True, sync=False, raise_on_result=None):
+        self.event = object()
+        self.data = data
+        self.completes = completes
+        self.sync = sync
+        self.cancelled = False
+        self.raise_on_result = raise_on_result
+
+    def cancel(self):
+        self.cancelled = True
+
+    def GetOverlappedResult(self, wait):
+        assert wait, "must wait for the op to settle before touching its buffer"
+        if self.raise_on_result:
+            raise self.raise_on_result
+        if self.completes:
+            return len(self.data), 0
+        assert self.cancelled, "an unfinished op must be cancelled before waiting"
+        return 0, _pipe._ERROR_OPERATION_ABORTED
+
+    def getbuffer(self):
+        return self.data
+
+
+class _FakeWinapi:
+    """Only the calls _OverlappedPipe makes. ``ov`` is the op the next
+    ReadFile/WriteFile starts; ``waits`` records every bound passed."""
+
+    def __init__(self, ov):
+        self.ov = ov
+        self.waits = []
+        self.closed = 0
+
+    def _start(self):
+        if self.ov.sync:
+            return self.ov, 0
+        return self.ov, _pipe._ERROR_IO_PENDING
+
+    def ReadFile(self, _h, _n, overlapped):
+        assert overlapped
+        return self._start()
+
+    def WriteFile(self, _h, _buf, overlapped):
+        assert overlapped
+        return self._start()
+
+    def WaitForSingleObject(self, _event, ms):
+        self.waits.append(ms)
+        return _pipe._WAIT_OBJECT_0 if self.ov.completes else _pipe._WAIT_TIMEOUT
+
+    def CloseHandle(self, _h):
+        self.closed += 1
+
+
+def _ovpipe(ov):
+    w = _FakeWinapi(ov)
+    return _pipe._OverlappedPipe(object(), w), w
+
+
+class TestOverlappedPipe(unittest.TestCase):
+    """The Windows I/O path against a fake _winapi. This proves the control
+    flow (bounds, cancel-then-settle, EOF mapping), not Windows itself."""
+
+    def test_read_completes(self):
+        p, w = _ovpipe(_FakeOv(b"hello"))
+        self.assertEqual(p.read(16, 2.5), b"hello")
+        self.assertEqual(w.waits, [2500])
+
+    def test_none_waits_forever(self):
+        p, w = _ovpipe(_FakeOv(b"x"))
+        p.read(1, None)
+        self.assertEqual(w.waits, [_pipe._INFINITE])
+
+    def test_tiny_timeout_rounds_up_not_to_a_poll(self):
+        p, w = _ovpipe(_FakeOv(b"x"))
+        p.read(1, 0.0001)
+        self.assertEqual(w.waits, [1])
+
+    def test_read_timeout_cancels_and_raises(self):
+        ov = _FakeOv(completes=False)
+        p, _ = _ovpipe(ov)
+        with self.assertRaises(socket.timeout):
+            p.read(16, 0.5)
+        self.assertTrue(ov.cancelled)
+
+    def test_read_that_won_the_cancel_race_keeps_its_bytes(self):
+        # The wait expired, but the kernel completed the read before cancel.
+        ov = _FakeOv(b"late")
+        p, w = _ovpipe(ov)
+        w.WaitForSingleObject = lambda _e, ms: _pipe._WAIT_TIMEOUT
+        self.assertEqual(p.read(16, 0.5), b"late")
+        self.assertTrue(ov.cancelled)
+
+    def test_sync_completion(self):
+        p, w = _ovpipe(_FakeOv(b"now", sync=True))
+        self.assertEqual(p.read(16, 1), b"now")
+        self.assertEqual(w.waits, [])
+
+    def test_broken_pipe_is_eof(self):
+        p, _ = _ovpipe(_FakeOv(raise_on_result=BrokenPipeError()))
+        self.assertEqual(p.read(16, 1), b"")
+
+    def test_write_timeout_cancels_and_raises(self):
+        ov = _FakeOv(completes=False)
+        p, _ = _ovpipe(ov)
+        with self.assertRaises(socket.timeout):
+            p.write(b"abc", 0.5)
+        self.assertTrue(ov.cancelled)
+
+    def test_write_returns_count(self):
+        p, _ = _ovpipe(_FakeOv(b"abc"))
+        self.assertEqual(p.write(b"abc", None), 3)
+
+    def test_close_once(self):
+        p, w = _ovpipe(_FakeOv())
+        p.close()
+        p.close()
+        self.assertEqual(w.closed, 1)
+
+
+class TestPipeConnTimeout(unittest.TestCase):
+    """settimeout is real now: a peer that never answers raises instead of
+    hanging the plugin (the hung-proxy case)."""
+
+    def _pc(self):
+        client_sock, server_sock = socket.socketpair()
+        self.addCleanup(client_sock.close)
+        self.addCleanup(server_sock.close)
+        return _pipeconn_over(client_sock), server_sock
+
+    def test_settimeout_gettimeout_socket_semantics(self):
+        pc, _ = self._pc()
+        self.assertIsNone(pc.gettimeout())
+        pc.settimeout(3)
+        self.assertEqual(pc.gettimeout(), 3.0)
+        pc.settimeout(None)
+        self.assertIsNone(pc.gettimeout())
+        with self.assertRaises(ValueError):
+            pc.settimeout(-1)
+
+    def test_recv_times_out_on_silent_peer(self):
+        pc, _ = self._pc()
+        pc.settimeout(0.05)
+        with self.assertRaises(socket.timeout):
+            pc.recv(1)
+
+    def test_makefile_read_times_out_on_silent_peer(self):
+        pc, _ = self._pc()
+        pc.settimeout(0.05)
+        f = pc.makefile("rb")
+        self.addCleanup(f.close)
+        with self.assertRaises(socket.timeout):
+            f.readline()
+
+    def test_timeout_passed_to_transport(self):
+        seen = []
+
+        class Rec:
+            def read(self, n, timeout):
+                seen.append(timeout)
+                return b"x"
+
+            def write(self, b, timeout):
+                seen.append(timeout)
+                return len(b)
+
+        pc = _pipe.PipeConn.__new__(_pipe.PipeConn)
+        pc._f, pc._timeout = Rec(), 2.0
+        pc.recv(1)
+        pc.sendall(b"abc")
+        self.assertEqual(seen[0], 2.0)
+        self.assertTrue(0 < seen[1] <= 2.0, "sendall passes the REMAINING budget")
+
+    def test_tls_pipe_delegates_timeout_to_transport(self):
+        pc, _ = self._pc()
+        t = _pipe.TlsPipe.__new__(_pipe.TlsPipe)
+        t._t = pc
+        t.settimeout(1.5)
+        self.assertEqual(pc.gettimeout(), 1.5)
+        self.assertEqual(t.gettimeout(), 1.5)
+
+
+class TestStreamClosedFlag(unittest.TestCase):
+    """close() now marks the makefile stream closed (it used to stay
+    ``closed == False``) without disturbing the reference count."""
+
+    def test_pipeconn_stream_reports_closed(self):
+        client_sock, server_sock = socket.socketpair()
+        self.addCleanup(client_sock.close)
+        self.addCleanup(server_sock.close)
+        pc = _pipeconn_over(client_sock)
+        r = pc.makefile("rb")
+        w = pc.makefile("wb", buffering=0)
+        r.close()
+        w.close()
+        self.assertTrue(r.closed)
+        self.assertTrue(w.closed)
+        self.assertEqual(pc._io_refs, 0)
+        self.assertFalse(pc._closed, "stream close alone must not close the pipe")
+        del r, w  # finalizers must not decref again
+        self.assertEqual(pc._io_refs, 0)
+
+    def test_tls_stream_reports_closed(self):
+        t = TestTlsPipeRefcount._tls(None)
+        f = t.makefile("rb")
+        t.close()
+        f.close()
+        self.assertTrue(f.closed)
+        self.assertEqual(t._obj.unwrapped, 1)
 
 
 if __name__ == "__main__":

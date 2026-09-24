@@ -79,6 +79,74 @@ class TestFraming(unittest.TestCase):
             Reader(io.BytesIO(b"not json\n")).read_event()
 
 
+def echo(raw: bytes) -> bytes:
+    """Read every frame in ``raw`` and re-emit it: what a pass-through stage
+    and the framing conformance fixture both do."""
+    return write_all(list(Reader(io.BytesIO(raw))))
+
+
+class TestDataBytePreservation(unittest.TestCase):
+    """Go keeps ``data`` as json.RawMessage, so an echoed frame keeps its
+    exact bytes. Python parses, and re-serialising changed these values."""
+
+    CASES = [
+        b'{"type":"t","data":{"v":1e-7}}\n',        # was 1e-07
+        b'{"type":"t","data":{"v":1e16}}\n',        # was 1e+16
+        b'{"type":"t","data":{"v":1.10}}\n',        # was 1.1
+        b'{"type":"t","data":{"s":"\\u00e9"}}\n',   # was raw \xc3\xa9
+        b'{"type":"t","data":{"s":"\\ud800"}}\n',   # raised UnicodeEncodeError
+        b'{"type":"t","data":{"v":[1E+2,-0,0.0,"<&>"]}}\n',
+        b'{"type":"t","data":{"v":1e-7},"payload_length":2}\nab',
+    ]
+
+    def test_echo_is_byte_identical(self):
+        for raw in self.CASES:
+            with self.subTest(raw=raw):
+                self.assertEqual(echo(raw), raw)
+
+    def test_parsed_value_still_exposed(self):
+        ev = Reader(io.BytesIO(self.CASES[0])).read_event()
+        self.assertEqual(ev.data, {"v": 1e-7})
+        self.assertEqual(ev.raw_data, b'{"v":1e-7}')
+
+    def test_whitespace_compacted_like_go(self):
+        # Go's encoder compacts a RawMessage; string contents are untouched.
+        self.assertEqual(
+            echo(b'{ "type" : "t" , "data" : { "v" : 1e-7 , "s" : "a b" } }\n'),
+            b'{"type":"t","data":{"v":1e-7,"s":"a b"}}\n')
+
+    def test_edited_data_is_reserialised(self):
+        ev = Reader(io.BytesIO(b'{"type":"t","data":{"v":1e-7}}\n')).read_event()
+        ev.data["v"] = 2
+        self.assertEqual(write_all([ev]), b'{"type":"t","data":{"v":2}}\n')
+
+    def test_type_swap_is_an_edit(self):
+        # True == 1 in Python; the raw bytes must not mask that swap.
+        ev = Reader(io.BytesIO(b'{"type":"t","data":{"v":1}}\n')).read_event()
+        ev.data["v"] = True
+        self.assertEqual(write_all([ev]), b'{"type":"t","data":{"v":true}}\n')
+
+    def test_constructed_lone_surrogate_does_not_crash(self):
+        # Go's decoder maps a lone surrogate to U+FFFD; the writer does the
+        # same instead of raising UnicodeEncodeError.
+        self.assertEqual(write_all([Event("t", {"s": "a\ud800b"})]),
+                         '{"type":"t","data":{"s":"a\ufffdb"}}\n'.encode())
+
+    def test_invalid_utf8_in_data_passes_through(self):
+        # Go copies a RawMessage without validating UTF-8.
+        raw = b'{"type":"t","data":{"s":"\xff"}}\n'
+        self.assertEqual(echo(raw), raw)
+
+    def test_empty_data_still_omitted(self):
+        self.assertEqual(echo(b'{"type":"t","data":{ }}\n'), b'{"type":"t"}\n')
+
+    def test_malformed_still_rejected(self):
+        for raw in (b'{"type":"t",}\n', b'{"type":"t"} x\n', b'[1]\n',
+                    b'{"type":"t","data":{"v":01}}\n'):
+            with self.subTest(raw=raw), self.assertRaises(WireError):
+                Reader(io.BytesIO(raw)).read_event()
+
+
 class TestCredit(unittest.TestCase):
     def test_cadence(self):
         buf = io.BytesIO()

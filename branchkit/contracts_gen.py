@@ -7,7 +7,7 @@ API_VERSION = "0.2.0"
 # RPC method names: plugin → actuator (use with plugin.call()).
 METHOD_ACTIONS_LIST = "actions.list"  # since 0.1.0
 METHOD_ARTIFACT_DELETE = "artifact.delete"  # since 0.1.0
-METHOD_BLOB_PUBLISH = "blob.publish"  # stable, since 0.2.0
+METHOD_BLOB_PUBLISH = "blob.publish"  # since 0.2.0
 METHOD_COLLECTION_APPEND = "collection.append"  # stable, since 0.1.0
 METHOD_COLLECTION_APPEND_KEYED = "collection.append_keyed"  # since 0.1.0
 METHOD_COLLECTION_COUNT = "collection.count"  # stable, since 0.1.0

@@ -137,6 +137,9 @@ def _connect_tunnel(endpoint: tuple, host: str, port: int, timeout) -> socket.so
     elif endpoint[0] == "npipe":
         from . import _pipe
         sock = _pipe.PipeConn(endpoint[1])
+        # Opening a pipe cannot hang (a busy pipe fails at once), but the
+        # CONNECT handshake below can: bound it like the unix/tcp branches.
+        sock.settimeout(timeout)
     else:
         sock = socket.create_connection((endpoint[1], endpoint[2]), timeout=timeout)
     try:

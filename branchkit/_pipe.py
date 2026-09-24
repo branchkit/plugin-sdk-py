@@ -11,12 +11,132 @@ of a socket for both the relay (``http.server`` request handling) and the
 plain-HTTP proxy path (``http.client``). It is deliberately NOT TLS-wrappable:
 ``ssl`` needs a real socket, and the socketpair adapter that would give it one
 uses loopback — which is exactly what the sandbox blocks here. The HTTPS proxy
-path over a pipe therefore needs an ``ssl.MemoryBIO`` layer, tracked separately.
+path over a pipe therefore needs an ``ssl.MemoryBIO`` layer (:class:`TlsPipe`).
+
+Timeouts. A socket gets deadlines from the kernel; a pipe opened with plain
+``open()`` has none, so ``settimeout`` used to be a no-op and a proxy that
+accepted the pipe and never answered hung the plugin forever (Go gets real
+deadlines from go-winio). The pipe is now opened OVERLAPPED and every read and
+write waits on its completion event with a bound, cancelling the I/O when the
+bound passes — the same stdlib ``_winapi`` primitives
+``multiprocessing.connection.PipeConnection`` uses, so no ctypes. ``settimeout``
+/ ``gettimeout`` follow socket semantics: ``None`` blocks, ``0`` polls, a
+positive number bounds each ``recv`` and the whole of ``sendall``, and expiry
+raises ``TimeoutError`` (``socket.timeout``).
 """
 
 from __future__ import annotations
 
 import io
+import math
+import socket
+import time
+
+# Win32 codes. Spelled out: _winapi does not export all of them everywhere.
+_ERROR_BROKEN_PIPE = 109
+_ERROR_OPERATION_ABORTED = 995
+_ERROR_IO_PENDING = 997
+_WAIT_OBJECT_0 = 0
+_WAIT_TIMEOUT = 258
+_INFINITE = 0xFFFFFFFF
+
+
+def _timeout_ms(timeout) -> int:
+    """Seconds (None = forever) -> a WaitForSingleObject bound. Rounded UP so
+    a small positive timeout never degrades to a 0 ms poll."""
+    if timeout is None:
+        return _INFINITE
+    return min(int(math.ceil(timeout * 1000)), _INFINITE - 1)
+
+
+def _is_broken_pipe(exc: OSError) -> bool:
+    return isinstance(exc, BrokenPipeError) or getattr(exc, "winerror", None) == _ERROR_BROKEN_PIPE
+
+
+class _OverlappedPipe:
+    """One named-pipe HANDLE opened for overlapped I/O, with bounded waits.
+
+    ``winapi`` is the stdlib ``_winapi`` module in production and a fake in
+    the tests (which run on every OS); nothing here reaches Windows another way.
+    """
+
+    def __init__(self, handle, winapi):
+        self._h = handle
+        self._w = winapi
+        self._closed = False
+
+    @classmethod
+    def open(cls, path: str) -> "_OverlappedPipe":
+        import _winapi  # Windows-only stdlib module
+
+        w = _winapi
+        # Raises OSError (busy / gone / access denied) exactly as open() did.
+        h = w.CreateFile(
+            path,
+            w.GENERIC_READ | w.GENERIC_WRITE,
+            0,
+            w.NULL,
+            w.OPEN_EXISTING,
+            w.FILE_FLAG_OVERLAPPED,
+            w.NULL,
+        )
+        return cls(h, w)
+
+    def _finish(self, ov, timeout) -> tuple[int, bool]:
+        """Wait for a started overlapped op: (transferred, timed_out).
+
+        On expiry the op is cancelled and then waited for, because the kernel
+        may have completed it in the race — a read that did complete must hand
+        its bytes back rather than drop them.
+        """
+        res = self._w.WaitForSingleObject(ov.event, _timeout_ms(timeout))
+        timed_out = res == _WAIT_TIMEOUT
+        if timed_out:
+            try:
+                ov.cancel()
+            except OSError:
+                pass  # already completed
+        elif res != _WAIT_OBJECT_0:
+            ov.cancel()
+            ov.GetOverlappedResult(True)
+            raise OSError(f"pipe: WaitForSingleObject returned {res}")
+        n, err = ov.GetOverlappedResult(True)
+        if err == _ERROR_OPERATION_ABORTED and not timed_out:
+            raise OSError("pipe: I/O aborted")
+        return n, timed_out and n == 0
+
+    def read(self, n: int, timeout) -> bytes:
+        """Up to ``n`` bytes; b"" at EOF (the server end closed)."""
+        try:
+            ov, err = self._w.ReadFile(self._h, n, overlapped=True)
+            if err == _ERROR_IO_PENDING:
+                got, timed_out = self._finish(ov, timeout)
+                if timed_out:
+                    raise socket.timeout("timed out")
+            else:
+                # Completed synchronously (0), or ERROR_MORE_DATA on a message-
+                # mode pipe (the remainder comes with the next read).
+                got, _ = ov.GetOverlappedResult(True)
+        except OSError as exc:
+            if not isinstance(exc, TimeoutError) and _is_broken_pipe(exc):
+                return b""
+            raise
+        return bytes(ov.getbuffer()[:got]) if got else b""
+
+    def write(self, data, timeout) -> int:
+        ov, err = self._w.WriteFile(self._h, bytes(data), overlapped=True)
+        if err == _ERROR_IO_PENDING:
+            n, timed_out = self._finish(ov, timeout)
+            if timed_out:
+                raise socket.timeout("timed out")
+            return n
+        n, _ = ov.GetOverlappedResult(True)
+        return n
+
+    def close(self) -> None:
+        if not self._closed:
+            self._closed = True
+            self._w.CloseHandle(self._h)
 
 
 class _Unclosable(io.RawIOBase):
@@ -38,7 +158,6 @@ class _Unclosable(io.RawIOBase):
 
     def __init__(self, pc: "PipeConn"):
         self._pc = pc
-        self._decref_done = False
 
     def readable(self) -> bool:
         return True
@@ -47,7 +166,9 @@ class _Unclosable(io.RawIOBase):
         return True
 
     def readinto(self, b) -> int:
-        data = self._pc._f.read(len(b))
+        # Through recv/_send, not the file, so the connection's timeout
+        # applies to makefile reads and writes as it does on a socket.
+        data = self._pc.recv(len(b))
         if not data:
             return 0
         n = len(data)
@@ -55,14 +176,17 @@ class _Unclosable(io.RawIOBase):
         return n
 
     def write(self, b) -> int:
-        return self._pc._f.write(bytes(b))
+        return self._pc._send(b)
 
     def close(self) -> None:
-        # Drop this stream's reference exactly once. close() may be called more
-        # than once (explicit close plus __del__), so guard the decrement.
-        if not self._decref_done:
-            self._decref_done = True
-            self._pc._decref()
+        # socket.SocketIO's shape: mark THIS stream closed (so ``.closed`` is
+        # honest and a finalizer never re-flushes into it), then drop its one
+        # reference. IOBase.close is a no-op once closed, and __del__ skips a
+        # closed stream, so the early return is the exactly-once guard.
+        if self.closed:
+            return
+        super().close()
+        self._pc._decref()
 
 
 class PipeConn:
@@ -76,34 +200,45 @@ class PipeConn:
     """
 
     def __init__(self, path: str):
-        # buffering=0 -> a raw io.FileIO; the pipe is opened read+write (duplex).
-        # open() on Windows accepts a \\.\pipe\ path.
-        self._f = open(path, "r+b", buffering=0)
+        # Duplex, overlapped: see the module docstring on timeouts.
+        self._f = _OverlappedPipe.open(path)
         self._closed = False
+        # Like a new socket: the process-wide default (None unless changed).
+        self._timeout = socket.getdefaulttimeout()
         # Socket-style makefile reference counting (see _Unclosable): close()
         # defers the real teardown while a makefile stream is still reading.
         self._io_refs = 0
         self._close_requested = False
 
+    def _send(self, data, timeout=...) -> int:
+        return self._f.write(data, self._timeout if timeout is ... else timeout)
+
     def sendall(self, data) -> None:
+        # Like socket.sendall since 3.5, the timeout bounds the WHOLE call, not
+        # each chunk — a peer draining one byte per timeout can't stretch it.
         mv = memoryview(data if isinstance(data, (bytes, bytearray)) else bytes(data))
+        deadline = None if self._timeout is None else time.monotonic() + self._timeout
         while mv:
-            n = self._f.write(mv)
+            left = None if deadline is None else max(0.0, deadline - time.monotonic())
+            n = self._send(mv, left)
             if not n:
+                if deadline is not None and time.monotonic() >= deadline:
+                    raise socket.timeout("timed out")
                 continue
             mv = mv[n:]
 
     def recv(self, n: int) -> bytes:
-        data = self._f.read(n)
-        return data if data is not None else b""
+        return self._f.read(n, self._timeout)
 
-    def settimeout(self, _timeout) -> None:
-        # A pipe has no socket-level timeout; the relay pairs within a round
-        # trip and the proxy answers immediately, so a blocking read is fine.
-        pass
+    def settimeout(self, timeout) -> None:
+        if timeout is not None:
+            timeout = float(timeout)
+            if timeout < 0:
+                raise ValueError("Timeout value out of range")
+        self._timeout = timeout
 
     def gettimeout(self):
-        return None
+        return self._timeout
 
     def getpeername(self):
         return ("pipe", 0)
@@ -214,8 +349,14 @@ class TlsPipe:
             # http.client then decides truncation from Content-Length/chunking.
             return b""
 
-    def settimeout(self, _t) -> None:
-        pass
+    def settimeout(self, timeout) -> None:
+        # The deadline lives on the transport: every byte TLS moves goes
+        # through its recv/sendall, so a stalled peer times out mid-handshake
+        # or mid-record exactly as a plain read would.
+        self._t.settimeout(timeout)
+
+    def gettimeout(self):
+        return self._t.gettimeout()
 
     def getpeername(self):
         return ("pipe-tls", 0)
@@ -258,7 +399,6 @@ class _TlsRaw(io.RawIOBase):
 
     def __init__(self, tls: "TlsPipe"):
         self._tls = tls
-        self._decref_done = False
 
     def readable(self) -> bool:
         return True
@@ -280,8 +420,9 @@ class _TlsRaw(io.RawIOBase):
 
     def close(self) -> None:
         # Drop this stream's reference exactly once; the pipe closes when the
-        # last live stream does. close() may be called more than once (explicit
-        # close plus __del__), so guard the decrement.
-        if not self._decref_done:
-            self._decref_done = True
-            self._tls._decref()
+        # last live stream does. Same shape as _Unclosable.close: ``.closed``
+        # goes True, and a second close (explicit plus __del__) returns early.
+        if self.closed:
+            return
+        super().close()
+        self._tls._decref()
