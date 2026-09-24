@@ -9,6 +9,7 @@ from .contracts_gen import (
     METHOD_ACTIONS_LIST,
     METHOD_ARTIFACT_DELETE,
     METHOD_BLOB_PUBLISH,
+    METHOD_BLOB_STATE,
     METHOD_COLLECTIONS_CREATE_USER,
     METHOD_COLLECTIONS_LIST,
     METHOD_COLLECTIONS_OWNED,
@@ -635,6 +636,7 @@ if TYPE_CHECKING:
         BleService,
         BleWriteEntry,
         BlobPublishResponse,
+        BlobStateResponse,
         BluetoothDevice,
         CalendarEvent,
         CameraDevice,
@@ -1053,6 +1055,21 @@ class MethodsMixin:
         if new_generation is not None:
             params["new_generation"] = new_generation
         result = await self.call(METHOD_BLOB_PUBLISH, params)
+        return result
+
+    async def blob_state(self, name: str, provider: str | None = None) -> BlobStateResponse:
+        """Where a blob stands: its current generation, published length and version. For a restarted provider (which generation to write) and a starting consumer (what to open)
+
+        name: The blob's name, as its provider declared it in `provides.blobs`.
+        provider: The providing plugin. Omitted: the caller's own blob. Another
+            plugin's blob is answerable only to a consumer granted to read it.
+        """
+        params: dict[str, Any] = {
+            "name": name,
+        }
+        if provider is not None:
+            params["provider"] = provider
+        result = await self.call(METHOD_BLOB_STATE, params)
         return result
 
     async def collection_append(self, name: str, payload: Any) -> LogEntry | None:

@@ -1718,6 +1718,28 @@ BlobPublishResponse = TypedDict("BlobPublishResponse", {
     "version": int,
 })
 
+BlobStateRequest = TypedDict("BlobStateRequest", {
+    # The blob's name, as its provider declared it in `provides.blobs`.
+    "name": str,
+    # The providing plugin. Omitted: the caller's own blob. Another
+    # plugin's blob is answerable only to a consumer granted to read it.
+    "provider": NotRequired[str],
+})
+
+BlobStateResponse = TypedDict("BlobStateResponse", {
+    # The generation file currently being appended to — the one a
+    # restarted provider writes next, and the one a consumer opens.
+    # wire uint64 (64-bit) · min 0
+    "generation": int,
+    # Bytes published within that generation.
+    # wire uint64 (64-bit) · min 0
+    "length": int,
+    # The latest version; it rises across generations AND across actuator
+    # restarts, so a consumer can tell new from already-seen.
+    # wire uint64 (64-bit) · min 0
+    "version": int,
+})
+
 CollectionAppendRequest = TypedDict("CollectionAppendRequest", {
     # Collection name. Must be a `kind: "log"` collection.
     "name": str,
