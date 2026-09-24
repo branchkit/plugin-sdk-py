@@ -1,5 +1,6 @@
 """Settings-tab interaction idioms — the layer where every silent dead
-button so far was born (DESIGN_SETTINGS_UI_ROBUSTNESS.md, leg 2). Parity
+button so far was born: these idioms were hand-written strings that no
+compiler, validator or test checked. Parity
 with plugin-sdk-go/ui and plugin-sdk-ts/src/ui.ts. Each helper encodes a
 contract the platform cannot check at runtime:
 

@@ -64,8 +64,8 @@ class CommandBuilder:
     def action(self, type: str, params: dict | None = None) -> "CommandBuilder":
         """Set the action fired on match. `type` is the action's type (a
         built-in like "key" or a dotted plugin action); `params` nest under
-        the action object's `params` key — one dialect, see
-        DESIGN_ONE_PARAMS_DIALECT.md."""
+        the action object's `params` key — one dialect: the envelope is
+        closed and the platform refuses any other key at load."""
         self._spec["action"] = {"type": type, "params": params} if params else {"type": type}
         return self
 
@@ -100,9 +100,9 @@ class CommandBuilder:
         """Declare the command's prefix-discovery affordance ("prefix",
         "exclusive", or "select" — select points at entries via
         platform-assigned alphabet codewords instead of their names). Valid
-        only on a literal-prefix + single-tail-capture pattern. See
-        docs/design/DESIGN_DISCOVERABLE_PREFIX.md and
-        DESIGN_SELECTION_PRIMITIVE.md."""
+        only on a literal-prefix + single-tail-capture pattern; the actuator
+        rejects other shapes at load. Select keeps churning item names out of
+        the grammar."""
         self._spec["discovery"] = mode
         return self
 

@@ -9,7 +9,8 @@ network namespace, where a self-bound 127.0.0.1 is a private dead
 loopback — the inherited host-loopback listener is the only reachable
 surface. CPython serves an inherited fd natively
 (`socket.socket(fileno=...)`), so unlike TS there is no two-runtime
-dance. See the actuator's docs/design/DESIGN_SANDBOX_LOOPBACK_FDPASS.md."""
+dance (the TS SDK must run a plugin with listeners under Node, because Bun
+cannot serve an inherited fd)."""
 
 from __future__ import annotations
 
@@ -60,7 +61,7 @@ def _relay_env() -> tuple[tuple[str, int], str] | None:
     is unreachable from outside (the loopback exemption is outbound-only),
     so the actuator binds the declared listeners outside the sandbox and
     relays inbound connections over connections the plugin opens outward
-    (the actuator's docs/design/DESIGN_WINDOWS_LISTENER_RELAY.md). Chosen
+    (the actuator's listener relay). Chosen
     by the environment, not the platform, so a test anywhere can play the
     actuator."""
     raw = os.environ.get("BRANCHKIT_LISTEN_RELAY", "")

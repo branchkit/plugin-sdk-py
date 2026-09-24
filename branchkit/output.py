@@ -7,7 +7,9 @@ plugin states what is true for the person (``OutputState``,
 item's ``action`` is one of exactly two shapes; these build them so no
 producer hand-writes the envelope, and so the three SDKs read the same.
 
-Design: docs/design/DESIGN_SEMANTIC_OUTPUT_CHANNEL.md.
+Producers state what is true (a kind, human-language phrases, an urgency)
+and never choose how or whether it is shown or spoken; every renderer reads
+the same document.
 """
 
 from __future__ import annotations

@@ -199,7 +199,9 @@ class CollectionMixin:
         ``{"put": n, "deleted": n, "skipped": n}``.
 
         Scope is required and never inferred — pass `scope_collection()` or
-        `scope_group(...)`. See docs/design/DESIGN_COLLECTION_REPLACE.md."""
+        `scope_group(...)`. The complement is computed platform-side because a
+        client-side diff needs the caller to remember what it last published,
+        and that memory dies with the process (records orphaned on restart)."""
         # Refused locally rather than sent: guessing between "everything I
         # own here" and "the subset under this key space" is how a refresh
         # silently becomes a wipe.

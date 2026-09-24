@@ -37,8 +37,8 @@ writing. Newly typed here:
   `disabled_plugins`, which the schema had been omitting entirely
 
 Untyped members across the three SDKs: 193 → 147. What is left is listed
-field by field, with a reason, in the platform's
-`DESIGN_SDK_GENERATION_FIDELITY.md` ledger.
+field by field, each with a written reason, in the generator's fidelity
+ledger (every remaining member is opaque by declaration in the Rust source).
 
 ### Known gap
 

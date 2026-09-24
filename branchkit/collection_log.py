@@ -62,7 +62,8 @@ class CollectionLogMixin:
         """Annotate a keyed log (`log` preset, `id_strategy: by_field`):
         appends `payload` with `key` stamped into the key field, as a fresh
         append; same-key appends fold. Read the merged view with
-        `list_compacted`. See docs/design/DESIGN_LOG_ANNOTATION_PROJECTION.md."""
+        `list_compacted`. Annotation is by appending, never mutating, so the
+        original event is preserved."""
         await self.collection_append_keyed(key, name, payload)
 
     async def list_log(self, name: str, opts: dict | None = None) -> list[dict]:

@@ -3,7 +3,7 @@ r"""Windows named-pipe transport for the sandbox proxy and listener relay.
 On Windows a plugin runs in an AppContainer with no loopback exemption, so the
 actuator hands it the filtering proxy and the relay rendezvous over NAMED PIPES
 ACL'd to the plugin's container SID (``npipe://\\.\pipe\...``), not loopback TCP
-(the actuator's docs/design/DESIGN_WINDOWS_LOOPBACK_EXEMPTION.md).
+(a loopback exemption would open every loopback port on the machine).
 
 A named pipe opens as a FILE, not a socket, and the stdlib's ``http.server`` and
 ``http.client`` want a socket. :class:`PipeConn` wraps one pipe file as enough

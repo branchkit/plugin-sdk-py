@@ -1,7 +1,7 @@
 """Per-plugin leveled log façade over `plugin.debug` (the RPC method).
 Python twin of debug.{go,ts}. Lines land in
 `<app_support>/plugin-logs/<pluginID>.log`; warn/error cross-post to
-actuator.log. See docs/design/DESIGN_PLUGIN_LOG_LEVELS.md."""
+actuator.log. The default per-plugin threshold is info."""
 
 from __future__ import annotations
 

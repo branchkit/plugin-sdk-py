@@ -1,5 +1,6 @@
 """Capability-mechanism helpers (effects). Python twin of effects.{go,ts}.
-See docs/design/DESIGN_CAPABILITY_MECHANISM.md."""
+An effect is a contended platform behavior: per-effect ownership stack, last
+assert wins, a retract restores the previous owner."""
 
 from __future__ import annotations
 

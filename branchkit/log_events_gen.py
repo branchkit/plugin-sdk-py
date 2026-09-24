@@ -2,7 +2,7 @@
 # Run: just contracts
 #
 # BranchKit observability bus — closed log-event vocabulary.
-# See docs/design/DESIGN_OBSERVABILITY_BUS.md for the architectural contract.
+# Registered in actuator code; extended only by a platform release.
 
 from typing import TypedDict
 

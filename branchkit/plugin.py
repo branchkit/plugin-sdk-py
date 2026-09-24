@@ -153,7 +153,8 @@ class PluginCore:
         self._ready = asyncio.Event()
         self._shutdown_event = asyncio.Event()
         # Inbound notifications drain through one pump so listeners observe
-        # them in wire order. See docs/design/DESIGN_SDK_EVENT_ORDERING.md.
+        # them in wire order, matching the Go and TS SDKs; responses resolve
+        # outside this queue, so it cannot deadlock.
         self._notify_queue: asyncio.Queue = asyncio.Queue()
         # Stdout writes can come from the loop AND from offloaded sync
         # handlers calling notify(); one lock keeps frames unfragmented.
@@ -667,7 +668,8 @@ def artifacts_dir() -> str:
     """The plugin's artifact namespace (BRANCHKIT_ARTIFACTS_DIR) — where the CLI
     provisions the artifacts this plugin declares in `provides.artifacts`
     (named bundles of large run-time files). READ-ONLY; "" when unset. Was
-    `models_dir` (kept as a deprecated alias); see DESIGN_ARTIFACTS_RENAME.md."""
+    `models_dir` (kept as a deprecated alias for one release after the
+    rename to artifacts)."""
     return os.environ.get("BRANCHKIT_ARTIFACTS_DIR") or os.environ.get("BRANCHKIT_MODELS_DIR", "")
 
 
