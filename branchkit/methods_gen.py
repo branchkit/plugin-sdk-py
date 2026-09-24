@@ -6178,7 +6178,7 @@ class MethodsMixin:
         await self.call(METHOD_SYSTEM_NOTIFY, params)
 
     async def system_run_shell(self, command: str) -> None:
-        """Run a shell command via /bin/bash -c (security-sensitive)
+        """Start a shell command via /bin/bash -c, run by the actuator outside any plugin sandbox (security-sensitive; not on Windows)
 
         command: Shell command to execute via `/bin/bash -c`.
         """
