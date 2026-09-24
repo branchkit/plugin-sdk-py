@@ -574,6 +574,7 @@ from .contracts_gen import (
     METHOD_NATIVE_XCODE_VERSION,
     METHOD_NATIVE_ZIP,
     METHOD_NATIVE_ZOOM_ENABLED,
+    METHOD_NETWORK_REQUEST_HOST,
     METHOD_OUTPUT_CLEAR,
     METHOD_OUTPUT_STATE,
     METHOD_OVERRIDES_APPLY,
@@ -599,6 +600,7 @@ from .contracts_gen import (
     METHOD_SECRETS_DELETE,
     METHOD_SECRETS_IS_SET,
     METHOD_SECRETS_LIST,
+    METHOD_SECRETS_REQUEST_SLOT,
     METHOD_SECRETS_SET,
     METHOD_SELECTION_PICK,
     METHOD_SELECTION_SET,
@@ -954,6 +956,7 @@ if TYPE_CHECKING:
         NativeXcodeVersionResponse,
         NativeZoomEnabledResponse,
         NetworkInterface,
+        NetworkRequestHostResponse,
         OcrRegion,
         OnPointer,
         OutputClearResponse,
@@ -989,6 +992,7 @@ if TYPE_CHECKING:
         SecretsDeleteResponse,
         SecretsIsSetResponse,
         SecretsListResponse,
+        SecretsRequestSlotResponse,
         SecretsSetResponse,
         SelectionPickResponse,
         SessionEndCleanupResponse,
@@ -5523,6 +5527,21 @@ class MethodsMixin:
         result = await self.call(METHOD_NATIVE_ZOOM_ENABLED)
         return result
 
+    async def network_request_host(self, host: str, reason: str | None = None) -> NetworkRequestHostResponse:
+        """Ask for one more network host at runtime (a plugin declaring requestable hosts). It appears on the plugin's page, off until the user allows it
+
+        host: One exact host (no wildcard, no port, no path).
+        reason: Shown to the user beside the switch — why the plugin wants it.
+            default ""
+        """
+        params: dict[str, Any] = {
+            "host": host,
+        }
+        if reason is not None:
+            params["reason"] = reason
+        result = await self.call(METHOD_NETWORK_REQUEST_HOST, params)
+        return result
+
     async def output_clear(self, channel: str) -> OutputClearResponse:
         """Nothing is true on one of your HUD channels now: clears its semantic state so every renderer stops conveying it; visibility stays yours (hud.hide)
 
@@ -5896,6 +5915,25 @@ class MethodsMixin:
     async def secrets_list(self) -> SecretsListResponse:
         """The credential names this plugin has stored, and how they are protected on this machine"""
         result = await self.call(METHOD_SECRETS_LIST)
+        return result
+
+    async def secrets_request_slot(self, host: str, name: str, label: str | None = None) -> SecretsRequestSlotResponse:
+        """Ask for a credential row on this plugin's Settings page: the user pastes the value straight into the store, bound to one host this plugin can reach. The plugin never sees the value
+
+        host: The ONE host the value may be sent to — one this plugin may already
+            reach (declared, or requested with `network.request_host`).
+        label: What the user sees on the row, e.g. "Weather script — API key".
+            default ""
+        name: The secret's name in this plugin's drawer (ASCII letters, digits,
+            `_`, `-`, `.`).
+        """
+        params: dict[str, Any] = {
+            "host": host,
+            "name": name,
+        }
+        if label is not None:
+            params["label"] = label
+        result = await self.call(METHOD_SECRETS_REQUEST_SLOT, params)
         return result
 
     async def secrets_set(self, name: str, value: str, host: str | None = None) -> SecretsSetResponse:

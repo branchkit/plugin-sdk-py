@@ -5504,6 +5504,20 @@ NativeZoomEnabledResponse = TypedDict("NativeZoomEnabledResponse", {
     "enabled": bool,
 })
 
+NetworkRequestHostRequest = TypedDict("NetworkRequestHostRequest", {
+    # One exact host (no wildcard, no port, no path).
+    "host": str,
+    # Shown to the user beside the switch — why the plugin wants it.
+    # default ""
+    "reason": NotRequired[str],
+})
+
+NetworkRequestHostResponse = TypedDict("NetworkRequestHostResponse", {
+    # `"allowed"` — the user has it switched on; `"pending"` — it now
+    # appears on the plugin's page, off, until the user allows it.
+    "status": str,
+})
+
 OutputClearRequest = TypedDict("OutputClearRequest", {
     # The channel on which nothing is true now. Must be owned by the
     # calling plugin.
@@ -5869,6 +5883,23 @@ SecretsListResponse = TypedDict("SecretsListResponse", {
     # surface showing secrets can show the TRUE sentence rather than the
     # flattering one. See `os`-agnostic `KeySource::describe`.
     "protection": str,
+})
+
+SecretsRequestSlotRequest = TypedDict("SecretsRequestSlotRequest", {
+    # The ONE host the value may be sent to — one this plugin may already
+    # reach (declared, or requested with `network.request_host`).
+    "host": str,
+    # What the user sees on the row, e.g. "Weather script — API key".
+    # default ""
+    "label": NotRequired[str],
+    # The secret's name in this plugin's drawer (ASCII letters, digits,
+    # `_`, `-`, `.`).
+    "name": str,
+})
+
+SecretsRequestSlotResponse = TypedDict("SecretsRequestSlotResponse", {
+    # Whether a value is already stored under this name.
+    "is_set": bool,
 })
 
 SecretsSetRequest = TypedDict("SecretsSetRequest", {
