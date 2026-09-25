@@ -94,7 +94,8 @@ Capability = TypedDict("Capability", {
     "consumes": NotRequired[list[str]],
     # Event types this stage emits — built-in tags (`transcript`,
     # `power_snapshot`, …) and/or custom types under [`EXT_EVENT_PREFIX`]
-    # (an `ext.<vendor>.*` glob covers a vendor namespace). Advisory at
+    # (an `ext.<vendor>.*` glob covers every type under the vendor, at any
+    # depth; a `*` elsewhere is exactly one segment). Advisory at
     # runtime (the platform logs undeclared `ext.*` emissions rather than
     # dropping them); enforced by the conformance harness. Empty = the
     # stage declares nothing (pre-existing stages).
