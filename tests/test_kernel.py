@@ -416,6 +416,60 @@ class TestPatternDelivery(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(seen, [("scripts.notes.saved", {"k": 1})])
 
 
+class TestEventOrigin(unittest.IsolatedAsyncioTestCase):
+    """A listener can read who sent the event it is handling — both listener
+    shapes, a plain-def one offloaded to a thread included, and only for the
+    delivery it is inside."""
+
+    async def _deliver(self, core, messages, expected):
+        core._ready.set()
+        pump = asyncio.ensure_future(core._drain_notifications())
+        try:
+            for msg in messages:
+                core._route_message({"jsonrpc": "2.0", "params": {}, **msg})
+            for _ in range(200):
+                if expected():
+                    break
+                await asyncio.sleep(0.01)
+        finally:
+            pump.cancel()
+
+    async def test_listeners_read_their_deliverys_sender(self):
+        core = PluginCore()
+        exact, patterned = [], []
+        # Plain def: offloaded via asyncio.to_thread, which must carry it.
+        core.on("scripts.headphones.charged", lambda p: exact.append(core.current_event_origin()))
+
+        async def pattern_listener(event_type, params):
+            patterned.append(core.current_event_origin())
+
+        core.on_pattern("scripts.*.*", pattern_listener)
+        await self._deliver(
+            core,
+            [
+                {
+                    "method": "scripts.headphones.charged",
+                    "source": "scripts",
+                    "on_behalf_of": "headphones.lua",
+                },
+                {"method": "scripts.headphones.charged", "source": "impostor"},
+                # No origin at all: an older actuator, or a notification that
+                # is not a bus event. Must not inherit the previous sender.
+                {"method": "scripts.headphones.charged"},
+            ],
+            lambda: len(patterned) == 3,
+        )
+        want = [
+            branchkit.EventOrigin("scripts", "headphones.lua"),
+            branchkit.EventOrigin("impostor", ""),
+            branchkit.EventOrigin("", ""),
+        ]
+        self.assertEqual(exact, want)
+        self.assertEqual(patterned, want)
+        self.assertEqual(core.current_event_origin(), branchkit.EventOrigin())
+        self.assertEqual(branchkit.get_current_event_origin().source, "")
+
+
 class TestDualHandlerDispatch(unittest.IsolatedAsyncioTestCase):
     async def test_sync_handler_offloads_and_sees_correlation(self):
         core = PluginCore()

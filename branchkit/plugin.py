@@ -24,6 +24,7 @@ from .contracts_gen import HOOK_ON_ACTION, HOOK_RENDER_SETTINGS
 
 from .actor import get_current_actor
 from .correlation import get_current_correlation, reset_correlation, set_correlation
+from .origin import EventOrigin, get_current_event_origin, reset_event_origin, set_event_origin
 from .log import log
 
 
@@ -396,6 +397,21 @@ class PluginCore:
         records."""
         return get_current_actor()
 
+    def current_event_origin(self) -> EventOrigin:
+        """Who sent the event notification being handled — inside `on` and
+        `on_pattern` listeners — or an empty `EventOrigin` when none is in
+        flight. The platform delivers every event a subscription matches,
+        whoever emitted it; a listener that must only act on one sender's
+        events checks `source`:
+
+            @plugin.on_pattern("scripts.*.*")
+            async def relay(event_type, params):
+                if plugin.current_event_origin().source != "scripts":
+                    return
+                ...
+        """
+        return get_current_event_origin()
+
     # --- Lifecycle ---
 
     async def run(self) -> None:
@@ -551,7 +567,10 @@ class PluginCore:
         # Notification — method, no id (W5: no response). Enqueue for the
         # single ordered pump.
         if msg_id is None and method:
-            self._notify_queue.put_nowait((method, msg.get("params"), msg.get("correlation_id")))
+            # The sender rides the envelope beside the correlation id; on an
+            # event notification `on_behalf_of` is the EMITTER's label.
+            origin = EventOrigin(msg.get("source") or "", msg.get("on_behalf_of") or "")
+            self._notify_queue.put_nowait((method, msg.get("params"), msg.get("correlation_id"), origin))
 
     async def _invoke2(self, fn: Callable, event_type: str, params: Any) -> Any:
         """`_invoke` for the two-argument pattern-listener shape."""
@@ -612,12 +631,13 @@ class PluginCore:
         if self._closed:
             return
         while True:
-            method, params, correlation_id = await self._notify_queue.get()
+            method, params, correlation_id, origin = await self._notify_queue.get()
             listeners = self._listeners.get(method) or []
             patterned = [fn for pat, fn in self._pattern_listeners if matches_topic(pat, method)]
             if not listeners and not patterned:
                 continue
             token = set_correlation(correlation_id)
+            origin_token = set_event_origin(origin)
             try:
                 for fn in list(listeners):
                     try:
@@ -634,6 +654,7 @@ class PluginCore:
                     except Exception as e:
                         log(self._plugin_id, f"pattern listener error for {method}: {e}")
             finally:
+                reset_event_origin(origin_token)
                 reset_correlation(token)
 
 

@@ -36,6 +36,7 @@ from .plugin import (
     plugin_dir,
 )
 from .actor import acting_for, get_current_actor
+from .origin import EventOrigin, get_current_event_origin
 from .collection import CollectionMixin, list_opts, scope_collection, scope_group
 from .collection_log import CollectionLogMixin, log_list_opts
 from .debug import DebugMixin
