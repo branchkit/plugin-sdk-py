@@ -156,7 +156,17 @@ class PluginCore:
         # Inbound notifications drain through one pump so listeners observe
         # them in wire order, matching the Go and TS SDKs; responses resolve
         # outside this queue, so it cannot deadlock.
+        #
+        # A state stream (an event notification the actuator marks
+        # `delivery: "latest"`) holds at most ONE place in the queue. The read
+        # loop never waits, so a listener slower than a 250 Hz position stream
+        # would otherwise build a backlog that only grows — every position
+        # stale by the time it is handled. Instead the stream's place keeps its
+        # newest value in `_latest_values` (keyed by sender and type; a key is
+        # present exactly while its place is queued), and the listener gets the
+        # newest position each time it is ready.
         self._notify_queue: asyncio.Queue = asyncio.Queue()
+        self._latest_values: dict[tuple[str, str], tuple] = {}
         # Stdout writes can come from the loop AND from offloaded sync
         # handlers calling notify(); one lock keeps frames unfragmented.
         self._write_lock = threading.Lock()
@@ -570,7 +580,16 @@ class PluginCore:
             # The sender rides the envelope beside the correlation id; on an
             # event notification `on_behalf_of` is the EMITTER's label.
             origin = EventOrigin(msg.get("source") or "", msg.get("on_behalf_of") or "")
-            self._notify_queue.put_nowait((method, msg.get("params"), msg.get("correlation_id"), origin))
+            item = (method, msg.get("params"), msg.get("correlation_id"), origin)
+            if msg.get("delivery") == _DELIVERY_LATEST:
+                key = (origin.source, method)
+                placed = key in self._latest_values
+                self._latest_values[key] = item
+                if placed:
+                    return
+                self._notify_queue.put_nowait((item, key))
+                return
+            self._notify_queue.put_nowait((item, None))
 
     async def _invoke2(self, fn: Callable, event_type: str, params: Any) -> Any:
         """`_invoke` for the two-argument pattern-listener shape."""
@@ -631,7 +650,11 @@ class PluginCore:
         if self._closed:
             return
         while True:
-            method, params, correlation_id, origin = await self._notify_queue.get()
+            item, latest_key = await self._notify_queue.get()
+            if latest_key is not None:
+                # The stream's place: deliver its newest value, taken now.
+                item = self._latest_values.pop(latest_key, item)
+            method, params, correlation_id, origin = item
             listeners = self._listeners.get(method) or []
             patterned = [fn for pat, fn in self._pattern_listeners if matches_topic(pat, method)]
             if not listeners and not patterned:
@@ -656,6 +679,10 @@ class PluginCore:
             finally:
                 reset_event_origin(origin_token)
                 reset_correlation(token)
+
+
+# The `delivery` envelope value that marks a state-stream event notification.
+_DELIVERY_LATEST = "latest"
 
 
 def api_version() -> str:

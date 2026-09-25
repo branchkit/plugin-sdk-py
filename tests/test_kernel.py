@@ -416,6 +416,79 @@ class TestPatternDelivery(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(seen, [("scripts.notes.saved", {"k": 1})])
 
 
+class TestStateStreamDelivery(unittest.IsolatedAsyncioTestCase):
+    """A state stream — an event notification the actuator marks
+    `delivery: "latest"` — holds one place in the notification queue, newest
+    value winning. The Go and TS SDKs do the same; the sdk-test coalescing
+    case holds all three to it."""
+
+    def _gaze(self, seq, source="acme.gaze"):
+        return {
+            "jsonrpc": "2.0",
+            "method": "ext.acme.gaze_point",
+            "params": {"seq": seq},
+            "source": source,
+            "delivery": "latest",
+        }
+
+    async def test_a_busy_listener_is_handed_the_newest_value(self):
+        core = PluginCore()
+        order = []
+        release = asyncio.Event()
+
+        async def on_gaze(params):
+            order.append(f"gaze:{params['seq']}")
+            if len(order) == 1:
+                await release.wait()  # busy while the rest of the stream arrives
+
+        core.on("ext.acme.gaze_point", on_gaze)
+        core.on("ext.acme.blink", lambda p: order.append("blink"))
+        core._ready.set()
+        pump = asyncio.ensure_future(core._drain_notifications())
+        try:
+            core._route_message(self._gaze(0))
+            for _ in range(100):
+                if order:
+                    break
+                await asyncio.sleep(0.01)
+            for i in range(1, 100):
+                core._route_message(self._gaze(i))
+            core._route_message(
+                {"jsonrpc": "2.0", "method": "ext.acme.blink", "params": {}, "source": "acme.gaze"}
+            )
+            release.set()
+            for _ in range(200):
+                if "blink" in order:
+                    break
+                await asyncio.sleep(0.01)
+        finally:
+            pump.cancel()
+        self.assertEqual(order, ["gaze:0", "gaze:99", "blink"])
+        self.assertEqual(core._latest_values, {}, "nothing left waiting")
+
+    async def test_senders_are_separate_streams_and_other_notifications_keep_their_place(self):
+        core = PluginCore()
+        got = []
+        core.on("tick", lambda p: got.append(f"tick:{p['seq']}"))
+        core.on("ext.acme.gaze_point", lambda p: got.append(f"gaze:{p['seq']}"))
+        # Routed before the pump starts, so everything waits together.
+        for i in range(3):
+            core._route_message({"jsonrpc": "2.0", "method": "tick", "params": {"seq": i}})
+        core._route_message(self._gaze(1, "left.tracker"))
+        core._route_message(self._gaze(2, "right.tracker"))
+        core._route_message(self._gaze(3, "left.tracker"))
+        core._ready.set()
+        pump = asyncio.ensure_future(core._drain_notifications())
+        try:
+            for _ in range(200):
+                if len(got) == 5:
+                    break
+                await asyncio.sleep(0.01)
+        finally:
+            pump.cancel()
+        self.assertEqual(got, ["tick:0", "tick:1", "tick:2", "gaze:3", "gaze:2"])
+
+
 class TestEventOrigin(unittest.IsolatedAsyncioTestCase):
     """A listener can read who sent the event it is handling — both listener
     shapes, a plain-def one offloaded to a thread included, and only for the
