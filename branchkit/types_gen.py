@@ -6430,13 +6430,19 @@ CaptureProgressEventParams = TypedDict("CaptureProgressEventParams", {
 
 # Payload of the `_platform.clipboard.changed` event.
 ClipboardChangedEventParams = TypedDict("ClipboardChangedEventParams", {
-    # `NSPasteboard.changeCount` after the change. Monotonic per session;
-    # useful for deduping and for detecting missed changes.
+    # The host's clipboard change counter after the change (macOS
+    # `changeCount`, Windows `GetClipboardSequenceNumber`, a counter kept by
+    # the host on Linux). Monotonic per session; useful for deduping and for
+    # detecting missed changes.
     # wire uint64 (64-bit) · min 0
     "change_count": int,
-    # Pasteboard type identifiers now available (e.g.
-    # `public.utf8-plain-text`, `public.png`). Enough to filter on without
-    # reading anything.
+    # The host's own names for the same contents, for what MIME cannot
+    # name: macOS UTIs (`public.utf8-plain-text`), Windows clipboard formats
+    # (`CF_UNICODETEXT`, `HTML Format`), X11 targets (`UTF8_STRING`).
+    "native_types": list[str],
+    # MIME types of what the clipboard now holds, e.g. `text/plain`,
+    # `image/png`, `text/uri-list` for files — the same names on every OS.
+    # Enough to filter on without reading anything.
     "types": list[str],
 })
 
