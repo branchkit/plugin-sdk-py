@@ -26,20 +26,8 @@ from .actor import get_current_actor
 from .correlation import get_current_correlation, reset_correlation, set_correlation
 from .origin import EventOrigin, get_current_event_origin, reset_event_origin, set_event_origin
 from .log import log
+from .topic import matches_topic
 
-
-def matches_topic(pattern: str, event_type: str) -> bool:
-    """Does `event_type` match `pattern`, where `*` is exactly one
-    dot-separated segment? Mirrors the actuator's `event_bus::matches_topic`,
-    which is what actually gates delivery — the two must agree or a plugin's
-    own routing disagrees with what it receives."""
-    if pattern == event_type:
-        return True
-    pat = pattern.split(".")
-    evt = event_type.split(".")
-    if len(pat) != len(evt):
-        return False
-    return all(p == "*" or p == e for p, e in zip(pat, evt))
 
 # Mirrors the Go SDK's `oversizedFrameBytes` — keep the SDKs in step so the
 # tripwire fires at the same size whichever SDK a plugin uses.
@@ -304,8 +292,11 @@ class PluginCore:
 
     def on_pattern(self, pattern: str, fn: Callable | None = None):
         """Register a listener for every notification whose method matches
-        `pattern`, where `*` stands for exactly one dot-separated segment —
-        the same language `consumes.events` uses in the manifest.
+        `pattern`, where `*` stands for exactly one dot-separated segment and
+        `**` for zero or more — the same language `consumes.events` uses in
+        the manifest. `ext.acme.**` hears every depth under the vendor,
+        including the bare `ext.acme`; `**` alone hears everything the
+        manifest admits.
 
         Needed whenever a plugin subscribes to a namespace instead of a name:
         `on` keys listeners by exact method, so a manifest subscription like

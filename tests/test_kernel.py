@@ -384,6 +384,13 @@ class TestPatternListeners(unittest.TestCase):
             ("scripts.*", "scripts.headphones.charged", False),
             ("scripts.*.*", "scripts.headphones", False),
             ("scripts.*.*", "browser.tab.opened", False),
+            # `**` is zero or more whole segments.
+            ("scripts.**", "scripts.headphones.charged", True),
+            ("scripts.**", "scripts", True),
+            ("**.charged", "scripts.headphones.charged", True),
+            ("scripts.**.charged", "scripts.charged", True),
+            ("scripts.**", "scriptsx.headphones", False),
+            ("scripts.**b", "scripts.b", False),
         ]:
             self.assertEqual(matches_topic(pattern, event), want, f"{pattern} vs {event}")
 
@@ -403,6 +410,24 @@ class TestPatternDelivery(unittest.IsolatedAsyncioTestCase):
         core.on_pattern("scripts.*.*", lambda t, p: seen.append(t))
         await core._invoke2(core._pattern_listeners[0][1], "scripts.headphones.charged", {})
         self.assertEqual(seen, ["scripts.headphones.charged"])
+
+    async def test_globstar_pattern_listener_hears_every_depth(self):
+        core = PluginCore()
+        seen = []
+        core.on_pattern("ext.acme.**", lambda t, p: seen.append(t))
+        core._ready.set()
+        pump = asyncio.ensure_future(core._drain_notifications())
+        try:
+            for method in ["ext.acme", "ext.acme.gaze", "ext.acme.gaze.left_eye", "ext.acmeister.x", "ext.other.gaze"]:
+                core._route_message({"jsonrpc": "2.0", "method": method, "params": {}})
+            for _ in range(200):
+                if len(seen) >= 3:
+                    break
+                await asyncio.sleep(0.005)
+            await asyncio.sleep(0.02)
+        finally:
+            pump.cancel()
+        self.assertEqual(seen, ["ext.acme", "ext.acme.gaze", "ext.acme.gaze.left_eye"])
 
     async def test_async_pattern_listener_is_awaited(self):
         core = PluginCore()

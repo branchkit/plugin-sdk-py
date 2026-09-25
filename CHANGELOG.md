@@ -5,6 +5,17 @@ git history.
 
 ## Unreleased
 
+### `**` in pattern listeners
+
+- `on_pattern` now takes `**`, zero or more whole segments, matching the
+  platform's subscription grammar: `ext.acme.**` hears every depth under the
+  vendor (the bare `ext.acme` included), and `_platform.**` every platform
+  event. `*` is unchanged — exactly one segment. Wildcards are whole segments
+  only, so `a**` stays literal text. Before this, a `**` pattern matched
+  nothing but its own literal text. The matcher runs the platform's topic
+  conformance table (a copy ships beside the tests), so it answers exactly
+  what delivery does.
+
 ### Who sent this event
 
 - `plugin.current_event_origin()` (and `get_current_event_origin()`) returns
