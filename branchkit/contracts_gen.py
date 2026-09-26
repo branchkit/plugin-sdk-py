@@ -584,6 +584,7 @@ METHOD_PIPELINES_RUN = "pipelines.run"  # since 0.1.0
 METHOD_PIPELINES_STATUS = "pipelines.status"  # since 0.1.0
 METHOD_PIPELINES_STOP = "pipelines.stop"  # since 0.1.0
 METHOD_PIPELINES_WARM = "pipelines.warm"  # since 0.1.0
+METHOD_PLATFORM_PROFILE = "platform.profile"  # since 0.2.0
 METHOD_PLUGIN_DATA_EXPORT = "plugin.data.export"  # since 0.1.0
 METHOD_PLUGIN_DEBUG = "plugin.debug"  # since 0.1.0
 METHOD_PLUGIN_REPORT_HEALTH = "plugin.report_health"  # since 0.1.0

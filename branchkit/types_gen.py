@@ -1533,6 +1533,18 @@ TtsVoice = TypedDict("TtsVoice", {
     "quality": str,
 })
 
+UnavailableOperation = TypedDict("UnavailableOperation", {
+    # Prose, for a session refusal: the session's own explanation.
+    "detail": NotRequired[str],
+    # The operation's method name.
+    "op": str,
+    # Why, as a refusal's `data.reason` says it: `platform_no_analogue`,
+    # `platform_unported` or `session_unsupported` (each SDK's
+    # `UNSUPPORTED_REASON_*` constants). A string, as on a refusal, so an
+    # SDK older than a new reason still reads the profile.
+    "reason": str,
+})
+
 UsbDevice = TypedDict("UsbDevice", {
     "manufacturer": NotRequired[str],
     "name": str,
@@ -5687,6 +5699,22 @@ PipelinesWarmRequest = TypedDict("PipelinesWarmRequest", {
 
 PipelinesWarmResponse = TypedDict("PipelinesWarmResponse", {
     "warmed": bool,
+})
+
+PlatformProfileResponse = TypedDict("PlatformProfileResponse", {
+    # The host process serving host-dependent operations and events.
+    "host": str,
+    # `macos`, `linux` or `windows`.
+    "os": str,
+    # On Linux, the desktop session the window tools drive: `x11`, `sway`,
+    # `gnome` or `other_wayland`. Absent on other systems.
+    "session": NotRequired[str],
+    # Every operation a plugin can call that would be refused here, with
+    # the reason and detail the refusal itself carries. An operation not
+    # listed runs here.
+    "unavailable": list["UnavailableOperation"],
+    # Host events (`_platform.*`) that are never delivered here.
+    "unobservable_events": list[str],
 })
 
 PluginDataExportRequest = TypedDict("PluginDataExportRequest", {

@@ -585,6 +585,7 @@ from .contracts_gen import (
     METHOD_PIPELINES_STATUS,
     METHOD_PIPELINES_STOP,
     METHOD_PIPELINES_WARM,
+    METHOD_PLATFORM_PROFILE,
     METHOD_PLUGIN_DATA_EXPORT,
     METHOD_PLUGIN_DEBUG,
     METHOD_PLUGIN_REPORT_HEALTH,
@@ -971,6 +972,7 @@ if TYPE_CHECKING:
         PipelinesStatusResponse,
         PipelinesStopResponse,
         PipelinesWarmResponse,
+        PlatformProfileResponse,
         PluginDataExportResponse,
         PluginLogLevel,
         PrinterInfo,
@@ -5712,6 +5714,11 @@ class MethodsMixin:
         if param_overrides is not None:
             params["param_overrides"] = param_overrides
         result = await self.call(METHOD_PIPELINES_WARM, params)
+        return result
+
+    async def platform_profile(self) -> PlatformProfileResponse:
+        """Which operations and host events this machine cannot provide, and why — ask before calling instead of handling a refusal"""
+        result = await self.call(METHOD_PLATFORM_PROFILE)
         return result
 
     async def plugin_data_export(self, path: str, filename: str | None = None) -> PluginDataExportResponse:
