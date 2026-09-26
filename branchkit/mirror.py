@@ -5,13 +5,18 @@ owner bug.
 
 Freshness model: fetches once at on_ready (the documented earliest safe
 point to read other plugins' collections); refetches on
-`_platform.collection.updated` for this collection (the manifest must
-subscribe to that event pattern in `consumes.events`); an unpopulated
+`_platform.collection.updated` for this collection, which the platform
+delivers for every collection the manifest declares (`provides.collections`
+or `consumes.collections`) with no `consumes.events` line, and which a
+plugin that falls behind still receives, the newest per changed collection;
+mirroring an undeclared collection needs the subscription. on_change fires
+only when the refetched data differs from the snapshot. An unpopulated
 collection (the boot race) is NOT an error — the mirror stays not-ready
 and the update event completes it."""
 
 from __future__ import annotations
 
+import json
 from typing import Callable
 
 from .log import log
@@ -31,6 +36,10 @@ class CollectionMirror:
         self._name = name
         self._compacted = compacted
         self._data = None
+        # `_data` serialized, to tell a real change from an identical
+        # refetch. Compared as JSON text, not with ==, which would call
+        # `1` and `true` (or `1` and `1.0`) the same value.
+        self._serialized: str | None = None
         self._ready = False
         self._on_change: list[Callable] = []
 
@@ -45,7 +54,9 @@ class CollectionMirror:
         return self._data
 
     def on_change(self, fn: Callable) -> None:
-        """Register a callback fired after every successful refresh."""
+        """Register a callback fired after every refresh that changed the
+        snapshot; a refetch that returns the data already held fires
+        nothing."""
         self._on_change.append(fn)
 
     async def refresh(self) -> None:
@@ -74,7 +85,11 @@ class CollectionMirror:
             if not self._ready:
                 return  # boot race — the update event will complete the mirror
             data = []
+        serialized = json.dumps(data)
+        if self._ready and serialized == self._serialized:
+            return  # nothing new: the same data is not a change
         self._data = data
+        self._serialized = serialized
         self._ready = True
         for fn in list(self._on_change):
             fn()
