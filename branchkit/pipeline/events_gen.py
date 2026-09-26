@@ -41,6 +41,7 @@ def is_valid_ext_event_type(t: str) -> bool:
 MODELS_DIR_ENV = "BRANCHKIT_MODELS_DIR"
 DATA_DIR_ENV = "BRANCHKIT_STAGE_DATA"
 
+# What a stage declares about itself in its handshake: what it is, how it runs, and the events it emits, consumes and accepts as configuration.
 Capability = TypedDict("Capability", {
     # Custom event types this stage accepts as CONFIGURATION from the plugin
     # that ships it — exact `ext.<vendor>.<name>` types, or `ext.<vendor>.*`
