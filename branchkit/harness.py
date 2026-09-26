@@ -176,8 +176,18 @@ class Harness:
     def set_world(self, world: Any) -> None:
         self._call("test.set_world", world)
 
-    def inject_event(self, event_type: str, data: Any) -> None:
-        self._call("test.inject_event", {"event_type": event_type, "data": data})
+    def inject_event(self, event_type: str, data: Any, source: str | None = None) -> None:
+        """Fire an event on the bus.
+
+        The sender is the harness itself unless ``source`` names one, so a
+        listener that checks its sender (``Plugin.current_event_origin()``, or a
+        subscription naming a source) can be tested. A source naming no loaded
+        plugin gets a stand-in emitter and the grants a user would have given.
+        """
+        params: dict[str, Any] = {"event_type": event_type, "data": data}
+        if source:
+            params["source"] = source
+        self._call("test.inject_event", params)
 
     def get_hud(self, channel: str) -> dict:
         return self._call("test.get_hud", {"channel": channel})
