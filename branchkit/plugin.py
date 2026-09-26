@@ -64,6 +64,20 @@ class RecordingDisabledError(RpcCallError):
     `errors.Is(err, ErrRecordingDisabled)` and TS's `instanceof`."""
 
 
+class CallTimeoutError(TimeoutError):
+    """What `call` raises when no answer arrives in time. It is not a
+    failure: the actuator may have carried the call out and only the answer
+    is missing, so a write that timed out may have been committed. Tell it
+    apart from a definite refusal (RpcCallError) with isinstance, and for a
+    write, re-read or re-assert rather than assume either outcome. A
+    TimeoutError subclass, so `except TimeoutError` keeps catching it."""
+
+    def __init__(self, method: str, timeout: float):
+        super().__init__(f'rpc call "{method}" timed out after {timeout}s')
+        self.method = method
+        self.timeout = timeout
+
+
 class UnsupportedError(RpcCallError):
     """Sentinel subclass for an op this platform or desktop session cannot
     run at all — a well-formed call to a capability absent here (kind
@@ -332,7 +346,8 @@ class PluginCore:
     async def call(self, method: str, params: Any = None, timeout: float | None = None) -> Any:
         """Send a request to the actuator and wait for the response.
         Default timeout 10s (T1); override per call (T3). Raises
-        RpcCallError for wire errors, TimeoutError on expiry."""
+        RpcCallError for wire errors, CallTimeoutError (a TimeoutError) on
+        expiry."""
         if self._detached:
             raise DetachedError(method)
         if self._closed:
@@ -359,9 +374,7 @@ class PluginCore:
             return await asyncio.wait_for(fut, 10.0 if timeout is None else timeout)
         except asyncio.TimeoutError:
             self._pending.pop(call_id, None)
-            raise TimeoutError(
-                f'rpc call "{method}" timed out after {10.0 if timeout is None else timeout}s'
-            ) from None
+            raise CallTimeoutError(method, 10.0 if timeout is None else timeout) from None
 
     def call_sync(self, method: str, params: Any = None, timeout: float | None = None) -> Any:
         """`call` for plain-`def` handlers, which run off the loop in a
