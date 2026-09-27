@@ -1695,8 +1695,11 @@ WorldModel = TypedDict("WorldModel", {
     "active_window_id": NotRequired[str],
     # default []
     "displays": list["DisplayInfo"],
-    # Active keyboard layout ID (e.g. "com.apple.keylayout.US"), or EMPTY
-    # when this platform cannot report one — today, anywhere but macOS.
+    # Active keyboard layout ID, or EMPTY when the platform cannot report
+    # one. macOS: the input source ("com.apple.keylayout.US"). Linux: the
+    # XKB layout in use ("us", "de(nodeadkeys)"), empty with no X server
+    # or XWayland to ask. Windows: the foreground window's layout KLID
+    # ("00000409").
     #
     # Empty is a sentinel, not a layout. The platform's own change
     # detection already treats it that way (`world_poller` will not report a
