@@ -3514,7 +3514,7 @@ class MethodsMixin:
         return result
 
     async def native_key_repeat_delay(self) -> float:
-        """Get initial key repeat delay"""
+        """Get initial key repeat delay (seconds)"""
         result = await self.call(METHOD_NATIVE_KEY_REPEAT_DELAY)
         return result
 
@@ -4765,7 +4765,7 @@ class MethodsMixin:
         return bool((result or {}).get("ok", False))
 
     async def native_set_key_repeat_delay(self, delay: float) -> bool:
-        """Set initial key repeat delay
+        """Set initial key repeat delay (seconds)
 
         delay: wire double
         """
@@ -4776,7 +4776,7 @@ class MethodsMixin:
         return bool((result or {}).get("ok", False))
 
     async def native_set_key_repeat_rate(self, rate: float) -> bool:
-        """Set key repeat rate
+        """Set key repeat rate (keys per second)
 
         rate: wire double
         """
