@@ -173,6 +173,12 @@ class PluginCore:
         # handlers calling notify(); one lock keeps frames unfragmented.
         self._write_lock = threading.Lock()
 
+        # What this machine can do, from on_ready's params or the first
+        # supports() call. Registered before any plugin listener, so a
+        # plugin's own on_ready already sees platform().
+        self._platform: dict | None = None
+        self.on("on_ready", self._take_platform)
+
         # Built-in introspection: the actuator calls list_action_types after
         # readiness to validate handlers against the manifest's
         # `action_types`; list_methods feeds the settings-HTML validator.
@@ -340,6 +346,42 @@ class PluginCore:
             return deco
         self.on("on_ready", lambda params: fn())
         return fn
+
+    def platform(self) -> "dict | None":
+        """What this machine can do (a `PlatformProfileResponse`): the OS,
+        the Linux desktop session, the host, every operation a call to which
+        would be refused here (with the refusal's own reason), and the host
+        events that never fire. The actuator sends it with on_ready, so it is
+        set by the time an on_ready callback runs; None before, unless
+        supports() has already fetched it."""
+        return self._platform
+
+    async def supports(self, method: str) -> bool:
+        """Whether calling `method` can succeed on this machine, as far as
+        the platform goes: False only when the profile lists it as
+        unavailable. Asking first lets a plugin degrade deliberately — hide
+        a command, pick another route — instead of handling a refusal after
+        the fact. A method the profile does not list is supported, including
+        one this SDK has never heard of.
+
+        Before on_ready this fetches the profile once (platform.profile) and
+        keeps it; if that fails it answers True, and the call itself will
+        say."""
+        if self._platform is None:
+            try:
+                fetched = await self.platform_profile()  # generated wrapper
+            except Exception:
+                return True
+            if self._platform is None:
+                self._platform = fetched
+        return not any(u.get("op") == method for u in self._platform.get("unavailable", []))
+
+    def _take_platform(self, params) -> None:
+        # An actuator older than the profile sends a bare on_ready;
+        # supports() then fetches it on first use.
+        profile = params.get("platform") if isinstance(params, dict) else None
+        if profile:
+            self._platform = profile
 
     # --- Outbound ---
 
