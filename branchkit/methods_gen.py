@@ -4395,7 +4395,7 @@ class MethodsMixin:
         return result
 
     async def native_run_applescript(self, script: str) -> NativeRunApplescriptResponse:
-        """Execute an AppleScript via osascript
+        """Execute an AppleScript via osascript. Exists only on macOS; elsewhere it is refused with platform_no_analogue
 
         script: AppleScript source to execute via `osascript`.
         """
