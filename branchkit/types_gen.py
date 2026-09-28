@@ -4430,6 +4430,10 @@ NativePowerAdapterConnectedResponse = TypedDict("NativePowerAdapterConnectedResp
     "enabled": bool,
 })
 
+NativePowerModeResponse = TypedDict("NativePowerModeResponse", {
+    "mode": str,
+})
+
 NativePowerSourceResponse = TypedDict("NativePowerSourceResponse", {
     "source": str,
 })
@@ -5086,6 +5090,14 @@ NativeSetOnScreenKeyboardEnabledResponse = TypedDict("NativeSetOnScreenKeyboardE
     "ok": bool,
 })
 
+NativeSetPowerModeRequest = TypedDict("NativeSetPowerModeRequest", {
+    "mode": str,
+})
+
+NativeSetPowerModeResponse = TypedDict("NativeSetPowerModeResponse", {
+    "ok": bool,
+})
+
 NativeSetScreenReaderEnabledRequest = TypedDict("NativeSetScreenReaderEnabledRequest", {
     "enabled": bool,
 })
@@ -5191,6 +5203,14 @@ NativeSetURLSchemeHandlerRequest = TypedDict("NativeSetURLSchemeHandlerRequest",
 })
 
 NativeSetURLSchemeHandlerResponse = TypedDict("NativeSetURLSchemeHandlerResponse", {
+    "ok": bool,
+})
+
+NativeSetVisualAlertsEnabledRequest = TypedDict("NativeSetVisualAlertsEnabledRequest", {
+    "enabled": bool,
+})
+
+NativeSetVisualAlertsEnabledResponse = TypedDict("NativeSetVisualAlertsEnabledResponse", {
     "ok": bool,
 })
 
@@ -5572,6 +5592,10 @@ NativeUserNameResponse = TypedDict("NativeUserNameResponse", {
 
 NativeUserShellResponse = TypedDict("NativeUserShellResponse", {
     "shell": str,
+})
+
+NativeVisualAlertsEnabledResponse = TypedDict("NativeVisualAlertsEnabledResponse", {
+    "enabled": bool,
 })
 
 NativeVolumeResponse = TypedDict("NativeVolumeResponse", {

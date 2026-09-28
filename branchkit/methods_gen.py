@@ -378,6 +378,7 @@ from .contracts_gen import (
     METHOD_NATIVE_PLAY_SOUND,
     METHOD_NATIVE_POLL_BURST,
     METHOD_NATIVE_POWER_ADAPTER_CONNECTED,
+    METHOD_NATIVE_POWER_MODE,
     METHOD_NATIVE_POWER_SOURCE,
     METHOD_NATIVE_PRESS_AND_HOLD_ENABLED,
     METHOD_NATIVE_PREVENT_SLEEP,
@@ -482,6 +483,7 @@ from .contracts_gen import (
     METHOD_NATIVE_SET_MOUSE_SPEED,
     METHOD_NATIVE_SET_NIGHT_SHIFT,
     METHOD_NATIVE_SET_ON_SCREEN_KEYBOARD_ENABLED,
+    METHOD_NATIVE_SET_POWER_MODE,
     METHOD_NATIVE_SET_SCREENSHOT_FORMAT,
     METHOD_NATIVE_SET_SCREENSHOT_INCLUDE_SHADOW,
     METHOD_NATIVE_SET_SCREENSHOT_LOCATION,
@@ -495,6 +497,7 @@ from .contracts_gen import (
     METHOD_NATIVE_SET_TEXT_SCALE,
     METHOD_NATIVE_SET_TRACKPAD_SPEED,
     METHOD_NATIVE_SET_URL_SCHEME_HANDLER,
+    METHOD_NATIVE_SET_VISUAL_ALERTS_ENABLED,
     METHOD_NATIVE_SET_VOLUME,
     METHOD_NATIVE_SET_WALLPAPER,
     METHOD_NATIVE_SET_WINDOW_ALPHA,
@@ -569,6 +572,7 @@ from .contracts_gen import (
     METHOD_NATIVE_USER_AVATAR,
     METHOD_NATIVE_USER_NAME,
     METHOD_NATIVE_USER_SHELL,
+    METHOD_NATIVE_VISUAL_ALERTS_ENABLED,
     METHOD_NATIVE_VOLUME,
     METHOD_NATIVE_VPN_STATUS,
     METHOD_NATIVE_WARP_CURSOR,
@@ -883,6 +887,7 @@ if TYPE_CHECKING:
         NativePinchToZoomResponse,
         NativePlayFeedbackWhenVolumeChangedResponse,
         NativePowerAdapterConnectedResponse,
+        NativePowerModeResponse,
         NativePowerSourceResponse,
         NativePressAndHoldEnabledResponse,
         NativePreventSleepResponse,
@@ -969,6 +974,7 @@ if TYPE_CHECKING:
         NativeUserAvatarResponse,
         NativeUserNameResponse,
         NativeUserShellResponse,
+        NativeVisualAlertsEnabledResponse,
         NativeVolumeResponse,
         NativeVpnStatusResponse,
         NativeWifiResponse,
@@ -4128,6 +4134,11 @@ class MethodsMixin:
         result = await self.call(METHOD_NATIVE_POWER_ADAPTER_CONNECTED)
         return result
 
+    async def native_power_mode(self) -> NativePowerModeResponse:
+        """Get the power mode: saving energy, balanced, or favouring performance. Returns one of: power-saver, balanced, performance"""
+        result = await self.call(METHOD_NATIVE_POWER_MODE)
+        return result
+
     async def native_power_source(self) -> NativePowerSourceResponse:
         """Get current power source type. Returns one of: AC, Battery, UPS, Unknown"""
         result = await self.call(METHOD_NATIVE_POWER_SOURCE)
@@ -4924,6 +4935,14 @@ class MethodsMixin:
         result = await self.call(METHOD_NATIVE_SET_ON_SCREEN_KEYBOARD_ENABLED, params)
         return bool((result or {}).get("ok", False))
 
+    async def native_set_power_mode(self, mode: str) -> bool:
+        """Set the power mode (power-saver, balanced or performance); false when refused or not offered"""
+        params: dict[str, Any] = {
+            "mode": mode,
+        }
+        result = await self.call(METHOD_NATIVE_SET_POWER_MODE, params)
+        return bool((result or {}).get("ok", False))
+
     async def native_set_screen_reader_enabled(self, enabled: bool) -> bool:
         """Turn the screen reader on or off (VoiceOver, Orca, Narrator); false when it did not change"""
         params: dict[str, Any] = {
@@ -5036,6 +5055,14 @@ class MethodsMixin:
             "scheme": scheme,
         }
         result = await self.call(METHOD_NATIVE_SET_URL_SCHEME_HANDLER, params)
+        return bool((result or {}).get("ok", False))
+
+    async def native_set_visual_alerts_enabled(self, enabled: bool) -> bool:
+        """Turn screen flashing on alert sounds on or off; false when it did not change"""
+        params: dict[str, Any] = {
+            "enabled": enabled,
+        }
+        result = await self.call(METHOD_NATIVE_SET_VISUAL_ALERTS_ENABLED, params)
         return bool((result or {}).get("ok", False))
 
     async def native_set_volume(self, volume: float) -> None:
@@ -5511,6 +5538,11 @@ class MethodsMixin:
     async def native_user_shell(self) -> NativeUserShellResponse:
         """Get the current user's login shell path. Exists only on macOS and Linux; elsewhere it is refused with platform_no_analogue"""
         result = await self.call(METHOD_NATIVE_USER_SHELL)
+        return result
+
+    async def native_visual_alerts_enabled(self) -> NativeVisualAlertsEnabledResponse:
+        """Check if the screen flashes when an alert sound plays"""
+        result = await self.call(METHOD_NATIVE_VISUAL_ALERTS_ENABLED)
         return result
 
     async def native_volume(self) -> NativeVolumeResponse:
