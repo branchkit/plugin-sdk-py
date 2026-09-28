@@ -219,11 +219,24 @@ CHANGELOG.md names every break with its migration. The Go
 implement the same surface and are held to it by one cross-language
 conformance suite.
 
-## Developing the SDK
+## Contributing
+
+[Issues](https://github.com/branchkit/plugin-sdk-py/issues/new/choose) are welcome:
+a bug in the SDK or its docs, or, most useful, something you tried to build
+and couldn't, with what you needed from the platform. You don't need to know
+how BranchKit is built to tell us that.
+
+We don't take pull requests for code yet. Much of each SDK is generated from
+BranchKit's platform contracts, which aren't public, and the three are kept in
+step across Go, TypeScript and Python, so the maintainers make each change in
+all three at once. Files ending in `_gen.py` are generated; don't edit them by hand.
+
+Found a security problem, such as a way around the sandbox or a permission
+check? Please [report it privately](https://github.com/branchkit/plugin-sdk-py/security/advisories/new),
+not in a public issue.
+
+To run this SDK's own tests:
 
 ```sh
 python3 -m unittest discover -s tests
 ```
-
-Files ending in `_gen.py` are generated from the platform's contracts; change
-the contract, not the file.
