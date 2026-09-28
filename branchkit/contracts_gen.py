@@ -174,6 +174,7 @@ METHOD_NATIVE_CURSOR_INFO = "native.cursor_info"  # since 0.1.0
 METHOD_NATIVE_CURSOR_SHAKE_TO_LOCATE = "native.cursor_shake_to_locate"  # since 0.1.0
 METHOD_NATIVE_DARK_MODE = "native.dark_mode"  # since 0.1.0
 METHOD_NATIVE_DATE_FORMAT = "native.date_format"  # since 0.1.0
+METHOD_NATIVE_DBUS_CALL = "native.dbus_call"  # since 0.2.0
 METHOD_NATIVE_DEFAULT_APP_FOR_UTI = "native.default_app_for_uti"  # since 0.1.0
 METHOD_NATIVE_DEFAULT_BROWSER = "native.default_browser"  # since 0.1.0
 METHOD_NATIVE_DEFAULT_EMAIL_CLIENT = "native.default_email_client"  # since 0.1.0

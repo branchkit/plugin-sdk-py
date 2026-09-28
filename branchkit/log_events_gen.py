@@ -36,6 +36,7 @@ LOG_EVENT_NATIVE_HID_LIFECYCLE = "native.hid_lifecycle"
 LOG_EVENT_NATIVE_WINDOW_SKIPPED = "native.window_skipped"
 LOG_EVENT_NATIVE_WORLD_POLLER_EVENT = "native.world_poller_event"
 LOG_EVENT_OPERATION_COMPLETED = "operation.completed"
+LOG_EVENT_PLUGIN_DBUS_CALL = "plugin.dbus_call"
 LOG_EVENT_PLUGIN_DEGRADED = "plugin.degraded"
 LOG_EVENT_PLUGIN_DIAGNOSTIC = "plugin.diagnostic"
 LOG_EVENT_PLUGIN_EXITED = "plugin.exited"
@@ -109,6 +110,7 @@ LOG_EVENT_REGISTRY: dict[str, LogEventMeta] = {
     "native.window_skipped": {"name": "native.window_skipped", "summary": "World poller skipped a non-standard window (debug-level).", "since": "0.1.0", "source": "native", "severity": "debug", "redaction": "none"},
     "native.world_poller_event": {"name": "native.world_poller_event", "summary": "World poller lifecycle event (started, seeded, batch processed, idle).", "since": "0.1.0", "source": "native", "severity": "debug", "redaction": "none"},
     "operation.completed": {"name": "operation.completed", "summary": "An operation handler completed execution.", "since": "0.1.0", "source": "dispatch", "severity": "debug", "redaction": "none"},
+    "plugin.dbus_call": {"name": "plugin.dbus_call", "summary": "A plugin called (or was refused) a D-Bus method through native.dbus_call: allowed, failed, denied (not declared), off (switched off by the user) or forbidden (no grant can reach it). The method and argument signature only. Audit-eligible.", "since": "0.2.0", "source": "plugins", "severity": "info", "redaction": "full"},
     "plugin.degraded": {"name": "plugin.degraded", "summary": "A plugin is running but not fully working — its RPC channel hit the consecutive-timeout threshold (reason absent), it stopped reading its stdin (the platform's reason), or it reported the fault itself via plugin.report_health (its own reason).", "since": "0.1.0", "source": "plugins", "severity": "warn", "redaction": "full"},
     "plugin.diagnostic": {"name": "plugin.diagnostic", "summary": "A plugin emitted a warn- or error-level diagnostic via plugin.debug; cross-posted to actuator.log so plugin-level failures interleave with the actuator's view of dispatch / coordination.", "since": "0.2.0", "source": "plugins", "severity": "warn", "redaction": "full"},
     "plugin.exited": {"name": "plugin.exited", "summary": "A managed plugin process exited (clean or crashed).", "since": "0.1.0", "source": "plugins", "severity": "info", "redaction": "none"},

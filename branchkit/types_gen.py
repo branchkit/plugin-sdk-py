@@ -3414,6 +3414,38 @@ NativeDateFormatResponse = TypedDict("NativeDateFormatResponse", {
     "value": NotRequired[str],
 })
 
+NativeDbusCallRequest = TypedDict("NativeDbusCallRequest", {
+    # Opaque by design: D-Bus values are typed by `signature` at run time,
+    # so no static type can describe them. One JSON value per argument,
+    # in the form its type takes: integers,
+    # numbers, booleans and strings as themselves; an array for `a…` and
+    # `(…)`; an object for `a{…}`; a variant as
+    # `{"signature": "d", "value": 0.5}` or a plain string, boolean or
+    # number.
+    # default []
+    "args": NotRequired[list[Any]],
+    # `session` (the default) or `system` (Properties.Get / GetAll only).
+    # default null
+    "bus": NotRequired[str],
+    "interface": str,
+    "method": str,
+    # The object path (`/org/mpris/MediaPlayer2`).
+    "path": str,
+    # The well-known service name (`org.mpris.MediaPlayer2.spotify`).
+    "service": str,
+    # The arguments' D-Bus signature (`su`); empty or absent for none.
+    # default null
+    "signature": NotRequired[str],
+})
+
+NativeDbusCallResponse = TypedDict("NativeDbusCallResponse", {
+    # The reply's D-Bus signature; empty when it carries nothing.
+    "signature": str,
+    # Opaque by design, typed by `signature` at run time: one JSON value
+    # per reply value, a variant unwrapped to its value.
+    "values": list[Any],
+})
+
 NativeDefaultAppForUtiRequest = TypedDict("NativeDefaultAppForUtiRequest", {
     "uti": str,
 })
