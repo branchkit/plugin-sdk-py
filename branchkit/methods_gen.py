@@ -2329,7 +2329,7 @@ class MethodsMixin:
         return result
 
     async def native_ax_perform_action(self, action: str, element: "AccessibleRef") -> bool:
-        """Perform an action on an accessibility element"""
+        """Perform an action on an accessibility element: press (its default action, what a click does), toggle, focus, expand, collapse, increment, decrement, scroll_into_view, show_menu, or one of the element's own actions by its OS name. The element's actions list says which it offers"""
         params: dict[str, Any] = {
             "action": action,
             "element": element,
@@ -2351,7 +2351,7 @@ class MethodsMixin:
         return result
 
     async def native_ax_set_attribute(self, attribute: str, element: "AccessibleRef", value: Any) -> bool:
-        """Set an attribute on an accessibility element"""
+        """Set an accessibility element's value (text, or a number for a slider or spin button) or focus it (focused: true). Returns whether it took"""
         params: dict[str, Any] = {
             "attribute": attribute,
             "element": element,
