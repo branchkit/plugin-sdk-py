@@ -2970,8 +2970,11 @@ NativeAxElementTreeRequest = TypedDict("NativeAxElementTreeRequest", {
 })
 
 NativeAxObserveRequest = TypedDict("NativeAxObserveRequest", {
+    # The notifications wanted, from the portable vocabulary; none means
+    # all of them. An unknown name is refused.
     # default []
     "notifications": NotRequired[list[str]],
+    # The application to observe.
     # wire int32
     "pid": int,
 })
@@ -6444,6 +6447,26 @@ AudioDevicesChangedEventParams = TypedDict("AudioDevicesChangedEventParams", {
     "name": str,
     # CoreAudio device UID.
     "uid": str,
+})
+
+# Payload of the `_platform.ax.notification` event.
+AxNotificationEventParams = TypedDict("AxNotificationEventParams", {
+    # The element it happened to, as the tree operations describe one.
+    "element": "AccessibleElement",
+    # focus_changed, value_changed, name_changed, state_changed,
+    # children_changed, selection_changed or window_opened.
+    "notification": str,
+    # For state_changed: whether that state is now on.
+    "on": NotRequired[bool],
+    # The plugin holding the subscription. The event is ADDRESSED to it:
+    # what a user types into a field arrives as value_changed, so no other
+    # plugin receives it, whatever it holds.
+    "owner_plugin": str,
+    # For state_changed: the ARIA state that changed (checked, expanded,
+    # selected, pressed, disabled).
+    "state": NotRequired[str],
+    # The subscription `native.ax_observe` returned.
+    "subscription_id": str,
 })
 
 # Payload of the `_platform.ble.notification` event.

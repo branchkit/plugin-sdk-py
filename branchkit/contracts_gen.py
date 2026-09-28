@@ -638,6 +638,7 @@ HOOK_TRIAL_SAMPLES = "trial_samples"  # since 0.1.0
 EVENT_ACTION_EXECUTED = "_platform.action.executed"
 EVENT_APP_FOCUSED = "_platform.app.focused"
 EVENT_AUDIO_DEVICES_CHANGED = "_platform.audio_devices.changed"
+EVENT_AX_NOTIFICATION = "_platform.ax.notification"
 EVENT_BLE_NOTIFICATION = "_platform.ble.notification"
 EVENT_BLOB_UPDATED = "_platform.blob.updated"
 EVENT_CAPTURE_PROGRESS = "_platform.capture.progress"

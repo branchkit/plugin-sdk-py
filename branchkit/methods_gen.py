@@ -2315,10 +2315,13 @@ class MethodsMixin:
         return result
 
     async def native_ax_observe(self, pid: int, notifications: list[str] | None = None) -> NativeAxObserveResponse:
-        """Start observing AX notifications (STUB -- not yet implemented)
+        """Observe an application's accessibility changes. Notifications arrive as _platform.ax.notification, addressed to the calling plugin alone: focus_changed, value_changed, name_changed, state_changed, children_changed, selection_changed, window_opened (none named means all)
 
-        notifications: default []
-        pid: wire int32
+        notifications: The notifications wanted, from the portable vocabulary; none means
+            all of them. An unknown name is refused.
+            default []
+        pid: The application to observe.
+            wire int32
         """
         params: dict[str, Any] = {
             "pid": pid,
@@ -2361,7 +2364,7 @@ class MethodsMixin:
         return bool((result or {}).get("result", False))
 
     async def native_ax_unobserve(self, subscription_id: str) -> bool:
-        """Stop observing AX notifications (STUB)"""
+        """Stop observing accessibility changes. A plugin can end only its own subscriptions"""
         params: dict[str, Any] = {
             "subscription_id": subscription_id,
         }
