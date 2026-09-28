@@ -1,6 +1,6 @@
 """Semantic output helpers — parity with output.{go,ts}.
 
-The generated ``plugin.output_state(state)`` wrapper is the whole call; a
+The generated ``plugin.output_state(state=...)`` wrapper is the whole call; a
 plugin states what is true for the person (``OutputState``,
 ``OutputSection``, ``OutputItem`` in types_gen.py, ``OUTPUT_KIND_*`` /
 ``OUTPUT_URGENCY_*`` in closed_vocab_gen.py) and never sees a renderer. An

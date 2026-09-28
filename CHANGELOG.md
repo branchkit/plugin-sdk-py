@@ -5,6 +5,13 @@ git history.
 
 ## Unreleased
 
+### D-Bus calls (Linux)
+
+- `await plugin.native_dbus_call(service=..., path=..., interface=..., method=..., args=...)`
+  calls one D-Bus method the plugin declared in `requires.dbus.methods` and the
+  user switched on. Linux only; elsewhere the call fails with "D-Bus exists
+  only on Linux".
+
 ### Breaking: generated method parameters are keyword-only
 
 - Every generated method's parameters are now keyword-only:

@@ -44,7 +44,7 @@ def acting_for(actor: str | None):
     """Stamp `actor` on every RPC made inside the block.
 
         with acting_for("headphones.py"):
-            await plugin.dispatch(action)
+            await plugin.dispatch(action=action)
 
     Nested blocks restore the outer label on exit, so one hosted thing
     invoking another leaves the trail intact.
