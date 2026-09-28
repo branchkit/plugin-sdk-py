@@ -136,6 +136,7 @@ from .contracts_gen import (
     METHOD_NATIVE_BOLD_TEXT_ENABLED,
     METHOD_NATIVE_BOOT_VOLUME,
     METHOD_NATIVE_BORDERS,
+    METHOD_NATIVE_BOUNCE_KEYS,
     METHOD_NATIVE_BRIGHTNESS,
     METHOD_NATIVE_BUNDLE_FOR_REMOTE_PORT,
     METHOD_NATIVE_CALENDAR_EVENTS_RANGE,
@@ -317,6 +318,7 @@ from .contracts_gen import (
     METHOD_NATIVE_LOG_OUT,
     METHOD_NATIVE_LOW_POWER_MODE,
     METHOD_NATIVE_MAC_ADDRESS,
+    METHOD_NATIVE_MAGNIFIER_ENABLED,
     METHOD_NATIVE_MAXIMIZE_WINDOW,
     METHOD_NATIVE_MEASUREMENT_SYSTEM,
     METHOD_NATIVE_MEDIA_NEXT_TRACK,
@@ -333,6 +335,7 @@ from .contracts_gen import (
     METHOD_NATIVE_MODEL_NAME,
     METHOD_NATIVE_MOUNT_POINTS,
     METHOD_NATIVE_MOUSE_BUTTON_CLICK,
+    METHOD_NATIVE_MOUSE_KEYS,
     METHOD_NATIVE_MOUSE_SPEED,
     METHOD_NATIVE_MOVE_FILE,
     METHOD_NATIVE_MOVE_WINDOW_TO_DISPLAY,
@@ -358,6 +361,7 @@ from .contracts_gen import (
     METHOD_NATIVE_OCR_SCREEN,
     METHOD_NATIVE_OCR_SCREEN_REGION,
     METHOD_NATIVE_OCR_WINDOW,
+    METHOD_NATIVE_ON_SCREEN_KEYBOARD_ENABLED,
     METHOD_NATIVE_OPEN_APP_SETTINGS,
     METHOD_NATIVE_OPEN_FINDER_WINDOW,
     METHOD_NATIVE_OPEN_SYSTEM_SETTINGS,
@@ -427,6 +431,7 @@ from .contracts_gen import (
     METHOD_NATIVE_SCREEN_COUNT,
     METHOD_NATIVE_SCREEN_LOCK,
     METHOD_NATIVE_SCREEN_LOCKED,
+    METHOD_NATIVE_SCREEN_READER_ENABLED,
     METHOD_NATIVE_SCREEN_RESOLUTION,
     METHOD_NATIVE_SCREEN_SAVER_ASK_PASSWORD,
     METHOD_NATIVE_SCREEN_SAVER_DELAY,
@@ -450,6 +455,7 @@ from .contracts_gen import (
     METHOD_NATIVE_SET_AUDIO_OUTPUT_DEVICE,
     METHOD_NATIVE_SET_AUTO_REARRANGE_SPACES,
     METHOD_NATIVE_SET_BLUETOOTH_POWER,
+    METHOD_NATIVE_SET_BOUNCE_KEYS,
     METHOD_NATIVE_SET_BRIGHTNESS,
     METHOD_NATIVE_SET_COMPUTER_NAME,
     METHOD_NATIVE_SET_DARK_MODE,
@@ -470,16 +476,23 @@ from .contracts_gen import (
     METHOD_NATIVE_SET_INPUT_SOURCE,
     METHOD_NATIVE_SET_KEY_REPEAT_DELAY,
     METHOD_NATIVE_SET_KEY_REPEAT_RATE,
+    METHOD_NATIVE_SET_MAGNIFIER_ENABLED,
     METHOD_NATIVE_SET_MENU_BAR_AUTO_HIDE,
+    METHOD_NATIVE_SET_MOUSE_KEYS,
     METHOD_NATIVE_SET_MOUSE_SPEED,
     METHOD_NATIVE_SET_NIGHT_SHIFT,
+    METHOD_NATIVE_SET_ON_SCREEN_KEYBOARD_ENABLED,
     METHOD_NATIVE_SET_SCREENSHOT_FORMAT,
     METHOD_NATIVE_SET_SCREENSHOT_INCLUDE_SHADOW,
     METHOD_NATIVE_SET_SCREENSHOT_LOCATION,
+    METHOD_NATIVE_SET_SCREEN_READER_ENABLED,
     METHOD_NATIVE_SET_SCROLL_DIRECTION_NATURAL,
     METHOD_NATIVE_SET_SIDEBAR_ICON_SIZE,
+    METHOD_NATIVE_SET_SLOW_KEYS,
     METHOD_NATIVE_SET_STAGE_MANAGER,
+    METHOD_NATIVE_SET_STICKY_KEYS,
     METHOD_NATIVE_SET_TAP_TO_CLICK,
+    METHOD_NATIVE_SET_TEXT_SCALE,
     METHOD_NATIVE_SET_TRACKPAD_SPEED,
     METHOD_NATIVE_SET_URL_SCHEME_HANDLER,
     METHOD_NATIVE_SET_VOLUME,
@@ -528,6 +541,7 @@ from .contracts_gen import (
     METHOD_NATIVE_TEMPERATURE_UNIT,
     METHOD_NATIVE_TEMP_DIRECTORY,
     METHOD_NATIVE_TEXT_REPLACEMENTS,
+    METHOD_NATIVE_TEXT_SCALE,
     METHOD_NATIVE_THERMAL_STATE,
     METHOD_NATIVE_THREE_FINGER_DRAG,
     METHOD_NATIVE_THUNDERBOLT_DEVICES,
@@ -555,7 +569,6 @@ from .contracts_gen import (
     METHOD_NATIVE_USER_AVATAR,
     METHOD_NATIVE_USER_NAME,
     METHOD_NATIVE_USER_SHELL,
-    METHOD_NATIVE_VOICEOVER_ENABLED,
     METHOD_NATIVE_VOLUME,
     METHOD_NATIVE_VPN_STATUS,
     METHOD_NATIVE_WARP_CURSOR,
@@ -576,7 +589,6 @@ from .contracts_gen import (
     METHOD_NATIVE_XCODE_PATH,
     METHOD_NATIVE_XCODE_VERSION,
     METHOD_NATIVE_ZIP,
-    METHOD_NATIVE_ZOOM_ENABLED,
     METHOD_NETWORK_REQUEST_HOST,
     METHOD_OUTPUT_CLEAR,
     METHOD_OUTPUT_STATE,
@@ -734,6 +746,7 @@ if TYPE_CHECKING:
         NativeBluetoothPowerResponse,
         NativeBoldTextEnabledResponse,
         NativeBootVolumeResponse,
+        NativeBounceKeysResponse,
         NativeBrightnessResponse,
         NativeBundleForRemotePortResponse,
         NativeCalendarPermissionResponse,
@@ -843,6 +856,7 @@ if TYPE_CHECKING:
         NativeLocationEnabledResponse,
         NativeLowPowerModeResponse,
         NativeMacAddressResponse,
+        NativeMagnifierEnabledResponse,
         NativeMeasurementSystemResponse,
         NativeMemoryInfoResponse,
         NativeMemoryPressureResponse,
@@ -851,6 +865,7 @@ if TYPE_CHECKING:
         NativeMenuBarClockFormatResponse,
         NativeMicrophonePermissionResponse,
         NativeModelNameResponse,
+        NativeMouseKeysResponse,
         NativeNetworkBandwidthResponse,
         NativeNetworkDnsDomainResponse,
         NativeNetworkProxyEnabledResponse,
@@ -863,6 +878,7 @@ if TYPE_CHECKING:
         NativeNowPlayingResponse,
         NativeNumberFormatDecimalResponse,
         NativeObserveWindowsResponse,
+        NativeOnScreenKeyboardEnabledResponse,
         NativeOptimizedChargingResponse,
         NativePinchToZoomResponse,
         NativePlayFeedbackWhenVolumeChangedResponse,
@@ -894,6 +910,7 @@ if TYPE_CHECKING:
         NativeScreenCapturePermissionResponse,
         NativeScreenCountResponse,
         NativeScreenLockedResponse,
+        NativeScreenReaderEnabledResponse,
         NativeScreenResolutionResponse,
         NativeScreenSaverAskPasswordResponse,
         NativeScreenSaverStatusResponse,
@@ -952,14 +969,12 @@ if TYPE_CHECKING:
         NativeUserAvatarResponse,
         NativeUserNameResponse,
         NativeUserShellResponse,
-        NativeVoiceoverEnabledResponse,
         NativeVolumeResponse,
         NativeVpnStatusResponse,
         NativeWifiResponse,
         NativeWindowBoundsResponse,
         NativeXcodePathResponse,
         NativeXcodeVersionResponse,
-        NativeZoomEnabledResponse,
         NetworkInterface,
         NetworkRequestHostResponse,
         OcrRegion,
@@ -2531,6 +2546,11 @@ class MethodsMixin:
             params["frames"] = frames
         await self.call(METHOD_NATIVE_BORDERS, params)
 
+    async def native_bounce_keys(self) -> NativeBounceKeysResponse:
+        """Check if Bounce Keys is on (repeated presses of one key are ignored)"""
+        result = await self.call(METHOD_NATIVE_BOUNCE_KEYS)
+        return result
+
     async def native_brightness(self, display_id: int | None = None) -> NativeBrightnessResponse:
         """Get display brightness (0.0-1.0)
 
@@ -3688,6 +3708,11 @@ class MethodsMixin:
         result = await self.call(METHOD_NATIVE_MAC_ADDRESS)
         return result
 
+    async def native_magnifier_enabled(self) -> NativeMagnifierEnabledResponse:
+        """Check if the screen magnifier is on (Zoom, the GNOME magnifier, Magnifier)"""
+        result = await self.call(METHOD_NATIVE_MAGNIFIER_ENABLED)
+        return result
+
     async def native_maximize_window(self, window_id: str) -> bool:
         """Maximize window to fill screen"""
         params: dict[str, Any] = {
@@ -3786,6 +3811,11 @@ class MethodsMixin:
         if y is not None:
             params["y"] = y
         await self.call(METHOD_NATIVE_MOUSE_BUTTON_CLICK, params)
+
+    async def native_mouse_keys(self) -> NativeMouseKeysResponse:
+        """Check if Mouse Keys is on (the numeric keypad moves the pointer)"""
+        result = await self.call(METHOD_NATIVE_MOUSE_KEYS)
+        return result
 
     async def native_mouse_speed(self) -> float:
         """Get the mouse tracking speed (0.0-3.0)"""
@@ -3977,6 +4007,11 @@ class MethodsMixin:
         }
         result = await self.call(METHOD_NATIVE_OCR_WINDOW, params)
         return (result or {}).get("regions") or []
+
+    async def native_on_screen_keyboard_enabled(self) -> NativeOnScreenKeyboardEnabledResponse:
+        """Check if the on-screen keyboard is on"""
+        result = await self.call(METHOD_NATIVE_ON_SCREEN_KEYBOARD_ENABLED)
+        return result
 
     async def native_open_app_settings(self, bundle_id: str) -> None:
         """Open an app's preferences window"""
@@ -4450,6 +4485,11 @@ class MethodsMixin:
         result = await self.call(METHOD_NATIVE_SCREEN_LOCKED)
         return result
 
+    async def native_screen_reader_enabled(self) -> NativeScreenReaderEnabledResponse:
+        """Check if the screen reader is on (VoiceOver, Orca, Narrator)"""
+        result = await self.call(METHOD_NATIVE_SCREEN_READER_ENABLED)
+        return result
+
     async def native_screen_resolution(self) -> NativeScreenResolutionResponse:
         """Get primary display resolution as 'WxH'"""
         result = await self.call(METHOD_NATIVE_SCREEN_RESOLUTION)
@@ -4646,6 +4686,14 @@ class MethodsMixin:
         result = await self.call(METHOD_NATIVE_SET_BLUETOOTH_POWER, params)
         return bool((result or {}).get("ok", False))
 
+    async def native_set_bounce_keys(self, enabled: bool) -> bool:
+        """Turn Bounce Keys on or off (repeated presses of one key are ignored)"""
+        params: dict[str, Any] = {
+            "enabled": enabled,
+        }
+        result = await self.call(METHOD_NATIVE_SET_BOUNCE_KEYS, params)
+        return bool((result or {}).get("ok", False))
+
     async def native_set_brightness(self, brightness: float, display_id: int | None = None) -> None:
         """Set display brightness (0.0-1.0)
 
@@ -4826,12 +4874,28 @@ class MethodsMixin:
         result = await self.call(METHOD_NATIVE_SET_KEY_REPEAT_RATE, params)
         return bool((result or {}).get("ok", False))
 
+    async def native_set_magnifier_enabled(self, enabled: bool) -> bool:
+        """Turn the screen magnifier on or off; false when it did not change"""
+        params: dict[str, Any] = {
+            "enabled": enabled,
+        }
+        result = await self.call(METHOD_NATIVE_SET_MAGNIFIER_ENABLED, params)
+        return bool((result or {}).get("ok", False))
+
     async def native_set_menu_bar_auto_hide(self, enabled: bool) -> bool:
         """Enable or disable menu bar auto-hide. Exists only on macOS; elsewhere it is refused with platform_no_analogue"""
         params: dict[str, Any] = {
             "enabled": enabled,
         }
         result = await self.call(METHOD_NATIVE_SET_MENU_BAR_AUTO_HIDE, params)
+        return bool((result or {}).get("ok", False))
+
+    async def native_set_mouse_keys(self, enabled: bool) -> bool:
+        """Turn Mouse Keys on or off (the numeric keypad moves the pointer)"""
+        params: dict[str, Any] = {
+            "enabled": enabled,
+        }
+        result = await self.call(METHOD_NATIVE_SET_MOUSE_KEYS, params)
         return bool((result or {}).get("ok", False))
 
     async def native_set_mouse_speed(self, speed: float) -> bool:
@@ -4851,6 +4915,22 @@ class MethodsMixin:
             "enabled": enabled,
         }
         await self.call(METHOD_NATIVE_SET_NIGHT_SHIFT, params)
+
+    async def native_set_on_screen_keyboard_enabled(self, enabled: bool) -> bool:
+        """Show or hide the on-screen keyboard; false when it did not change"""
+        params: dict[str, Any] = {
+            "enabled": enabled,
+        }
+        result = await self.call(METHOD_NATIVE_SET_ON_SCREEN_KEYBOARD_ENABLED, params)
+        return bool((result or {}).get("ok", False))
+
+    async def native_set_screen_reader_enabled(self, enabled: bool) -> bool:
+        """Turn the screen reader on or off (VoiceOver, Orca, Narrator); false when it did not change"""
+        params: dict[str, Any] = {
+            "enabled": enabled,
+        }
+        result = await self.call(METHOD_NATIVE_SET_SCREEN_READER_ENABLED, params)
+        return bool((result or {}).get("ok", False))
 
     async def native_set_screenshot_format(self, format: str) -> bool:
         """Set screenshot file format (png/jpg/pdf/tiff). Exists only on macOS; elsewhere it is refused with platform_no_analogue"""
@@ -4895,6 +4975,14 @@ class MethodsMixin:
         result = await self.call(METHOD_NATIVE_SET_SIDEBAR_ICON_SIZE, params)
         return bool((result or {}).get("ok", False))
 
+    async def native_set_slow_keys(self, enabled: bool) -> bool:
+        """Turn Slow Keys on or off (a key registers only after it is held)"""
+        params: dict[str, Any] = {
+            "enabled": enabled,
+        }
+        result = await self.call(METHOD_NATIVE_SET_SLOW_KEYS, params)
+        return bool((result or {}).get("ok", False))
+
     async def native_set_stage_manager(self, enabled: bool) -> bool:
         """Enable or disable Stage Manager. Exists only on macOS; elsewhere it is refused with platform_no_analogue"""
         params: dict[str, Any] = {
@@ -4903,12 +4991,31 @@ class MethodsMixin:
         result = await self.call(METHOD_NATIVE_SET_STAGE_MANAGER, params)
         return bool((result or {}).get("ok", False))
 
+    async def native_set_sticky_keys(self, enabled: bool) -> bool:
+        """Turn Sticky Keys on or off (modifiers latch, so shortcuts need one key at a time)"""
+        params: dict[str, Any] = {
+            "enabled": enabled,
+        }
+        result = await self.call(METHOD_NATIVE_SET_STICKY_KEYS, params)
+        return bool((result or {}).get("ok", False))
+
     async def native_set_tap_to_click(self, enabled: bool) -> bool:
         """Enable or disable tap-to-click"""
         params: dict[str, Any] = {
             "enabled": enabled,
         }
         result = await self.call(METHOD_NATIVE_SET_TAP_TO_CLICK, params)
+        return bool((result or {}).get("ok", False))
+
+    async def native_set_text_scale(self, scale: float) -> bool:
+        """Set the system text size as a factor of the default (1.0); false when refused
+
+        scale: wire double
+        """
+        params: dict[str, Any] = {
+            "scale": scale,
+        }
+        result = await self.call(METHOD_NATIVE_SET_TEXT_SCALE, params)
         return bool((result or {}).get("ok", False))
 
     async def native_set_trackpad_speed(self, speed: float) -> bool:
@@ -5238,6 +5345,11 @@ class MethodsMixin:
         result = await self.call(METHOD_NATIVE_TEXT_REPLACEMENTS)
         return result
 
+    async def native_text_scale(self) -> float:
+        """Get the system text size as a factor of the default (1.0)"""
+        result = await self.call(METHOD_NATIVE_TEXT_SCALE)
+        return result
+
     async def native_thermal_state(self) -> NativeThermalStateResponse:
         """Get coarse CPU throttling state from `pmset -g therm`. NOT ProcessInfo.thermalState — for the four-level nominal/fair/serious/critical reading, subscribe to _platform.thermal.changed. Returns one of: nominal, throttled"""
         result = await self.call(METHOD_NATIVE_THERMAL_STATE)
@@ -5401,11 +5513,6 @@ class MethodsMixin:
         result = await self.call(METHOD_NATIVE_USER_SHELL)
         return result
 
-    async def native_voiceover_enabled(self) -> NativeVoiceoverEnabledResponse:
-        """Check if VoiceOver is enabled"""
-        result = await self.call(METHOD_NATIVE_VOICEOVER_ENABLED)
-        return result
-
     async def native_volume(self) -> NativeVolumeResponse:
         """Get system volume and mute state"""
         result = await self.call(METHOD_NATIVE_VOLUME)
@@ -5563,11 +5670,6 @@ class MethodsMixin:
         }
         result = await self.call(METHOD_NATIVE_ZIP, params)
         return bool((result or {}).get("ok", False))
-
-    async def native_zoom_enabled(self) -> NativeZoomEnabledResponse:
-        """Check if Zoom accessibility is enabled"""
-        result = await self.call(METHOD_NATIVE_ZOOM_ENABLED)
-        return result
 
     async def network_request_host(self, host: str, reason: str | None = None) -> NetworkRequestHostResponse:
         """Ask for one more network host at runtime (a plugin declaring requestable hosts). It appears on the plugin's page, off until the user allows it

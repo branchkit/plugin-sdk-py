@@ -3158,6 +3158,10 @@ NativeBordersRequest = TypedDict("NativeBordersRequest", {
     "frames": NotRequired[list["WindowFrame"]],
 })
 
+NativeBounceKeysResponse = TypedDict("NativeBounceKeysResponse", {
+    "enabled": bool,
+})
+
 NativeBrightnessRequest = TypedDict("NativeBrightnessRequest", {
     # wire uint32 · default null · min 0
     "display_id": NotRequired[int],
@@ -4135,6 +4139,10 @@ NativeMacAddressResponse = TypedDict("NativeMacAddressResponse", {
     "value": str,
 })
 
+NativeMagnifierEnabledResponse = TypedDict("NativeMagnifierEnabledResponse", {
+    "enabled": bool,
+})
+
 NativeMaximizeWindowRequest = TypedDict("NativeMaximizeWindowRequest", {
     "window_id": str,
 })
@@ -4199,6 +4207,10 @@ NativeMouseButtonClickRequest = TypedDict("NativeMouseButtonClickRequest", {
     "x": NotRequired[int],
     # wire int32 · default null
     "y": NotRequired[int],
+})
+
+NativeMouseKeysResponse = TypedDict("NativeMouseKeysResponse", {
+    "enabled": bool,
 })
 
 NativeMoveFileRequest = TypedDict("NativeMoveFileRequest", {
@@ -4347,6 +4359,10 @@ NativeOcrWindowRequest = TypedDict("NativeOcrWindowRequest", {
 
 NativeOcrWindowResponse = TypedDict("NativeOcrWindowResponse", {
     "regions": list["OcrRegion"],
+})
+
+NativeOnScreenKeyboardEnabledResponse = TypedDict("NativeOnScreenKeyboardEnabledResponse", {
+    "enabled": bool,
 })
 
 NativeOpenAppSettingsRequest = TypedDict("NativeOpenAppSettingsRequest", {
@@ -4694,6 +4710,10 @@ NativeScreenLockedResponse = TypedDict("NativeScreenLockedResponse", {
     "enabled": bool,
 })
 
+NativeScreenReaderEnabledResponse = TypedDict("NativeScreenReaderEnabledResponse", {
+    "enabled": bool,
+})
+
 NativeScreenResolutionResponse = TypedDict("NativeScreenResolutionResponse", {
     "value": str,
 })
@@ -4850,6 +4870,14 @@ NativeSetBluetoothPowerRequest = TypedDict("NativeSetBluetoothPowerRequest", {
 })
 
 NativeSetBluetoothPowerResponse = TypedDict("NativeSetBluetoothPowerResponse", {
+    "ok": bool,
+})
+
+NativeSetBounceKeysRequest = TypedDict("NativeSetBounceKeysRequest", {
+    "enabled": bool,
+})
+
+NativeSetBounceKeysResponse = TypedDict("NativeSetBounceKeysResponse", {
     "ok": bool,
 })
 
@@ -5013,11 +5041,27 @@ NativeSetKeyRepeatRateResponse = TypedDict("NativeSetKeyRepeatRateResponse", {
     "ok": bool,
 })
 
+NativeSetMagnifierEnabledRequest = TypedDict("NativeSetMagnifierEnabledRequest", {
+    "enabled": bool,
+})
+
+NativeSetMagnifierEnabledResponse = TypedDict("NativeSetMagnifierEnabledResponse", {
+    "ok": bool,
+})
+
 NativeSetMenuBarAutoHideRequest = TypedDict("NativeSetMenuBarAutoHideRequest", {
     "enabled": bool,
 })
 
 NativeSetMenuBarAutoHideResponse = TypedDict("NativeSetMenuBarAutoHideResponse", {
+    "ok": bool,
+})
+
+NativeSetMouseKeysRequest = TypedDict("NativeSetMouseKeysRequest", {
+    "enabled": bool,
+})
+
+NativeSetMouseKeysResponse = TypedDict("NativeSetMouseKeysResponse", {
     "ok": bool,
 })
 
@@ -5032,6 +5076,22 @@ NativeSetMouseSpeedResponse = TypedDict("NativeSetMouseSpeedResponse", {
 
 NativeSetNightShiftRequest = TypedDict("NativeSetNightShiftRequest", {
     "enabled": bool,
+})
+
+NativeSetOnScreenKeyboardEnabledRequest = TypedDict("NativeSetOnScreenKeyboardEnabledRequest", {
+    "enabled": bool,
+})
+
+NativeSetOnScreenKeyboardEnabledResponse = TypedDict("NativeSetOnScreenKeyboardEnabledResponse", {
+    "ok": bool,
+})
+
+NativeSetScreenReaderEnabledRequest = TypedDict("NativeSetScreenReaderEnabledRequest", {
+    "enabled": bool,
+})
+
+NativeSetScreenReaderEnabledResponse = TypedDict("NativeSetScreenReaderEnabledResponse", {
+    "ok": bool,
 })
 
 NativeSetScreenshotFormatRequest = TypedDict("NativeSetScreenshotFormatRequest", {
@@ -5075,6 +5135,14 @@ NativeSetSidebarIconSizeResponse = TypedDict("NativeSetSidebarIconSizeResponse",
     "ok": bool,
 })
 
+NativeSetSlowKeysRequest = TypedDict("NativeSetSlowKeysRequest", {
+    "enabled": bool,
+})
+
+NativeSetSlowKeysResponse = TypedDict("NativeSetSlowKeysResponse", {
+    "ok": bool,
+})
+
 NativeSetStageManagerRequest = TypedDict("NativeSetStageManagerRequest", {
     "enabled": bool,
 })
@@ -5083,11 +5151,28 @@ NativeSetStageManagerResponse = TypedDict("NativeSetStageManagerResponse", {
     "ok": bool,
 })
 
+NativeSetStickyKeysRequest = TypedDict("NativeSetStickyKeysRequest", {
+    "enabled": bool,
+})
+
+NativeSetStickyKeysResponse = TypedDict("NativeSetStickyKeysResponse", {
+    "ok": bool,
+})
+
 NativeSetTapToClickRequest = TypedDict("NativeSetTapToClickRequest", {
     "enabled": bool,
 })
 
 NativeSetTapToClickResponse = TypedDict("NativeSetTapToClickResponse", {
+    "ok": bool,
+})
+
+NativeSetTextScaleRequest = TypedDict("NativeSetTextScaleRequest", {
+    # wire double
+    "scale": float,
+})
+
+NativeSetTextScaleResponse = TypedDict("NativeSetTextScaleResponse", {
     "ok": bool,
 })
 
@@ -5489,10 +5574,6 @@ NativeUserShellResponse = TypedDict("NativeUserShellResponse", {
     "shell": str,
 })
 
-NativeVoiceoverEnabledResponse = TypedDict("NativeVoiceoverEnabledResponse", {
-    "enabled": bool,
-})
-
 NativeVolumeResponse = TypedDict("NativeVolumeResponse", {
     "is_muted": bool,
     # wire double
@@ -5616,10 +5697,6 @@ NativeZipRequest = TypedDict("NativeZipRequest", {
 
 NativeZipResponse = TypedDict("NativeZipResponse", {
     "ok": bool,
-})
-
-NativeZoomEnabledResponse = TypedDict("NativeZoomEnabledResponse", {
-    "enabled": bool,
 })
 
 NetworkRequestHostRequest = TypedDict("NetworkRequestHostRequest", {
