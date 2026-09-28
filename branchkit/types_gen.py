@@ -5,47 +5,67 @@ from typing import Any, Literal, NotRequired, TypedDict
 
 # ===== Shared types (from components/schemas) =====
 
-# Detailed info about an accessibility element.
-AXElementInfo = TypedDict("AXElementInfo", {
+# An element's frame.
+AccessibleBounds = TypedDict("AccessibleBounds", {
+    # wire int32
+    "height": int,
+    # wire int32
+    "width": int,
+    # wire int32
+    "x": int,
+    # wire int32
+    "y": int,
+})
+
+# An element of an application's accessibility tree.
+AccessibleElement = TypedDict("AccessibleElement", {
+    # The portable actions it offers: "press", "focus", "toggle",
+    # "expand", "collapse", "increment", "decrement", "set_value",
+    # "scroll_into_view", "show_menu".
     "actions": list[str],
-    "attributes": list[str],
+    # Where it is on screen, in the same coordinates as the window list.
+    "bounds": NotRequired["AccessibleBounds"],
+    # How many children it has.
     # wire uint32 · min 0
     "children_count": int,
+    # Longer help or description text.
     "description": NotRequired[str],
-    "enabled": bool,
-    "focused": bool,
-    "path": list["AXPathSegment"],
-    "position": NotRequired[tuple[int, int]],
-    "role": str,
-    "size": NotRequired[tuple[int, int]],
-    "subrole": NotRequired[str],
-    "title": NotRequired[str],
-    "value": NotRequired[Any],
-})
-
-# A tree node of accessibility elements (recursive).
-#
-# schemars handles the self-reference automatically via a `$defs`
-# entry — no `#[schema(no_recursion)]` annotation needed (that was
-# utoipa-specific and was dropped in Phase 2j-utoipa-removal).
-AXElementNode = TypedDict("AXElementNode", {
-    "children": list["AXElementNode"],
-    "element": "AXElementInfo",
-})
-
-# A reference to an accessibility element by PID + path from the application root.
-AXElementRef = TypedDict("AXElementRef", {
-    # default []
-    "path": NotRequired[list["AXPathSegment"]],
+    # Opaque handle to pass back to read this element, valid while it
+    # lives. Its form differs per OS; treat it as a token.
+    "id": str,
+    # What assistive technology reads as the element's name ("Send").
+    "name": NotRequired[str],
+    # The OS's own role: "AXButton" (with its subrole, "AXButton/
+    # AXCloseButton"), "push button", "Button".
+    "native_role": str,
+    # The process the element belongs to.
     # wire int32
     "pid": int,
+    # The ARIA role ("button", "checkbox", "textbox", "menuitem", …), or
+    # "generic" where none fits. Also "window" and "text" (static text),
+    # which ARIA leaves to the host.
+    "role": str,
+    # ARIA states that hold: "focused", "focusable", "disabled",
+    # "checked", "mixed", "pressed", "expanded", "collapsed", "selected",
+    # "readonly", "multiline", "protected" (a password field).
+    "states": list[str],
+    # Its value as text: a field's contents, a slider's position.
+    "value": NotRequired[str],
 })
 
-# A segment of an accessibility element path (role + index among siblings with that role).
-AXPathSegment = TypedDict("AXPathSegment", {
-    # wire uint32 · min 0
-    "index": int,
-    "role": str,
+# An element and its descendants, to the depth asked for.
+AccessibleNode = TypedDict("AccessibleNode", {
+    "children": list["AccessibleNode"],
+    "element": "AccessibleElement",
+})
+
+# Which element: one a previous answer handed out (`id`), or an
+# application's root (`pid`).
+AccessibleRef = TypedDict("AccessibleRef", {
+    # default null
+    "id": NotRequired[str],
+    # wire int32 · default null
+    "pid": NotRequired[int],
 })
 
 ActionPlugin = TypedDict("ActionPlugin", {
@@ -2899,8 +2919,9 @@ NativeAutomationPermissionResponse = TypedDict("NativeAutomationPermissionRespon
 })
 
 NativeAxElementAtPointRequest = TypedDict("NativeAxElementAtPointRequest", {
-    # wire int32
-    "pid": int,
+    # Only this application's element; any application's when absent.
+    # wire int32 · default null
+    "pid": NotRequired[int],
     # wire int32
     "x": int,
     # wire int32
@@ -2908,26 +2929,44 @@ NativeAxElementAtPointRequest = TypedDict("NativeAxElementAtPointRequest", {
 })
 
 NativeAxElementAtPointResponse = TypedDict("NativeAxElementAtPointResponse", {
+    # The portable actions it offers: "press", "focus", "toggle",
+    # "expand", "collapse", "increment", "decrement", "set_value",
+    # "scroll_into_view", "show_menu".
     "actions": list[str],
-    "attributes": list[str],
+    # Where it is on screen, in the same coordinates as the window list.
+    "bounds": NotRequired["AccessibleBounds"],
+    # How many children it has.
     # wire uint32 · min 0
     "children_count": int,
+    # Longer help or description text.
     "description": NotRequired[str],
-    "enabled": bool,
-    "focused": bool,
-    "path": list["AXPathSegment"],
-    "position": NotRequired[tuple[int, int]],
+    # Opaque handle to pass back to read this element, valid while it
+    # lives. Its form differs per OS; treat it as a token.
+    "id": str,
+    # What assistive technology reads as the element's name ("Send").
+    "name": NotRequired[str],
+    # The OS's own role: "AXButton" (with its subrole, "AXButton/
+    # AXCloseButton"), "push button", "Button".
+    "native_role": str,
+    # The process the element belongs to.
+    # wire int32
+    "pid": int,
+    # The ARIA role ("button", "checkbox", "textbox", "menuitem", …), or
+    # "generic" where none fits. Also "window" and "text" (static text),
+    # which ARIA leaves to the host.
     "role": str,
-    "size": NotRequired[tuple[int, int]],
-    "subrole": NotRequired[str],
-    "title": NotRequired[str],
-    "value": NotRequired[Any],
+    # ARIA states that hold: "focused", "focusable", "disabled",
+    # "checked", "mixed", "pressed", "expanded", "collapsed", "selected",
+    # "readonly", "multiline", "protected" (a password field).
+    "states": list[str],
+    # Its value as text: a field's contents, a slider's position.
+    "value": NotRequired[str],
 })
 
 NativeAxElementTreeRequest = TypedDict("NativeAxElementTreeRequest", {
     # wire uint32 · default 3 · min 0
     "depth": NotRequired[int],
-    "element": "AXElementRef",
+    "element": "AccessibleRef",
 })
 
 NativeAxObserveRequest = TypedDict("NativeAxObserveRequest", {
@@ -2943,7 +2982,7 @@ NativeAxObserveResponse = TypedDict("NativeAxObserveResponse", {
 
 NativeAxPerformActionRequest = TypedDict("NativeAxPerformActionRequest", {
     "action": str,
-    "element": "AXElementRef",
+    "element": "AccessibleRef",
 })
 
 NativeAxPerformActionResponse = TypedDict("NativeAxPerformActionResponse", {
@@ -2953,12 +2992,12 @@ NativeAxPerformActionResponse = TypedDict("NativeAxPerformActionResponse", {
 NativeAxReadAttributesRequest = TypedDict("NativeAxReadAttributesRequest", {
     # default []
     "attributes": NotRequired[list[str]],
-    "element": "AXElementRef",
+    "element": "AccessibleRef",
 })
 
 NativeAxSetAttributeRequest = TypedDict("NativeAxSetAttributeRequest", {
     "attribute": str,
-    "element": "AXElementRef",
+    "element": "AccessibleRef",
     "value": Any,
 })
 
@@ -3714,7 +3753,7 @@ NativeFocusModesResponse = TypedDict("NativeFocusModesResponse", {
 })
 
 NativeFocusedElementResponse = TypedDict("NativeFocusedElementResponse", {
-    "element": NotRequired["AXElementInfo"],
+    "element": NotRequired["AccessibleElement"],
 })
 
 NativeFocusedWindowIDResponse = TypedDict("NativeFocusedWindowIDResponse", {

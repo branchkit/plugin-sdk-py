@@ -629,8 +629,8 @@ from .contracts_gen import (
 
 if TYPE_CHECKING:
     from .types_gen import (
-        AXElementNode,
-        AXElementRef,
+        AccessibleNode,
+        AccessibleRef,
         Action,
         ActionsListResponse,
         ActiveSpace,
@@ -2284,22 +2284,24 @@ class MethodsMixin:
         result = await self.call(METHOD_NATIVE_AUTOMATION_PERMISSION, params)
         return result
 
-    async def native_ax_element_at_point(self, pid: int, x: int, y: int) -> NativeAxElementAtPointResponse:
+    async def native_ax_element_at_point(self, x: int, y: int, pid: int | None = None) -> NativeAxElementAtPointResponse:
         """Get the accessibility element at a screen point
 
-        pid: wire int32
+        pid: Only this application's element; any application's when absent.
+            wire int32 · default null
         x: wire int32
         y: wire int32
         """
         params: dict[str, Any] = {
-            "pid": pid,
             "x": x,
             "y": y,
         }
+        if pid is not None:
+            params["pid"] = pid
         result = await self.call(METHOD_NATIVE_AX_ELEMENT_AT_POINT, params)
         return result
 
-    async def native_ax_element_tree(self, element: "AXElementRef", depth: int | None = None) -> AXElementNode:
+    async def native_ax_element_tree(self, element: "AccessibleRef", depth: int | None = None) -> AccessibleNode:
         """Get the accessibility element tree rooted at an element
 
         depth: wire uint32 · default 3 · min 0
@@ -2326,7 +2328,7 @@ class MethodsMixin:
         result = await self.call(METHOD_NATIVE_AX_OBSERVE, params)
         return result
 
-    async def native_ax_perform_action(self, action: str, element: "AXElementRef") -> bool:
+    async def native_ax_perform_action(self, action: str, element: "AccessibleRef") -> bool:
         """Perform an action on an accessibility element"""
         params: dict[str, Any] = {
             "action": action,
@@ -2335,7 +2337,7 @@ class MethodsMixin:
         result = await self.call(METHOD_NATIVE_AX_PERFORM_ACTION, params)
         return bool((result or {}).get("result", False))
 
-    async def native_ax_read_attributes(self, element: "AXElementRef", attributes: list[str] | None = None) -> None:
+    async def native_ax_read_attributes(self, element: "AccessibleRef", attributes: list[str] | None = None) -> dict[str, Any]:
         """Read specific attributes from an accessibility element
 
         attributes: default []
@@ -2345,9 +2347,10 @@ class MethodsMixin:
         }
         if attributes is not None:
             params["attributes"] = attributes
-        await self.call(METHOD_NATIVE_AX_READ_ATTRIBUTES, params)
+        result = await self.call(METHOD_NATIVE_AX_READ_ATTRIBUTES, params)
+        return result
 
-    async def native_ax_set_attribute(self, attribute: str, element: "AXElementRef", value: Any) -> bool:
+    async def native_ax_set_attribute(self, attribute: str, element: "AccessibleRef", value: Any) -> bool:
         """Set an attribute on an accessibility element"""
         params: dict[str, Any] = {
             "attribute": attribute,
@@ -3014,12 +3017,13 @@ class MethodsMixin:
         result = await self.call(METHOD_NATIVE_EPOCH_TIME)
         return result
 
-    async def native_extended_attributes(self, path: str) -> None:
+    async def native_extended_attributes(self, path: str) -> Any:
         """Read extended attributes (xattrs) from a file"""
         params: dict[str, Any] = {
             "path": path,
         }
-        await self.call(METHOD_NATIVE_EXTENDED_ATTRIBUTES, params)
+        result = await self.call(METHOD_NATIVE_EXTENDED_ATTRIBUTES, params)
+        return result
 
     async def native_external_disks(self) -> list[ExternalDisk]:
         """List mounted external/removable disks"""
@@ -3131,7 +3135,7 @@ class MethodsMixin:
         result = await self.call(METHOD_NATIVE_FILE_SIZE, params)
         return result
 
-    async def native_file_tags(self, path: str, tags: list[str] | None = None) -> None:
+    async def native_file_tags(self, path: str, tags: list[str] | None = None) -> Any:
         """Read or write Finder tags on a file
 
         tags: default null
@@ -3141,7 +3145,8 @@ class MethodsMixin:
         }
         if tags is not None:
             params["tags"] = tags
-        await self.call(METHOD_NATIVE_FILE_TAGS, params)
+        result = await self.call(METHOD_NATIVE_FILE_TAGS, params)
+        return result
 
     async def native_file_type(self, path: str) -> NativeFileTypeResponse:
         """Get the UTI type of a file"""
@@ -4272,13 +4277,14 @@ class MethodsMixin:
         result = await self.call(METHOD_NATIVE_RANDOM_UUID)
         return result
 
-    async def native_read_app_preference(self, domain: str, key: str) -> None:
+    async def native_read_app_preference(self, domain: str, key: str) -> Any:
         """Read a preference value for an app domain"""
         params: dict[str, Any] = {
             "domain": domain,
             "key": key,
         }
-        await self.call(METHOD_NATIVE_READ_APP_PREFERENCE, params)
+        result = await self.call(METHOD_NATIVE_READ_APP_PREFERENCE, params)
+        return result
 
     async def native_read_file(self, path: str) -> NativeReadFileResponse:
         """Read file contents as UTF-8 string"""
@@ -4301,12 +4307,13 @@ class MethodsMixin:
         result = await self.call(METHOD_NATIVE_READ_FILE_BINARY, params)
         return result
 
-    async def native_read_plist(self, path: str) -> None:
+    async def native_read_plist(self, path: str) -> Any:
         """Read a property list file as JSON"""
         params: dict[str, Any] = {
             "path": path,
         }
-        await self.call(METHOD_NATIVE_READ_PLIST, params)
+        result = await self.call(METHOD_NATIVE_READ_PLIST, params)
+        return result
 
     async def native_recent_documents(self, bundle_id: str) -> list[str]:
         """Get recent documents for an app (by bundle ID)"""
