@@ -75,7 +75,7 @@ class SettingsMirror:
         """set_user for a form submit: every field in one patch, one
         refresh. Same contract."""
         await self._plugin.overrides_apply(
-            "patch", self._name, None, fields, self._name, None, "_user"
+            action="patch", collection=self._name, field=None, fields=fields, id=self._name, new_id=None, tenant="_user"
         )
         await self.refresh()
 
@@ -84,7 +84,7 @@ class SettingsMirror:
         the plugin's shipped default (a change back to the default must not
         pin a copy of it)."""
         await self._plugin.overrides_apply(
-            "unpatch", self._name, field, None, self._name, None, "_user"
+            action="unpatch", collection=self._name, field=field, fields=None, id=self._name, new_id=None, tenant="_user"
         )
         await self.refresh()
 

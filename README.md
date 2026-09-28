@@ -27,7 +27,7 @@ plugin = branchkit.Plugin()
 
 @plugin.handle_action("myplugin.greet")
 async def greet(req):
-    await plugin.input_type_text("Hello!")
+    await plugin.input_type_text(text="Hello!")
     return {"status": "ok"}
 
 asyncio.run(plugin.run())
@@ -49,7 +49,7 @@ plugin — use `plugin.call_sync(...)` there instead of `await`).
 | Handle an action | `@plugin.handle_action("prefix.name")` (alias `@plugin.action`) |
 | Handle an RPC method | `@plugin.handle("my_method")` |
 | Listen for events | `@plugin.on(EVENT_COLLECTION_UPDATED)` |
-| Call the actuator | generated wrappers (`await plugin.collection_get(...)`, 600+) or raw `plugin.call` |
+| Call the actuator | generated wrappers, keyword arguments only (`await plugin.collection_get(name=...)`, 600+), or raw `plugin.call` |
 | State verbs | `plugin.get/list/put/patch/delete/replace/...` |
 | Logs (append-only) | `plugin.append/append_keyed/list_log/...` |
 | Mirrors | `plugin.mirror_collection(name)`, `plugin.settings(name)` |

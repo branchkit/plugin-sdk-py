@@ -78,7 +78,7 @@ class CollectionMirror:
             empty = len(recs) == 0
             data = recs
         else:
-            res = await self._plugin.collection_get(self._name)
+            res = await self._plugin.collection_get(name=self._name)
             data = (res or {}).get("data")
             empty = _unpopulated(data)
         if empty:

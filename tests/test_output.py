@@ -54,7 +54,7 @@ class TestOutputHelpers(unittest.TestCase):
             "locale": "en",
             "v": 1,
         }
-        res = asyncio.run(plugin.output_state(doc))
+        res = asyncio.run(plugin.output_state(state=doc))
         self.assertEqual(sent["method"], "output.state")
         self.assertEqual(sent["params"], {"state": doc})
         self.assertEqual(res, {"ok": True, "generation": 7, "meaning_changed": True})

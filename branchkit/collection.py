@@ -57,7 +57,7 @@ class CollectionMixin:
         """The record with that id, or None. On a keyed (compacted-changelog)
         log this is the RAW entry — use `get_compacted` for the folded
         current state."""
-        res = await self.collection_fetch(id, name)
+        res = await self.collection_fetch(id=id, name=name)
         rec = (res or {}).get("record")
         return rec if isinstance(rec, dict) else None
 
@@ -65,7 +65,7 @@ class CollectionMixin:
         """A keyed log's folded CURRENT state for one key — the point-read
         half of the compacted-changelog projection (pairs with
         `list_compacted`)."""
-        res = await self.collection_fetch_compacted(key, name)
+        res = await self.collection_fetch_compacted(id=key, name=name)
         rec = (res or {}).get("record")
         return rec if isinstance(rec, dict) else None
 
@@ -80,7 +80,7 @@ class CollectionMixin:
         Choose deliberately: some records -> `list` with an explicit `limit`;
         every record -> `list_all`; a page plus the real count -> `list_page`.
         """
-        res = await self.collection_list(name, opts)
+        res = await self.collection_list(name=name, opts=opts)
         return (res or {}).get("records") or []
 
     async def list_all(self, name: str) -> list[dict]:
@@ -157,24 +157,24 @@ class CollectionMixin:
         record per key instead of the raw append history."""
         merged = dict(opts or {})
         merged["compacted"] = True
-        res = await self.collection_list(name, merged)
+        res = await self.collection_list(name=name, opts=merged)
         return (res or {}).get("records") or []
 
     async def list_page(self, name: str, opts: dict | None = None) -> tuple[list[dict], int]:
         """Like `list` but also returns the unfiltered total."""
-        res = await self.collection_list(name, opts)
+        res = await self.collection_list(name=name, opts=opts)
         res = res or {}
         return res.get("records") or [], res.get("total") or 0
 
     async def count(self, name: str) -> int:
-        res = await self.collection_count(name)
+        res = await self.collection_count(name=name)
         return (res or {}).get("count") or 0
 
     async def put(self, name: str, id: str, payload: Any) -> None:
         """Single-record upsert. An unregistered name auto-registers as a
         record-keyed dynamic collection — memory-only and EPHEMERAL; declare
         the collection in the manifest for durable storage."""
-        await self.collection_put(name, [{"id": id, "payload": payload}])
+        await self.collection_put(name=name, entries=[{"id": id, "payload": payload}])
 
     async def put_many(self, name: str, entries: list[dict]) -> int:
         """Bulk upsert. Validation runs across all entries before any
@@ -182,7 +182,7 @@ class CollectionMixin:
         backend untouched."""
         if not entries:
             return 0
-        res = await self.collection_put(name, entries)
+        res = await self.collection_put(name=name, entries=entries)
         return (res or {}).get("count") or 0
 
     async def replace(
@@ -211,7 +211,7 @@ class CollectionMixin:
             )
         # No early return on empty `entries`: replacing with the empty set
         # is how a caller CLEARS its scope.
-        res = await self.collection_replace(name, scope, entries, label, roles)
+        res = await self.collection_replace(name=name, scope=scope, entries=entries, label=label, roles=roles)
         res = res or {}
         return {
             "put": res.get("put") or 0,
@@ -232,17 +232,17 @@ class CollectionMixin:
         Pass "" to leave the label unchanged; like roles, it persists."""
         if not entries:
             return 0
-        res = await self.collection_put(name, entries, None, label or None, roles)
+        res = await self.collection_put(name=name, entries=entries, group=None, label=label or None, roles=roles)
         return (res or {}).get("count") or 0
 
     async def patch(self, name: str, id: str, fields: Any) -> None:
         """Errors NOT_FOUND if no record with that id exists, or
         OPERATION_NOT_PERMITTED on collections the state forbids patching."""
-        await self.collection_patch(fields, id, name)
+        await self.collection_patch(fields=fields, id=id, name=name)
 
     async def delete(self, name: str, id: str) -> bool:
         """Single-record delete. Returns whether the record existed."""
-        res = await self.collection_delete_records(name, [id])
+        res = await self.collection_delete_records(name=name, ids=[id])
         return ((res or {}).get("deleted") or 0) > 0
 
     async def delete_many(self, name: str, ids: list[str]) -> tuple[int, int]:
@@ -250,7 +250,7 @@ class CollectionMixin:
         detect drift between their view and the platform's."""
         if not ids:
             return 0, 0
-        res = await self.collection_delete_records(name, ids)
+        res = await self.collection_delete_records(name=name, ids=ids)
         res = res or {}
         return res.get("deleted") or 0, res.get("already_absent") or 0
 

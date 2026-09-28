@@ -18,7 +18,7 @@ class EffectsMixin:
         """Declare this plugin is asserting `name` (which must be declared
         in the manifest's `consumes.effects[*].asserts`). Returns
         ``{"granted", "already_held", "displaced", "enforced"}``."""
-        res = await self.effects_assert(name)
+        res = await self.effects_assert(name=name)
         return {
             "granted": res["granted"],
             "already_held": res["already_held"],
@@ -29,7 +29,7 @@ class EffectsMixin:
     async def retract_effect(self, name: str) -> dict:
         """Release this plugin's assertion of `name`. Idempotent. Returns
         ``{"retracted", "new_owner"}``."""
-        res = await self.effects_retract(name)
+        res = await self.effects_retract(name=name)
         return {
             "retracted": res["retracted"],
             "new_owner": _optional_str(res.get("new_owner")),
@@ -39,7 +39,7 @@ class EffectsMixin:
         """``{"active", "current_owner"}`` — active is True when this plugin
         holds top-of-stack. Unknown names return active=False rather than
         raising."""
-        res = await self.effects_is_active(name)
+        res = await self.effects_is_active(name=name)
         return {
             "active": res["active"],
             "current_owner": _optional_str(res.get("current_owner")),

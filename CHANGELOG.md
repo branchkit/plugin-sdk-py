@@ -5,6 +5,17 @@ git history.
 
 ## Unreleased
 
+### Breaking: generated method parameters are keyword-only
+
+- Every generated method's parameters are now keyword-only:
+  `await plugin.collection_fetch(id=i, name=n)`, not
+  `await plugin.collection_fetch(i, n)`. Positional order came from the
+  schema, which is alphabetical, so it said nothing a caller could guess,
+  and 62 methods had two or more parameters of one type that ran just as
+  well swapped. A positional call now fails at once with a `TypeError`
+  naming the method. A new optional parameter can be added later without
+  breaking any caller. Methods with no parameters are unchanged.
+
 ### `**` in pattern listeners
 
 - `on_pattern` now takes `**`, zero or more whole segments, matching the

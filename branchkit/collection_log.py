@@ -46,14 +46,14 @@ class CollectionLogMixin:
         """Append an entry to a log-kind collection; the actuator assigns a
         ULID and timestamp. Returns the assigned entry id. Raises
         RecordingDisabledError if the collection's recording flag is off."""
-        entry = await self.collection_append(name, payload)
+        entry = await self.collection_append(name=name, payload=payload)
         if not entry:
             raise RuntimeError("collection.append: actuator returned no entry")
         return entry["id"]
 
     async def append_entry(self, name: str, payload: Any) -> dict:
         """Like `append` but returns the full LogEntry."""
-        entry = await self.collection_append(name, payload)
+        entry = await self.collection_append(name=name, payload=payload)
         if not entry:
             raise RuntimeError("collection.append: actuator returned no entry")
         return entry
@@ -64,7 +64,7 @@ class CollectionLogMixin:
         append; same-key appends fold. Read the merged view with
         `list_compacted`. Annotation is by appending, never mutating, so the
         original event is preserved."""
-        await self.collection_append_keyed(key, name, payload)
+        await self.collection_append_keyed(key=key, name=name, payload=payload)
 
     async def list_log(self, name: str, opts: dict | None = None) -> list[dict]:
         """List log entries newest-first."""
@@ -89,10 +89,10 @@ class CollectionLogMixin:
     async def set_collection_recording(self, name: str, enabled: bool) -> None:
         """Toggle the recording flag on a log-kind collection. When False,
         subsequent `append` calls raise RecordingDisabledError."""
-        await self.privacy_set_recording(enabled, name)
+        await self.privacy_set_recording(enabled=enabled, name=name)
 
     async def get_collection_recording(self, name: str) -> bool:
         """The effective recording flag — the user override if set,
         otherwise the manifest's `default_recording_enabled`."""
-        res = await self.privacy_get_recording(name)
+        res = await self.privacy_get_recording(name=name)
         return bool((res or {}).get("enabled", False))

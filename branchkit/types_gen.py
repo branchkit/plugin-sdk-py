@@ -6220,6 +6220,9 @@ SettingsRedirectRequest = TypedDict("SettingsRedirectRequest", {
 })
 
 SettingsRulesCreateRequest = TypedDict("SettingsRulesCreateRequest", {
+    # Check the candidate and report any conflict without saving it.
+    # default null
+    "check_only": NotRequired[bool],
     # Raw JSON action body, used when `newruleactiontype = "json"`.
     # default null
     "newruleactionjson": NotRequired[str],
@@ -6267,6 +6270,10 @@ SettingsRulesUpdateRequest = TypedDict("SettingsRulesUpdateRequest", {
     # Existing canonical command id (the previous canonical phrase) of
     # the rule being updated. Required.
     "canonical": str,
+    # Check the candidate and report any conflict without saving it or
+    # removing the command it would replace.
+    # default null
+    "check_only": NotRequired[bool],
     # default null
     "newruleactionjson": NotRequired[str],
     # default null
