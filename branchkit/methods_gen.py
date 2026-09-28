@@ -175,6 +175,7 @@ from .contracts_gen import (
     METHOD_NATIVE_CURSOR_SHAKE_TO_LOCATE,
     METHOD_NATIVE_DARK_MODE,
     METHOD_NATIVE_DATE_FORMAT,
+    METHOD_NATIVE_DBUS_CALL,
     METHOD_NATIVE_DEFAULT_APP_FOR_UTI,
     METHOD_NATIVE_DEFAULT_BROWSER,
     METHOD_NATIVE_DEFAULT_EMAIL_CLIENT,
@@ -774,6 +775,7 @@ if TYPE_CHECKING:
         NativeCursorShakeToLocateResponse,
         NativeDarkModeResponse,
         NativeDateFormatResponse,
+        NativeDbusCallResponse,
         NativeDefaultAppForUtiResponse,
         NativeDefaultBrowserResponse,
         NativeDefaultEmailClientResponse,
@@ -2806,6 +2808,39 @@ class MethodsMixin:
     async def native_date_format(self) -> NativeDateFormatResponse:
         """Get user date format string"""
         result = await self.call(METHOD_NATIVE_DATE_FORMAT)
+        return result
+
+    async def native_dbus_call(self, *, interface: str, method: str, path: str, service: str, args: list[Any] | None = None, bus: str | None = None, signature: str | None = None) -> NativeDbusCallResponse:
+        """Call one D-Bus method the plugin declared and the user switched on. Exists only on Linux; elsewhere it is refused with platform_no_analogue
+
+        args: Opaque by design: D-Bus values are typed by `signature` at run time,
+            so no static type can describe them. One JSON value per argument,
+            in the form its type takes: integers,
+            numbers, booleans and strings as themselves; an array for `a…` and
+            `(…)`; an object for `a{…}`; a variant as
+            `{"signature": "d", "value": 0.5}` or a plain string, boolean or
+            number.
+            default []
+        bus: `session` (the default) or `system` (Properties.Get / GetAll only).
+            default null
+        path: The object path (`/org/mpris/MediaPlayer2`).
+        service: The well-known service name (`org.mpris.MediaPlayer2.spotify`).
+        signature: The arguments' D-Bus signature (`su`); empty or absent for none.
+            default null
+        """
+        params: dict[str, Any] = {
+            "interface": interface,
+            "method": method,
+            "path": path,
+            "service": service,
+        }
+        if args is not None:
+            params["args"] = args
+        if bus is not None:
+            params["bus"] = bus
+        if signature is not None:
+            params["signature"] = signature
+        result = await self.call(METHOD_NATIVE_DBUS_CALL, params)
         return result
 
     async def native_default_app_for_uti(self, *, uti: str) -> NativeDefaultAppForUtiResponse:
