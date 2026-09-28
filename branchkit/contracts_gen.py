@@ -587,6 +587,7 @@ METHOD_NATIVE_WINDOW_LAYER = "native.window_layer"  # since 0.1.0
 METHOD_NATIVE_WINDOW_SCREENSHOT = "native.window_screenshot"  # since 0.1.0
 METHOD_NATIVE_WINDOW_SUBROLE = "native.window_subrole"  # since 0.1.0
 METHOD_NATIVE_WINDOW_TITLE = "native.window_title"  # since 0.1.0
+METHOD_NATIVE_WMI_QUERY = "native.wmi_query"  # since 0.2.0
 METHOD_NATIVE_WORLD_MODEL = "native.world_model"  # since 0.1.0
 METHOD_NATIVE_WRITE_APP_PREFERENCE = "native.write_app_preference"  # since 0.1.0
 METHOD_NATIVE_WRITE_FILE = "native.write_file"  # since 0.1.0

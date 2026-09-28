@@ -588,6 +588,7 @@ from .contracts_gen import (
     METHOD_NATIVE_WINDOW_SCREENSHOT,
     METHOD_NATIVE_WINDOW_SUBROLE,
     METHOD_NATIVE_WINDOW_TITLE,
+    METHOD_NATIVE_WMI_QUERY,
     METHOD_NATIVE_WORLD_MODEL,
     METHOD_NATIVE_WRITE_APP_PREFERENCE,
     METHOD_NATIVE_WRITE_FILE,
@@ -981,6 +982,7 @@ if TYPE_CHECKING:
         NativeVpnStatusResponse,
         NativeWifiResponse,
         NativeWindowBoundsResponse,
+        NativeWmiQueryResponse,
         NativeXcodePathResponse,
         NativeXcodeVersionResponse,
         NetworkInterface,
@@ -5685,6 +5687,41 @@ class MethodsMixin:
             "window_id": window_id,
         }
         result = await self.call(METHOD_NATIVE_WINDOW_TITLE, params)
+        return result
+
+    async def native_wmi_query(self, *, class_: str, limit: int | None = None, namespace: str | None = None, properties: list[str] | None = None, where: str | None = None) -> NativeWmiQueryResponse:
+        """Read the instances of one WMI class the plugin declared and the user switched on. Exists only on Windows; elsewhere it is refused with platform_no_analogue
+
+        class_: The class (`Win32_Battery`).
+        limit: Instances to return at most, 1 to 1000 (default 200); more sets
+            `truncated`.
+            wire uint32 · default null · min 0
+        namespace: The namespace, `root/cimv2` when absent (`root/WMI`,
+            `root/StandardCimv2`); `/` or `\\` between its parts.
+            default null
+        properties: The properties to read; all of them when empty.
+            default []
+        where: A condition on the class's own properties (`Name = 'x' AND
+            ProcessId > 4`), in WQL's syntax: comparisons with a string, number,
+            `TRUE` or `FALSE`; `LIKE` with `%`, `_` and `[…]`; `IS [NOT] NULL`;
+            `AND` / `OR` / `NOT` and parentheses. BranchKit evaluates it on the
+            listed instances; it is never sent to WMI. Strings compare without
+            regard to case, and a null or missing property matches no
+            comparison.
+            default null
+        """
+        params: dict[str, Any] = {
+            "class": class_,
+        }
+        if limit is not None:
+            params["limit"] = limit
+        if namespace is not None:
+            params["namespace"] = namespace
+        if properties is not None:
+            params["properties"] = properties
+        if where is not None:
+            params["where"] = where
+        result = await self.call(METHOD_NATIVE_WMI_QUERY, params)
         return result
 
     async def native_world_model(self, *, on_screen: bool | None = None) -> WorldModel:

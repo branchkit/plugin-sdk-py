@@ -49,6 +49,7 @@ LOG_EVENT_PLUGIN_RPC_FAILED = "plugin.rpc_failed"
 LOG_EVENT_PLUGIN_SANDBOX_APPLIED = "plugin.sandbox_applied"
 LOG_EVENT_PLUGIN_SPAWNED = "plugin.spawned"
 LOG_EVENT_PLUGIN_STDERR_LINE = "plugin.stderr_line"
+LOG_EVENT_PLUGIN_WMI_QUERY = "plugin.wmi_query"
 LOG_EVENT_RPC_CALL_COMPLETED = "rpc.call_completed"
 LOG_EVENT_RPC_CALL_RECEIVED = "rpc.call_received"
 LOG_EVENT_RPC_NOTIFY_RECEIVED = "rpc.notify_received"
@@ -123,6 +124,7 @@ LOG_EVENT_REGISTRY: dict[str, LogEventMeta] = {
     "plugin.sandbox_applied": {"name": "plugin.sandbox_applied", "summary": "Sandbox profile applied (or skipped) for a managed plugin spawn.", "since": "0.1.0", "source": "plugins", "severity": "debug", "redaction": "none"},
     "plugin.spawned": {"name": "plugin.spawned", "summary": "A managed plugin process was spawned.", "since": "0.1.0", "source": "plugins", "severity": "info", "redaction": "none"},
     "plugin.stderr_line": {"name": "plugin.stderr_line", "summary": "A managed plugin emitted a stdout/stderr line.", "since": "0.1.0", "source": "plugins", "severity": "info", "redaction": "full"},
+    "plugin.wmi_query": {"name": "plugin.wmi_query", "summary": "A plugin read (or was refused) a WMI class through native.wmi_query: allowed, failed, denied (not declared), off (switched off by the user) or forbidden (no grant can reach it). The namespace and class only. Audit-eligible.", "since": "0.2.0", "source": "plugins", "severity": "info", "redaction": "full"},
     "rpc.call_completed": {"name": "rpc.call_completed", "summary": "A plugin-to-actuator RPC call completed.", "since": "0.1.0", "source": "plugins", "severity": "debug", "redaction": "none"},
     "rpc.call_received": {"name": "rpc.call_received", "summary": "A plugin-to-actuator RPC call was received.", "since": "0.1.0", "source": "plugins", "severity": "debug", "redaction": "none"},
     "rpc.notify_received": {"name": "rpc.notify_received", "summary": "A plugin-to-actuator RPC notification (fire-and-forget) was received.", "since": "0.1.0", "source": "plugins", "severity": "debug", "redaction": "none"},
