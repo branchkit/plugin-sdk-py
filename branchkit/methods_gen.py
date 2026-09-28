@@ -334,6 +334,7 @@ from .contracts_gen import (
     METHOD_NATIVE_MICROPHONE_PERMISSION,
     METHOD_NATIVE_MINIMIZE_WINDOW,
     METHOD_NATIVE_MODEL_NAME,
+    METHOD_NATIVE_MONO_AUDIO,
     METHOD_NATIVE_MOUNT_POINTS,
     METHOD_NATIVE_MOUSE_BUTTON_CLICK,
     METHOD_NATIVE_MOUSE_KEYS,
@@ -480,6 +481,7 @@ from .contracts_gen import (
     METHOD_NATIVE_SET_KEY_REPEAT_RATE,
     METHOD_NATIVE_SET_MAGNIFIER_ENABLED,
     METHOD_NATIVE_SET_MENU_BAR_AUTO_HIDE,
+    METHOD_NATIVE_SET_MONO_AUDIO,
     METHOD_NATIVE_SET_MOUSE_KEYS,
     METHOD_NATIVE_SET_MOUSE_SPEED,
     METHOD_NATIVE_SET_NIGHT_SHIFT,
@@ -872,6 +874,7 @@ if TYPE_CHECKING:
         NativeMenuBarClockFormatResponse,
         NativeMicrophonePermissionResponse,
         NativeModelNameResponse,
+        NativeMonoAudioResponse,
         NativeMouseKeysResponse,
         NativeNetworkBandwidthResponse,
         NativeNetworkDnsDomainResponse,
@@ -3834,6 +3837,11 @@ class MethodsMixin:
         result = await self.call(METHOD_NATIVE_MODEL_NAME)
         return result
 
+    async def native_mono_audio(self) -> NativeMonoAudioResponse:
+        """Check if mono audio is on (the left and right channels are mixed, so either ear hears everything)"""
+        result = await self.call(METHOD_NATIVE_MONO_AUDIO)
+        return result
+
     async def native_mount_points(self) -> list[str]:
         """List mounted volumes"""
         result = await self.call(METHOD_NATIVE_MOUNT_POINTS)
@@ -4936,6 +4944,14 @@ class MethodsMixin:
             "enabled": enabled,
         }
         result = await self.call(METHOD_NATIVE_SET_MENU_BAR_AUTO_HIDE, params)
+        return bool((result or {}).get("ok", False))
+
+    async def native_set_mono_audio(self, *, enabled: bool) -> bool:
+        """Turn mono audio on or off (the left and right channels are mixed, so either ear hears everything)"""
+        params: dict[str, Any] = {
+            "enabled": enabled,
+        }
+        result = await self.call(METHOD_NATIVE_SET_MONO_AUDIO, params)
         return bool((result or {}).get("ok", False))
 
     async def native_set_mouse_keys(self, *, enabled: bool) -> bool:

@@ -4228,6 +4228,10 @@ NativeModelNameResponse = TypedDict("NativeModelNameResponse", {
     "model": str,
 })
 
+NativeMonoAudioResponse = TypedDict("NativeMonoAudioResponse", {
+    "enabled": bool,
+})
+
 NativeMountPointsResponse = TypedDict("NativeMountPointsResponse", {
     "volumes": list[str],
 })
@@ -5090,6 +5094,14 @@ NativeSetMenuBarAutoHideRequest = TypedDict("NativeSetMenuBarAutoHideRequest", {
 })
 
 NativeSetMenuBarAutoHideResponse = TypedDict("NativeSetMenuBarAutoHideResponse", {
+    "ok": bool,
+})
+
+NativeSetMonoAudioRequest = TypedDict("NativeSetMonoAudioRequest", {
+    "enabled": bool,
+})
+
+NativeSetMonoAudioResponse = TypedDict("NativeSetMonoAudioResponse", {
     "ok": bool,
 })
 
