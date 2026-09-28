@@ -3,7 +3,10 @@
 Versions before this file predate it; their contents are in the repo's
 git history.
 
-## Unreleased
+## 0.5.0 — 2026-09-28
+
+0.4.0 was tagged but never published to PyPI; 0.5.0 carries its changes too
+(listed under 0.4.0 below), so upgrading from 0.3.0 means reading both.
 
 ### D-Bus calls (Linux)
 
