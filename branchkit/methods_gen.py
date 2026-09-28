@@ -2076,7 +2076,7 @@ class MethodsMixin:
         return (result or {}).get("active") or []
 
     async def native_airdrop_enabled(self) -> NativeAirdropEnabledResponse:
-        """Check if AirDrop discoverability is enabled"""
+        """Check if AirDrop discoverability is enabled. Exists only on macOS and Windows; elsewhere it is refused with platform_no_analogue"""
         result = await self.call(METHOD_NATIVE_AIRDROP_ENABLED)
         return result
 
@@ -2101,7 +2101,7 @@ class MethodsMixin:
         return (result or {}).get("window_ids") or []
 
     async def native_apfs_snapshots(self) -> NativeApfsSnapshotsResponse:
-        """List APFS local snapshots as `tmutil listlocalsnapshots` prints them — a header line followed by one snapshot name per line, NOT JSON"""
+        """List APFS local snapshots as `tmutil listlocalsnapshots` prints them — a header line followed by one snapshot name per line, NOT JSON. Exists only on macOS; elsewhere it is refused with platform_no_analogue"""
         result = await self.call(METHOD_NATIVE_APFS_SNAPSHOTS)
         return result
 
@@ -2143,7 +2143,7 @@ class MethodsMixin:
         return result
 
     async def native_app_is_agent(self, bundle_id: str) -> NativeAppIsAgentResponse:
-        """Check if app is an LSUIElement (agent/background)"""
+        """Check if app is an LSUIElement (agent/background). Exists only on macOS; elsewhere it is refused with platform_no_analogue"""
         params: dict[str, Any] = {
             "bundle_id": bundle_id,
         }
@@ -2204,7 +2204,7 @@ class MethodsMixin:
         return result
 
     async def native_app_volumes(self) -> list[AppVolume]:
-        """List each app playing audio, with its own volume and mute, as the system mixer shows it"""
+        """List each app playing audio, with its own volume and mute, as the system mixer shows it. Exists only on Linux and Windows; elsewhere it is refused with platform_no_analogue"""
         result = await self.call(METHOD_NATIVE_APP_VOLUMES)
         return (result or {}).get("apps") or []
 
@@ -2266,7 +2266,7 @@ class MethodsMixin:
         return result
 
     async def native_auto_rearrange_spaces(self) -> NativeAutoRearrangeSpacesResponse:
-        """Check if Spaces auto-rearrange based on usage"""
+        """Check if Spaces auto-rearrange based on usage. Exists only on macOS; elsewhere it is refused with platform_no_analogue"""
         result = await self.call(METHOD_NATIVE_AUTO_REARRANGE_SPACES)
         return result
 
@@ -2276,7 +2276,7 @@ class MethodsMixin:
         return result
 
     async def native_autocorrect_enabled(self) -> NativeAutocorrectEnabledResponse:
-        """Check if auto-correction is enabled"""
+        """Check if auto-correction is enabled. Exists only on macOS and Windows; elsewhere it is refused with platform_no_analogue"""
         result = await self.call(METHOD_NATIVE_AUTOCORRECT_ENABLED)
         return result
 
@@ -2286,7 +2286,7 @@ class MethodsMixin:
         return result
 
     async def native_automation_permission(self, bundle_id: str) -> NativeAutomationPermissionResponse:
-        """Check if automation permission is granted for target app"""
+        """Check if automation permission is granted for target app. Exists only on macOS; elsewhere it is refused with platform_no_analogue"""
         params: dict[str, Any] = {
             "bundle_id": bundle_id,
         }
@@ -2511,7 +2511,7 @@ class MethodsMixin:
         return result
 
     async def native_bold_text_enabled(self) -> NativeBoldTextEnabledResponse:
-        """Check if bold text is enabled in accessibility"""
+        """Check if bold text is enabled in accessibility. Exists only on macOS; elsewhere it is refused with platform_no_analogue"""
         result = await self.call(METHOD_NATIVE_BOLD_TEXT_ENABLED)
         return result
 
@@ -2728,7 +2728,7 @@ class MethodsMixin:
         return bool((result or {}).get("ok", False))
 
     async def native_cron_jobs(self) -> list[str]:
-        """List the current user crontab entries"""
+        """List the current user crontab entries. Exists only on macOS and Linux; elsewhere it is refused with platform_no_analogue"""
         result = await self.call(METHOD_NATIVE_CRON_JOBS)
         return (result or {}).get("jobs") or []
 
@@ -2837,7 +2837,7 @@ class MethodsMixin:
         return result
 
     async def native_differentiate_without_color(self) -> NativeDifferentiateWithoutColorResponse:
-        """Check if differentiate without color is enabled"""
+        """Check if differentiate without color is enabled. Exists only on macOS; elsewhere it is refused with platform_no_analogue"""
         result = await self.call(METHOD_NATIVE_DIFFERENTIATE_WITHOUT_COLOR)
         return result
 
@@ -2954,42 +2954,42 @@ class MethodsMixin:
         return (result or {}).get("servers") or []
 
     async def native_dock_auto_hide(self) -> NativeDockAutoHideResponse:
-        """Check if Dock auto-hide is enabled"""
+        """Check if Dock auto-hide is enabled. Exists only on macOS; elsewhere it is refused with platform_no_analogue"""
         result = await self.call(METHOD_NATIVE_DOCK_AUTO_HIDE)
         return result
 
     async def native_dock_magnification(self) -> NativeDockMagnificationResponse:
-        """Check if Dock magnification is enabled"""
+        """Check if Dock magnification is enabled. Exists only on macOS; elsewhere it is refused with platform_no_analogue"""
         result = await self.call(METHOD_NATIVE_DOCK_MAGNIFICATION)
         return result
 
     async def native_dock_minimize_effect(self) -> NativeDockMinimizeEffectResponse:
-        """Get Dock minimize animation. Returns one of: genie, scale, suck"""
+        """Get Dock minimize animation. Returns one of: genie, scale, suck. Exists only on macOS; elsewhere it is refused with platform_no_analogue"""
         result = await self.call(METHOD_NATIVE_DOCK_MINIMIZE_EFFECT)
         return result
 
     async def native_dock_minimize_to_app(self) -> NativeDockMinimizeToAppResponse:
-        """Check if windows minimize into app icon"""
+        """Check if windows minimize into app icon. Exists only on macOS; elsewhere it is refused with platform_no_analogue"""
         result = await self.call(METHOD_NATIVE_DOCK_MINIMIZE_TO_APP)
         return result
 
     async def native_dock_position(self) -> NativeDockPositionResponse:
-        """Get the Dock position (left, bottom, right)"""
+        """Get the Dock position (left, bottom, right). Exists only on macOS; elsewhere it is refused with platform_no_analogue"""
         result = await self.call(METHOD_NATIVE_DOCK_POSITION)
         return result
 
     async def native_dock_show_indicators(self) -> NativeDockShowIndicatorsResponse:
-        """Check if Dock shows running app indicators"""
+        """Check if Dock shows running app indicators. Exists only on macOS; elsewhere it is refused with platform_no_analogue"""
         result = await self.call(METHOD_NATIVE_DOCK_SHOW_INDICATORS)
         return result
 
     async def native_dock_show_recents(self) -> NativeDockShowRecentsResponse:
-        """Check if Dock shows recent apps"""
+        """Check if Dock shows recent apps. Exists only on macOS; elsewhere it is refused with platform_no_analogue"""
         result = await self.call(METHOD_NATIVE_DOCK_SHOW_RECENTS)
         return result
 
     async def native_dock_size(self) -> int:
-        """Get the Dock tile size (0-128)"""
+        """Get the Dock tile size (0-128). Exists only on macOS; elsewhere it is refused with platform_no_analogue"""
         result = await self.call(METHOD_NATIVE_DOCK_SIZE)
         return result
 
@@ -3187,17 +3187,17 @@ class MethodsMixin:
         return result
 
     async def native_finder_new_window_target(self) -> NativeFinderNewWindowTargetResponse:
-        """Get Finder new window default location"""
+        """Get Finder new window default location. Exists only on macOS; elsewhere it is refused with platform_no_analogue"""
         result = await self.call(METHOD_NATIVE_FINDER_NEW_WINDOW_TARGET)
         return result
 
     async def native_finder_selection(self) -> list[str]:
-        """Get the currently selected files in Finder"""
+        """Get the currently selected files in Finder. Exists only on macOS; elsewhere it is refused with platform_no_analogue"""
         result = await self.call(METHOD_NATIVE_FINDER_SELECTION)
         return (result or {}).get("paths") or []
 
     async def native_finder_show_extensions(self) -> NativeFinderShowExtensionsResponse:
-        """Whether the file manager shows file extensions"""
+        """Whether the file manager shows file extensions. Exists only on macOS and Windows; elsewhere it is refused with platform_no_analogue"""
         result = await self.call(METHOD_NATIVE_FINDER_SHOW_EXTENSIONS)
         return result
 
@@ -3207,7 +3207,7 @@ class MethodsMixin:
         return result
 
     async def native_finder_show_path_bar(self) -> NativeFinderShowPathBarResponse:
-        """Check if Finder shows path bar"""
+        """Check if Finder shows path bar. Exists only on macOS; elsewhere it is refused with platform_no_analogue"""
         result = await self.call(METHOD_NATIVE_FINDER_SHOW_PATH_BAR)
         return result
 
@@ -3217,7 +3217,7 @@ class MethodsMixin:
         return result
 
     async def native_finder_window_path(self) -> NativeFinderWindowPathResponse:
-        """Get the path of the frontmost Finder window"""
+        """Get the path of the frontmost Finder window. Exists only on macOS; elsewhere it is refused with platform_no_analogue"""
         result = await self.call(METHOD_NATIVE_FINDER_WINDOW_PATH)
         return result
 
@@ -3237,7 +3237,7 @@ class MethodsMixin:
         return bool((result or {}).get("ok", False))
 
     async def native_fn_key_function(self) -> NativeFnKeyFunctionResponse:
-        """Get function key default behavior"""
+        """Get function key default behavior. Exists only on macOS; elsewhere it is refused with platform_no_analogue"""
         result = await self.call(METHOD_NATIVE_FN_KEY_FUNCTION)
         return result
 
@@ -3284,12 +3284,12 @@ class MethodsMixin:
         return result
 
     async def native_full_disk_access(self) -> NativeFullDiskAccessResponse:
-        """Check if full disk access is granted"""
+        """Check if full disk access is granted. Exists only on macOS; elsewhere it is refused with platform_no_analogue"""
         result = await self.call(METHOD_NATIVE_FULL_DISK_ACCESS)
         return result
 
     async def native_function_keys_standard(self) -> NativeFunctionKeysStandardResponse:
-        """Check if function keys are set to standard behavior (not media)"""
+        """Check if function keys are set to standard behavior (not media). Exists only on macOS; elsewhere it is refused with platform_no_analogue"""
         result = await self.call(METHOD_NATIVE_FUNCTION_KEYS_STANDARD)
         return result
 
@@ -3344,12 +3344,12 @@ class MethodsMixin:
         return result
 
     async def native_group_windows_by_app(self) -> NativeGroupWindowsByAppResponse:
-        """Check if Mission Control groups windows by app"""
+        """Check if Mission Control groups windows by app. Exists only on macOS; elsewhere it is refused with platform_no_analogue"""
         result = await self.call(METHOD_NATIVE_GROUP_WINDOWS_BY_APP)
         return result
 
     async def native_handoff_enabled(self) -> NativeHandoffEnabledResponse:
-        """Check if Handoff is enabled"""
+        """Check if Handoff is enabled. Exists only on macOS; elsewhere it is refused with platform_no_analogue"""
         result = await self.call(METHOD_NATIVE_HANDOFF_ENABLED)
         return result
 
@@ -3439,7 +3439,7 @@ class MethodsMixin:
         return result
 
     async def native_homebrew_prefix(self) -> NativeHomebrewPrefixResponse:
-        """Get the Homebrew installation prefix"""
+        """Get the Homebrew installation prefix. Exists only on macOS and Linux; elsewhere it is refused with platform_no_analogue"""
         result = await self.call(METHOD_NATIVE_HOMEBREW_PREFIX)
         return result
 
@@ -3462,17 +3462,17 @@ class MethodsMixin:
         return result
 
     async def native_icloud_desktop_sync(self) -> NativeIcloudDesktopSyncResponse:
-        """Check if iCloud Desktop & Documents sync is enabled"""
+        """Check if iCloud Desktop & Documents sync is enabled. Exists only on macOS; elsewhere it is refused with platform_no_analogue"""
         result = await self.call(METHOD_NATIVE_ICLOUD_DESKTOP_SYNC)
         return result
 
     async def native_icloud_drive_path(self) -> NativeIcloudDrivePathResponse:
-        """Get the local path to iCloud Drive"""
+        """Get the local path to iCloud Drive. Exists only on macOS and Windows; elsewhere it is refused with platform_no_analogue"""
         result = await self.call(METHOD_NATIVE_ICLOUD_DRIVE_PATH)
         return result
 
     async def native_icloud_signed_in(self) -> NativeIcloudSignedInResponse:
-        """Check if the user is signed into iCloud"""
+        """Check if the user is signed into iCloud. Exists only on macOS; elsewhere it is refused with platform_no_analogue"""
         result = await self.call(METHOD_NATIVE_ICLOUD_SIGNED_IN)
         return result
 
@@ -3492,7 +3492,7 @@ class MethodsMixin:
         return (result or {}).get("apps") or []
 
     async def native_interface_style_switcher(self) -> NativeInterfaceStyleSwitcherResponse:
-        """Get auto appearance switching setting"""
+        """Get auto appearance switching setting. Exists only on macOS; elsewhere it is refused with platform_no_analogue"""
         result = await self.call(METHOD_NATIVE_INTERFACE_STYLE_SWITCHER)
         return result
 
@@ -3630,7 +3630,7 @@ class MethodsMixin:
         return (result or {}).get("notifications") or []
 
     async def native_list_shortcuts(self) -> list[ShortcutInfo]:
-        """List available Shortcuts.app shortcuts"""
+        """List available Shortcuts.app shortcuts. Exists only on macOS; elsewhere it is refused with platform_no_analogue"""
         result = await self.call(METHOD_NATIVE_LIST_SHORTCUTS)
         return (result or {}).get("shortcuts") or []
 
@@ -3640,7 +3640,7 @@ class MethodsMixin:
         return (result or {}).get("spaces") or []
 
     async def native_live_text_enabled(self) -> NativeLiveTextEnabledResponse:
-        """Check if Live Text is enabled"""
+        """Check if Live Text is enabled. Exists only on macOS; elsewhere it is refused with platform_no_analogue"""
         result = await self.call(METHOD_NATIVE_LIVE_TEXT_ENABLED)
         return result
 
@@ -3674,7 +3674,7 @@ class MethodsMixin:
         return (result or {}).get("items") or []
 
     async def native_login_items_modern(self) -> list[str]:
-        """List modern login items (SMAppService)"""
+        """List modern login items (SMAppService). Exists only on macOS; elsewhere it is refused with platform_no_analogue"""
         result = await self.call(METHOD_NATIVE_LOGIN_ITEMS_MODERN)
         return (result or {}).get("items") or []
 
@@ -3735,7 +3735,7 @@ class MethodsMixin:
         return (result or {}).get("items") or []
 
     async def native_menu_bar_auto_hide(self) -> NativeMenuBarAutoHideResponse:
-        """Check if menu bar auto-hide is enabled"""
+        """Check if menu bar auto-hide is enabled. Exists only on macOS; elsewhere it is refused with platform_no_analogue"""
         result = await self.call(METHOD_NATIVE_MENU_BAR_AUTO_HIDE)
         return result
 
@@ -3852,7 +3852,7 @@ class MethodsMixin:
         return result
 
     async def native_network_quality(self) -> NativeNetworkQualityResponse:
-        """Run a quick network quality test (upload/download Mbps)"""
+        """Run a quick network quality test (upload/download Mbps). Exists only on macOS; elsewhere it is refused with platform_no_analogue"""
         result = await self.call(METHOD_NATIVE_NETWORK_QUALITY)
         return result
 
@@ -3986,7 +3986,7 @@ class MethodsMixin:
         await self.call(METHOD_NATIVE_OPEN_APP_SETTINGS, params)
 
     async def native_open_finder_window(self, path: str) -> None:
-        """Open a Finder window at a specific path"""
+        """Open a Finder window at a specific path. Exists only on macOS; elsewhere it is refused with platform_no_analogue"""
         params: dict[str, Any] = {
             "path": path,
         }
@@ -4060,7 +4060,7 @@ class MethodsMixin:
         await self.call(METHOD_NATIVE_PIN_WINDOW_ABOVE, params)
 
     async def native_pinch_to_zoom(self) -> NativePinchToZoomResponse:
-        """Check if pinch-to-zoom gesture is enabled"""
+        """Check if pinch-to-zoom gesture is enabled. Exists only on macOS and Windows; elsewhere it is refused with platform_no_analogue"""
         result = await self.call(METHOD_NATIVE_PINCH_TO_ZOOM)
         return result
 
@@ -4073,7 +4073,7 @@ class MethodsMixin:
         return result
 
     async def native_play_feedback_when_volume_changed(self) -> NativePlayFeedbackWhenVolumeChangedResponse:
-        """Check if volume change feedback sound is enabled"""
+        """Check if volume change feedback sound is enabled. Exists only on macOS; elsewhere it is refused with platform_no_analogue"""
         result = await self.call(METHOD_NATIVE_PLAY_FEEDBACK_WHEN_VOLUME_CHANGED)
         return result
 
@@ -4099,7 +4099,7 @@ class MethodsMixin:
         return result
 
     async def native_press_and_hold_enabled(self) -> NativePressAndHoldEnabledResponse:
-        """Check if press-and-hold for accented characters is enabled"""
+        """Check if press-and-hold for accented characters is enabled. Exists only on macOS; elsewhere it is refused with platform_no_analogue"""
         result = await self.call(METHOD_NATIVE_PRESS_AND_HOLD_ENABLED)
         return result
 
@@ -4252,7 +4252,7 @@ class MethodsMixin:
         return bool((result or {}).get("ok", False))
 
     async def native_purgeable_space(self) -> int:
-        """Get purgeable disk space in bytes"""
+        """Get purgeable disk space in bytes. Exists only on macOS; elsewhere it is refused with platform_no_analogue"""
         result = await self.call(METHOD_NATIVE_PURGEABLE_SPACE)
         return result
 
@@ -4341,7 +4341,7 @@ class MethodsMixin:
         return result
 
     async def native_reduce_transparency(self) -> NativeReduceTransparencyResponse:
-        """Check if Reduce Transparency is enabled"""
+        """Check if Reduce Transparency is enabled. Exists only on macOS and Windows; elsewhere it is refused with platform_no_analogue"""
         result = await self.call(METHOD_NATIVE_REDUCE_TRANSPARENCY)
         return result
 
@@ -4390,7 +4390,7 @@ class MethodsMixin:
         await self.call(METHOD_NATIVE_REVEAL_IN_FINDER, params)
 
     async def native_rosetta_installed(self) -> NativeRosettaInstalledResponse:
-        """Check if Rosetta 2 is installed (Apple Silicon)"""
+        """Check if Rosetta 2 is installed (Apple Silicon). Exists only on macOS; elsewhere it is refused with platform_no_analogue"""
         result = await self.call(METHOD_NATIVE_ROSETTA_INSTALLED)
         return result
 
@@ -4406,7 +4406,7 @@ class MethodsMixin:
         return result
 
     async def native_run_jxa(self, script: str) -> NativeRunJxaResponse:
-        """Run JavaScript for Automation (JXA) code"""
+        """Run JavaScript for Automation (JXA) code. Exists only on macOS; elsewhere it is refused with platform_no_analogue"""
         params: dict[str, Any] = {
             "script": script,
         }
@@ -4414,7 +4414,7 @@ class MethodsMixin:
         return result
 
     async def native_run_shortcut(self, name: str, input: str | None = None) -> NativeRunShortcutResponse:
-        """Run a Shortcuts.app shortcut by name
+        """Run a Shortcuts.app shortcut by name. Exists only on macOS; elsewhere it is refused with platform_no_analogue
 
         input: default null
         """
@@ -4497,22 +4497,22 @@ class MethodsMixin:
         return result
 
     async def native_screenshot_format(self) -> NativeScreenshotFormatResponse:
-        """Get screenshot file format"""
+        """Get screenshot file format. Exists only on macOS; elsewhere it is refused with platform_no_analogue"""
         result = await self.call(METHOD_NATIVE_SCREENSHOT_FORMAT)
         return result
 
     async def native_screenshot_include_shadow(self) -> NativeScreenshotIncludeShadowResponse:
-        """Check if screenshots include window shadow"""
+        """Check if screenshots include window shadow. Exists only on macOS; elsewhere it is refused with platform_no_analogue"""
         result = await self.call(METHOD_NATIVE_SCREENSHOT_INCLUDE_SHADOW)
         return result
 
     async def native_screenshot_location(self) -> NativeScreenshotLocationResponse:
-        """Get the configured screenshot save location"""
+        """Get the configured screenshot save location. Exists only on macOS; elsewhere it is refused with platform_no_analogue"""
         result = await self.call(METHOD_NATIVE_SCREENSHOT_LOCATION)
         return result
 
     async def native_screenshot_show_thumbnail(self) -> NativeScreenshotShowThumbnailResponse:
-        """Check if screenshot thumbnail is shown"""
+        """Check if screenshot thumbnail is shown. Exists only on macOS; elsewhere it is refused with platform_no_analogue"""
         result = await self.call(METHOD_NATIVE_SCREENSHOT_SHOW_THUMBNAIL)
         return result
 
@@ -4572,7 +4572,7 @@ class MethodsMixin:
         return bool((result or {}).get("ok", False))
 
     async def native_set_app_muted(self, app: str, muted: bool) -> bool:
-        """Mute or unmute one app in the system mixer; false when the app has no audio stream"""
+        """Mute or unmute one app in the system mixer; false when the app has no audio stream. Exists only on Linux and Windows; elsewhere it is refused with platform_no_analogue"""
         params: dict[str, Any] = {
             "app": app,
             "muted": muted,
@@ -4581,7 +4581,7 @@ class MethodsMixin:
         return bool((result or {}).get("ok", False))
 
     async def native_set_app_volume(self, app: str, volume: float) -> bool:
-        """Set one app's volume (0.0-1.0) in the system mixer; false when the app has no audio stream
+        """Set one app's volume (0.0-1.0) in the system mixer; false when the app has no audio stream. Exists only on Linux and Windows; elsewhere it is refused with platform_no_analogue
 
         volume: wire double
         """
@@ -4631,7 +4631,7 @@ class MethodsMixin:
         return bool((result or {}).get("ok", False))
 
     async def native_set_auto_rearrange_spaces(self, enabled: bool) -> bool:
-        """Enable or disable auto-rearrange Spaces"""
+        """Enable or disable auto-rearrange Spaces. Exists only on macOS; elsewhere it is refused with platform_no_analogue"""
         params: dict[str, Any] = {
             "enabled": enabled,
         }
@@ -4682,7 +4682,7 @@ class MethodsMixin:
         await self.call(METHOD_NATIVE_SET_DND, params)
 
     async def native_set_dock_auto_hide(self, enabled: bool) -> bool:
-        """Enable or disable Dock auto-hide"""
+        """Enable or disable Dock auto-hide. Exists only on macOS; elsewhere it is refused with platform_no_analogue"""
         params: dict[str, Any] = {
             "enabled": enabled,
         }
@@ -4690,7 +4690,7 @@ class MethodsMixin:
         return bool((result or {}).get("ok", False))
 
     async def native_set_dock_magnification(self, enabled: bool) -> bool:
-        """Enable or disable Dock magnification"""
+        """Enable or disable Dock magnification. Exists only on macOS; elsewhere it is refused with platform_no_analogue"""
         params: dict[str, Any] = {
             "enabled": enabled,
         }
@@ -4698,7 +4698,7 @@ class MethodsMixin:
         return bool((result or {}).get("ok", False))
 
     async def native_set_dock_minimize_effect(self, effect: str) -> bool:
-        """Set Dock minimize animation (genie/scale)"""
+        """Set Dock minimize animation (genie/scale). Exists only on macOS; elsewhere it is refused with platform_no_analogue"""
         params: dict[str, Any] = {
             "effect": effect,
         }
@@ -4706,7 +4706,7 @@ class MethodsMixin:
         return bool((result or {}).get("ok", False))
 
     async def native_set_dock_position(self, position: str) -> bool:
-        """Set the Dock position (left, bottom, right)"""
+        """Set the Dock position (left, bottom, right). Exists only on macOS; elsewhere it is refused with platform_no_analogue"""
         params: dict[str, Any] = {
             "position": position,
         }
@@ -4714,7 +4714,7 @@ class MethodsMixin:
         return bool((result or {}).get("ok", False))
 
     async def native_set_dock_show_recents(self, enabled: bool) -> bool:
-        """Show or hide recent apps in Dock"""
+        """Show or hide recent apps in Dock. Exists only on macOS; elsewhere it is refused with platform_no_analogue"""
         params: dict[str, Any] = {
             "enabled": enabled,
         }
@@ -4722,7 +4722,7 @@ class MethodsMixin:
         return bool((result or {}).get("ok", False))
 
     async def native_set_dock_size(self, size: float) -> bool:
-        """Set Dock tile size
+        """Set Dock tile size. Exists only on macOS; elsewhere it is refused with platform_no_analogue
 
         size: wire double
         """
@@ -4752,7 +4752,7 @@ class MethodsMixin:
         return bool((result or {}).get("ok", False))
 
     async def native_set_file_permissions(self, mode: str, path: str) -> bool:
-        """Set file permissions (chmod octal mode)"""
+        """Set file permissions (chmod octal mode). Exists only on macOS and Linux; elsewhere it is refused with platform_no_analogue"""
         params: dict[str, Any] = {
             "mode": mode,
             "path": path,
@@ -4761,7 +4761,7 @@ class MethodsMixin:
         return bool((result or {}).get("ok", False))
 
     async def native_set_finder_show_extensions(self, enabled: bool) -> bool:
-        """Show or hide file extensions in Finder"""
+        """Show or hide file extensions in Finder. Exists only on macOS and Windows; elsewhere it is refused with platform_no_analogue"""
         params: dict[str, Any] = {
             "enabled": enabled,
         }
@@ -4827,7 +4827,7 @@ class MethodsMixin:
         return bool((result or {}).get("ok", False))
 
     async def native_set_menu_bar_auto_hide(self, enabled: bool) -> bool:
-        """Enable or disable menu bar auto-hide"""
+        """Enable or disable menu bar auto-hide. Exists only on macOS; elsewhere it is refused with platform_no_analogue"""
         params: dict[str, Any] = {
             "enabled": enabled,
         }
@@ -4853,7 +4853,7 @@ class MethodsMixin:
         await self.call(METHOD_NATIVE_SET_NIGHT_SHIFT, params)
 
     async def native_set_screenshot_format(self, format: str) -> bool:
-        """Set screenshot file format (png/jpg/pdf/tiff)"""
+        """Set screenshot file format (png/jpg/pdf/tiff). Exists only on macOS; elsewhere it is refused with platform_no_analogue"""
         params: dict[str, Any] = {
             "format": format,
         }
@@ -4861,7 +4861,7 @@ class MethodsMixin:
         return bool((result or {}).get("ok", False))
 
     async def native_set_screenshot_include_shadow(self, enabled: bool) -> bool:
-        """Enable or disable window shadow in screenshots"""
+        """Enable or disable window shadow in screenshots. Exists only on macOS; elsewhere it is refused with platform_no_analogue"""
         params: dict[str, Any] = {
             "enabled": enabled,
         }
@@ -4869,7 +4869,7 @@ class MethodsMixin:
         return bool((result or {}).get("ok", False))
 
     async def native_set_screenshot_location(self, path: str) -> bool:
-        """Set the screenshot save location"""
+        """Set the screenshot save location. Exists only on macOS; elsewhere it is refused with platform_no_analogue"""
         params: dict[str, Any] = {
             "path": path,
         }
@@ -4885,7 +4885,7 @@ class MethodsMixin:
         return bool((result or {}).get("ok", False))
 
     async def native_set_sidebar_icon_size(self, size: int) -> bool:
-        """Set sidebar icon size (1=small,2=medium,3=large)
+        """Set sidebar icon size (1=small,2=medium,3=large). Exists only on macOS; elsewhere it is refused with platform_no_analogue
 
         size: wire uint32 · min 0
         """
@@ -4896,7 +4896,7 @@ class MethodsMixin:
         return bool((result or {}).get("ok", False))
 
     async def native_set_stage_manager(self, enabled: bool) -> bool:
-        """Enable or disable Stage Manager"""
+        """Enable or disable Stage Manager. Exists only on macOS; elsewhere it is refused with platform_no_analogue"""
         params: dict[str, Any] = {
             "enabled": enabled,
         }
@@ -4983,7 +4983,7 @@ class MethodsMixin:
         await self.call(METHOD_NATIVE_SET_WINDOW_POSITION, params)
 
     async def native_set_window_shadow(self, enabled: bool, window_id: str) -> None:
-        """Enable or disable the drop shadow for a window"""
+        """Enable or disable the drop shadow for a window. Exists only on macOS; elsewhere it is refused with platform_no_analogue"""
         params: dict[str, Any] = {
             "enabled": enabled,
             "window_id": window_id,
@@ -5022,7 +5022,7 @@ class MethodsMixin:
         return result
 
     async def native_sidebar_icon_size(self) -> NativeSidebarIconSizeResponse:
-        """Get sidebar icon size. Returns one of: small, medium, large"""
+        """Get sidebar icon size. Returns one of: small, medium, large. Exists only on macOS; elsewhere it is refused with platform_no_analogue"""
         result = await self.call(METHOD_NATIVE_SIDEBAR_ICON_SIZE)
         return result
 
@@ -5032,7 +5032,7 @@ class MethodsMixin:
         return result
 
     async def native_siri_enabled(self) -> NativeSiriEnabledResponse:
-        """Check if Siri is enabled"""
+        """Check if Siri is enabled. Exists only on macOS; elsewhere it is refused with platform_no_analogue"""
         result = await self.call(METHOD_NATIVE_SIRI_ENABLED)
         return result
 
@@ -5046,12 +5046,12 @@ class MethodsMixin:
         return result
 
     async def native_smart_quotes_enabled(self) -> NativeSmartQuotesEnabledResponse:
-        """Check if smart quotes are enabled"""
+        """Check if smart quotes are enabled. Exists only on macOS; elsewhere it is refused with platform_no_analogue"""
         result = await self.call(METHOD_NATIVE_SMART_QUOTES_ENABLED)
         return result
 
     async def native_smart_zoom(self) -> NativeSmartZoomResponse:
-        """Check if smart zoom (double-tap) is enabled"""
+        """Check if smart zoom (double-tap) is enabled. Exists only on macOS; elsewhere it is refused with platform_no_analogue"""
         result = await self.call(METHOD_NATIVE_SMART_ZOOM)
         return result
 
@@ -5125,7 +5125,7 @@ class MethodsMixin:
         return (result or {}).get("results") or []
 
     async def native_stage_manager_enabled(self) -> NativeStageManagerEnabledResponse:
-        """Check if Stage Manager is enabled"""
+        """Check if Stage Manager is enabled. Exists only on macOS; elsewhere it is refused with platform_no_analogue"""
         result = await self.call(METHOD_NATIVE_STAGE_MANAGER_ENABLED)
         return result
 
@@ -5135,7 +5135,7 @@ class MethodsMixin:
         return result
 
     async def native_startup_sound_enabled(self) -> NativeStartupSoundEnabledResponse:
-        """Check if startup sound is enabled"""
+        """Check if startup sound is enabled. Exists only on macOS and Windows; elsewhere it is refused with platform_no_analogue"""
         result = await self.call(METHOD_NATIVE_STARTUP_SOUND_ENABLED)
         return result
 
@@ -5150,7 +5150,7 @@ class MethodsMixin:
         return result
 
     async def native_swipe_between_pages(self) -> NativeSwipeBetweenPagesResponse:
-        """Check if swipe between pages gesture is enabled"""
+        """Check if swipe between pages gesture is enabled. Exists only on macOS; elsewhere it is refused with platform_no_analogue"""
         result = await self.call(METHOD_NATIVE_SWIPE_BETWEEN_PAGES)
         return result
 
@@ -5165,7 +5165,7 @@ class MethodsMixin:
         await self.call(METHOD_NATIVE_SWITCH_SPACE, params)
 
     async def native_switch_space_when_switching_app(self) -> NativeSwitchSpaceWhenSwitchingAppResponse:
-        """Check if switching to app switches to its Space"""
+        """Check if switching to app switches to its Space. Exists only on macOS; elsewhere it is refused with platform_no_analogue"""
         result = await self.call(METHOD_NATIVE_SWITCH_SPACE_WHEN_SWITCHING_APP)
         return result
 
@@ -5234,7 +5234,7 @@ class MethodsMixin:
         return result
 
     async def native_text_replacements(self) -> NativeTextReplacementsResponse:
-        """Get user text replacements as the raw `NSUserDictionaryReplacementItems` preference value — macOS plist text, NOT JSON"""
+        """Get user text replacements as the raw `NSUserDictionaryReplacementItems` preference value — macOS plist text, NOT JSON. Exists only on macOS; elsewhere it is refused with platform_no_analogue"""
         result = await self.call(METHOD_NATIVE_TEXT_REPLACEMENTS)
         return result
 
@@ -5244,7 +5244,7 @@ class MethodsMixin:
         return result
 
     async def native_three_finger_drag(self) -> NativeThreeFingerDragResponse:
-        """Check if three-finger drag is enabled"""
+        """Check if three-finger drag is enabled. Exists only on macOS; elsewhere it is refused with platform_no_analogue"""
         result = await self.call(METHOD_NATIVE_THREE_FINGER_DRAG)
         return result
 
@@ -5312,7 +5312,7 @@ class MethodsMixin:
         return result
 
     async def native_transparency_consent(self, service: str) -> str:
-        """Check TCC consent status for a service (e.g. kTCCServiceAccessibility)"""
+        """Check TCC consent status for a service (e.g. kTCCServiceAccessibility). Exists only on macOS; elsewhere it is refused with platform_no_analogue"""
         params: dict[str, Any] = {
             "service": service,
         }
@@ -5328,7 +5328,7 @@ class MethodsMixin:
         return bool((result or {}).get("result", False))
 
     async def native_true_tone(self) -> NativeTrueToneResponse:
-        """Check if True Tone is enabled. KNOWN LIMITATION: the `corebrightnessdiag` probe this depends on is absent from macOS 15, where this always reports false"""
+        """Check if True Tone is enabled. KNOWN LIMITATION: the `corebrightnessdiag` probe this depends on is absent from macOS 15, where this always reports false. Exists only on macOS and Windows; elsewhere it is refused with platform_no_analogue"""
         result = await self.call(METHOD_NATIVE_TRUE_TONE)
         return result
 
@@ -5397,7 +5397,7 @@ class MethodsMixin:
         return result
 
     async def native_user_shell(self) -> NativeUserShellResponse:
-        """Get the current user's login shell path"""
+        """Get the current user's login shell path. Exists only on macOS and Linux; elsewhere it is refused with platform_no_analogue"""
         result = await self.call(METHOD_NATIVE_USER_SHELL)
         return result
 
@@ -5546,12 +5546,12 @@ class MethodsMixin:
         return bool((result or {}).get("ok", False))
 
     async def native_xcode_path(self) -> NativeXcodePathResponse:
-        """Get the active Xcode developer directory path"""
+        """Get the active Xcode developer directory path. Exists only on macOS; elsewhere it is refused with platform_no_analogue"""
         result = await self.call(METHOD_NATIVE_XCODE_PATH)
         return result
 
     async def native_xcode_version(self) -> NativeXcodeVersionResponse:
-        """Get the installed Xcode version"""
+        """Get the installed Xcode version. Exists only on macOS; elsewhere it is refused with platform_no_analogue"""
         result = await self.call(METHOD_NATIVE_XCODE_VERSION)
         return result
 
