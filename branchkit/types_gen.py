@@ -178,6 +178,23 @@ ActiveSpace = TypedDict("ActiveSpace", {
 # Anchor position for a HUD window on screen.
 Anchor = Literal["top-left", "top-right", "bottom-left", "bottom-right", "bottom-center", "center"]
 
+# One app's audio in the system mixer: its own volume and mute, apart from
+# the device's. An app with several streams (a browser's tabs) is one
+# entry, and setting it sets them all.
+AppVolume = TypedDict("AppVolume", {
+    # The app's identity, as `native.running_apps` reports it.
+    "app": str,
+    # True when every one of its streams is muted.
+    "muted": bool,
+    # The app's name as the mixer shows it.
+    "name": str,
+    # True when a stream is playing now; a paused one stays listed.
+    "playing": bool,
+    # 0.0–1.0; the loudest of its streams.
+    # wire double
+    "volume": float,
+})
+
 # An audio input/output device.
 AudioDevice = TypedDict("AudioDevice", {
     # wire uint32 · min 0
@@ -2848,6 +2865,10 @@ NativeAppVersionRequest = TypedDict("NativeAppVersionRequest", {
     "bundle_id": str,
 })
 
+NativeAppVolumesResponse = TypedDict("NativeAppVolumesResponse", {
+    "apps": list["AppVolume"],
+})
+
 NativeAppWindowsRequest = TypedDict("NativeAppWindowsRequest", {
     "bundle_id": str,
 })
@@ -4766,6 +4787,25 @@ NativeSetAppHiddenRequest = TypedDict("NativeSetAppHiddenRequest", {
 })
 
 NativeSetAppHiddenResponse = TypedDict("NativeSetAppHiddenResponse", {
+    "ok": bool,
+})
+
+NativeSetAppMutedRequest = TypedDict("NativeSetAppMutedRequest", {
+    "app": str,
+    "muted": bool,
+})
+
+NativeSetAppMutedResponse = TypedDict("NativeSetAppMutedResponse", {
+    "ok": bool,
+})
+
+NativeSetAppVolumeRequest = TypedDict("NativeSetAppVolumeRequest", {
+    "app": str,
+    # wire double
+    "volume": float,
+})
+
+NativeSetAppVolumeResponse = TypedDict("NativeSetAppVolumeResponse", {
     "ok": bool,
 })
 

@@ -100,6 +100,7 @@ from .contracts_gen import (
     METHOD_NATIVE_APP_PID,
     METHOD_NATIVE_APP_SUPPORT_DIRECTORY,
     METHOD_NATIVE_APP_VERSION,
+    METHOD_NATIVE_APP_VOLUMES,
     METHOD_NATIVE_APP_WINDOWS,
     METHOD_NATIVE_APP_WINDOWS_COUNT,
     METHOD_NATIVE_AUDIO_DEVICES,
@@ -441,6 +442,8 @@ from .contracts_gen import (
     METHOD_NATIVE_SERIAL_NUMBER,
     METHOD_NATIVE_SET_AIRPORT_POWER,
     METHOD_NATIVE_SET_APP_HIDDEN,
+    METHOD_NATIVE_SET_APP_MUTED,
+    METHOD_NATIVE_SET_APP_VOLUME,
     METHOD_NATIVE_SET_AUDIO_DEVICE,
     METHOD_NATIVE_SET_AUDIO_DEVICE_VOLUME,
     METHOD_NATIVE_SET_AUDIO_INPUT_DEVICE,
@@ -635,6 +638,7 @@ if TYPE_CHECKING:
         ActionsListResponse,
         ActiveSpace,
         Anchor,
+        AppVolume,
         AudioDevice,
         BarcodeResult,
         BleService,
@@ -2198,6 +2202,11 @@ class MethodsMixin:
         }
         result = await self.call(METHOD_NATIVE_APP_VERSION, params)
         return result
+
+    async def native_app_volumes(self) -> list[AppVolume]:
+        """List each app playing audio, with its own volume and mute, as the system mixer shows it"""
+        result = await self.call(METHOD_NATIVE_APP_VOLUMES)
+        return (result or {}).get("apps") or []
 
     async def native_app_windows(self, bundle_id: str) -> list[WindowDetail]:
         """List all windows belonging to a specific app by bundle ID"""
@@ -4560,6 +4569,27 @@ class MethodsMixin:
             "hidden": hidden,
         }
         result = await self.call(METHOD_NATIVE_SET_APP_HIDDEN, params)
+        return bool((result or {}).get("ok", False))
+
+    async def native_set_app_muted(self, app: str, muted: bool) -> bool:
+        """Mute or unmute one app in the system mixer; false when the app has no audio stream"""
+        params: dict[str, Any] = {
+            "app": app,
+            "muted": muted,
+        }
+        result = await self.call(METHOD_NATIVE_SET_APP_MUTED, params)
+        return bool((result or {}).get("ok", False))
+
+    async def native_set_app_volume(self, app: str, volume: float) -> bool:
+        """Set one app's volume (0.0-1.0) in the system mixer; false when the app has no audio stream
+
+        volume: wire double
+        """
+        params: dict[str, Any] = {
+            "app": app,
+            "volume": volume,
+        }
+        result = await self.call(METHOD_NATIVE_SET_APP_VOLUME, params)
         return bool((result or {}).get("ok", False))
 
     async def native_set_audio_device(self, device_type: str, uid: str) -> None:
