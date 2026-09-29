@@ -177,6 +177,7 @@ from .contracts_gen import (
     METHOD_NATIVE_DARK_MODE,
     METHOD_NATIVE_DATE_FORMAT,
     METHOD_NATIVE_DBUS_CALL,
+    METHOD_NATIVE_DEFAULT_APP_FOR_MIME_TYPE,
     METHOD_NATIVE_DEFAULT_APP_FOR_UTI,
     METHOD_NATIVE_DEFAULT_BROWSER,
     METHOD_NATIVE_DEFAULT_EMAIL_CLIENT,
@@ -230,6 +231,7 @@ from .contracts_gen import (
     METHOD_NATIVE_FILE_EXTENDED_ATTRIBUTES,
     METHOD_NATIVE_FILE_HASH,
     METHOD_NATIVE_FILE_METADATA,
+    METHOD_NATIVE_FILE_MIME_TYPE,
     METHOD_NATIVE_FILE_MODIFICATION_DATE,
     METHOD_NATIVE_FILE_OWNER,
     METHOD_NATIVE_FILE_QUARANTINE,
@@ -783,6 +785,7 @@ if TYPE_CHECKING:
         NativeDarkModeResponse,
         NativeDateFormatResponse,
         NativeDbusCallResponse,
+        NativeDefaultAppForMimeTypeResponse,
         NativeDefaultAppForUtiResponse,
         NativeDefaultBrowserResponse,
         NativeDefaultEmailClientResponse,
@@ -2859,8 +2862,16 @@ class MethodsMixin:
         result = await self.call(METHOD_NATIVE_DBUS_CALL, params)
         return result
 
+    async def native_default_app_for_mime_type(self, *, mime_type: str) -> NativeDefaultAppForMimeTypeResponse:
+        """Get the application that opens files of a MIME type by default, by the identity the app operations use"""
+        params: dict[str, Any] = {
+            "mime_type": mime_type,
+        }
+        result = await self.call(METHOD_NATIVE_DEFAULT_APP_FOR_MIME_TYPE, params)
+        return result
+
     async def native_default_app_for_uti(self, *, uti: str) -> NativeDefaultAppForUtiResponse:
-        """Get the default application for a UTI"""
+        """Get the default application for a UTI. Exists only on macOS; elsewhere it is refused with platform_no_analogue"""
         params: dict[str, Any] = {
             "uti": uti,
         }
@@ -3192,6 +3203,14 @@ class MethodsMixin:
         result = await self.call(METHOD_NATIVE_FILE_METADATA, params)
         return result
 
+    async def native_file_mime_type(self, *, path: str) -> str:
+        """Get a file's MIME type (text/plain, image/png), the file-type name every OS shares"""
+        params: dict[str, Any] = {
+            "path": path,
+        }
+        result = await self.call(METHOD_NATIVE_FILE_MIME_TYPE, params)
+        return result
+
     async def native_file_modification_date(self, *, path: str) -> str:
         """Get file modification date as ISO string"""
         params: dict[str, Any] = {
@@ -3243,7 +3262,7 @@ class MethodsMixin:
         return result
 
     async def native_file_type(self, *, path: str) -> NativeFileTypeResponse:
-        """Get the UTI type of a file"""
+        """Get the UTI type of a file. Exists only on macOS; elsewhere it is refused with platform_no_analogue"""
         params: dict[str, Any] = {
             "path": path,
         }
@@ -3251,7 +3270,7 @@ class MethodsMixin:
         return result
 
     async def native_file_uti(self, *, path: str) -> str:
-        """Get the UTI (Uniform Type Identifier) for a file"""
+        """Get the UTI (Uniform Type Identifier) for a file. Exists only on macOS; elsewhere it is refused with platform_no_analogue"""
         params: dict[str, Any] = {
             "path": path,
         }

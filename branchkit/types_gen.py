@@ -3514,6 +3514,14 @@ NativeDbusCallResponse = TypedDict("NativeDbusCallResponse", {
     "values": list[Any],
 })
 
+NativeDefaultAppForMimeTypeRequest = TypedDict("NativeDefaultAppForMimeTypeRequest", {
+    "mime_type": str,
+})
+
+NativeDefaultAppForMimeTypeResponse = TypedDict("NativeDefaultAppForMimeTypeResponse", {
+    "app": str,
+})
+
 NativeDefaultAppForUtiRequest = TypedDict("NativeDefaultAppForUtiRequest", {
     "uti": str,
 })
@@ -3784,6 +3792,10 @@ NativeFileMetadataResponse = TypedDict("NativeFileMetadataResponse", {
     "readonly": bool,
     # wire uint64 (64-bit) · min 0
     "size": int,
+})
+
+NativeFileMimeTypeRequest = TypedDict("NativeFileMimeTypeRequest", {
+    "path": str,
 })
 
 NativeFileModificationDateRequest = TypedDict("NativeFileModificationDateRequest", {
