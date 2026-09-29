@@ -3645,18 +3645,19 @@ class MethodsMixin:
         result = await self.call(METHOD_NATIVE_GATEWAY_ADDRESS)
         return result
 
-    async def native_generate_pdf(self, *, html: str, output_path: str) -> bool:
-        """Generate a PDF from HTML content
+    async def native_generate_pdf(self, *, html: str, output_path: str) -> None:
+        """Render HTML to a PDF file through a Chromium-family browser (Chromium, Chrome, Edge or Brave) run headless and cut off from the network. Refused, naming what to install, when none is
 
-        html: non-empty
-        output_path: non-empty
+        html: The page, as HTML. Nothing it links to on the network is fetched.
+            non-empty
+        output_path: Where to write the PDF; replaced if it exists.
+            non-empty
         """
         params: dict[str, Any] = {
             "html": html,
             "output_path": output_path,
         }
-        result = await self.call(METHOD_NATIVE_GENERATE_PDF, params)
-        return bool((result or {}).get("ok", False))
+        await self.call(METHOD_NATIVE_GENERATE_PDF, params)
 
     async def native_get_window_info(self, *, window_id: str) -> NativeGetWindowInfoResponse:
         """Get detailed info for a single window

@@ -4116,14 +4116,12 @@ NativeGatewayAddressResponse = TypedDict("NativeGatewayAddressResponse", {
 })
 
 NativeGeneratePdfRequest = TypedDict("NativeGeneratePdfRequest", {
+    # The page, as HTML. Nothing it links to on the network is fetched.
     # non-empty
     "html": str,
+    # Where to write the PDF; replaced if it exists.
     # non-empty
     "output_path": str,
-})
-
-NativeGeneratePdfResponse = TypedDict("NativeGeneratePdfResponse", {
-    "ok": bool,
 })
 
 NativeGetWindowInfoRequest = TypedDict("NativeGetWindowInfoRequest", {
