@@ -6174,6 +6174,10 @@ NativeWriteAppPreferenceRequest = TypedDict("NativeWriteAppPreferenceRequest", {
     "key": str,
     # Opaque by design, as the read's result is. A GSettings value must
     # fit the key's type; an existing registry value keeps its type.
+    # Where GSettings has no fixed type (a variant, `v`, as in `a{sv}`)
+    # the JSON's own shape gives it: a boolean, an integer (int32, wider
+    # when it must be), a fraction (double), text, an array, an object
+    # (`a{sv}`). A byte string (`ay`) takes text, as it reads, or bytes.
     # `null` removes the setting (GSettings: resets it to its default).
     "value": Any,
 })
