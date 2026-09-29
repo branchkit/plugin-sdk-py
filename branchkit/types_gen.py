@@ -207,6 +207,30 @@ AudioDevice = TypedDict("AudioDevice", {
     "uid": str,
 })
 
+# A program that runs in the background or starts at login
+# (`native.background_items`).
+BackgroundItem = TypedDict("BackgroundItem", {
+    # A human name where the mechanism keeps one (a systemd Description, a
+    # Windows service's display name, an autostart entry's Name).
+    "display_name": NotRequired[str],
+    # What keeps it: `launchd`, `systemd`, `autostart`, `service`,
+    # `run_key` or `startup_folder`.
+    "mechanism": str,
+    # Its identifier in its mechanism: a launchd label, a systemd unit, a
+    # Windows service name, a Run value or a Startup-folder file.
+    "name": str,
+    # The program it runs, with its arguments where the mechanism records
+    # them as one command line.
+    "program": NotRequired[str],
+    # Whether it is running now; None where the mechanism does not say
+    # (a Run key or autostart entry is a launch, not a process).
+    "running": NotRequired[bool],
+    # `user` (runs for the signed-in user) or `system` (for the machine).
+    "scope": str,
+    # Whether it starts on its own, at login or at boot.
+    "starts_automatically": bool,
+})
+
 BarcodeResult = TypedDict("BarcodeResult", {
     # wire double
     "height": float,
@@ -3077,6 +3101,10 @@ NativeAxUnobserveResponse = TypedDict("NativeAxUnobserveResponse", {
     "result": bool,
 })
 
+NativeBackgroundItemsResponse = TypedDict("NativeBackgroundItemsResponse", {
+    "items": list["BackgroundItem"],
+})
+
 NativeBatchIsTileableRequest = TypedDict("NativeBatchIsTileableRequest", {
     # default []
     "window_ids": NotRequired[list[str]],
@@ -4149,14 +4177,6 @@ NativeLaunchAppRequest = TypedDict("NativeLaunchAppRequest", {
     "bundle_id": str,
     # default false
     "new_instance": NotRequired[bool],
-})
-
-NativeLaunchdAgentsResponse = TypedDict("NativeLaunchdAgentsResponse", {
-    "agents": list[str],
-})
-
-NativeLaunchdDaemonsResponse = TypedDict("NativeLaunchdDaemonsResponse", {
-    "daemons": list[str],
 })
 
 NativeListAudioInputDevicesResponse = TypedDict("NativeListAudioInputDevicesResponse", {

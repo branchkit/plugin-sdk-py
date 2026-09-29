@@ -121,6 +121,7 @@ from .contracts_gen import (
     METHOD_NATIVE_AX_READ_ATTRIBUTES,
     METHOD_NATIVE_AX_SET_ATTRIBUTE,
     METHOD_NATIVE_AX_UNOBSERVE,
+    METHOD_NATIVE_BACKGROUND_ITEMS,
     METHOD_NATIVE_BATCH_IS_TILEABLE,
     METHOD_NATIVE_BATCH_SET_FRAMES,
     METHOD_NATIVE_BATTERY,
@@ -302,8 +303,6 @@ from .contracts_gen import (
     METHOD_NATIVE_KEY_REPEAT_RATE,
     METHOD_NATIVE_KILL_PROCESS,
     METHOD_NATIVE_LAST_REBOOT,
-    METHOD_NATIVE_LAUNCHD_AGENTS,
-    METHOD_NATIVE_LAUNCHD_DAEMONS,
     METHOD_NATIVE_LAUNCH_APP,
     METHOD_NATIVE_LIST_AUDIO_INPUT_DEVICES,
     METHOD_NATIVE_LIST_AUDIO_OUTPUT_DEVICES,
@@ -664,6 +663,7 @@ if TYPE_CHECKING:
         Anchor,
         AppVolume,
         AudioDevice,
+        BackgroundItem,
         BarcodeResult,
         BleService,
         BleWriteEntry,
@@ -2414,6 +2414,11 @@ class MethodsMixin:
         result = await self.call(METHOD_NATIVE_AX_UNOBSERVE, params)
         return bool((result or {}).get("result", False))
 
+    async def native_background_items(self) -> list[BackgroundItem]:
+        """List the programs that run in the background or start at login: launchd jobs on macOS, systemd services and autostart entries on Linux, services, Run keys and Startup folders on Windows"""
+        result = await self.call(METHOD_NATIVE_BACKGROUND_ITEMS)
+        return (result or {}).get("items") or []
+
     async def native_batch_is_tileable(self, *, window_ids: list[str] | None = None) -> list[TileableEntry]:
         """Check which windows can be tiled
 
@@ -3680,16 +3685,6 @@ class MethodsMixin:
         if new_instance is not None:
             params["new_instance"] = new_instance
         await self.call(METHOD_NATIVE_LAUNCH_APP, params)
-
-    async def native_launchd_agents(self) -> list[str]:
-        """List user launch agents"""
-        result = await self.call(METHOD_NATIVE_LAUNCHD_AGENTS)
-        return (result or {}).get("agents") or []
-
-    async def native_launchd_daemons(self) -> list[str]:
-        """List system launch daemons"""
-        result = await self.call(METHOD_NATIVE_LAUNCHD_DAEMONS)
-        return (result or {}).get("daemons") or []
 
     async def native_list_audio_input_devices(self) -> list[str]:
         """List available audio input device names"""
