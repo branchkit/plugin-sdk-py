@@ -4733,10 +4733,16 @@ class MethodsMixin:
         return result
 
     async def native_read_app_preference(self, *, domain: str, key: str) -> Any:
-        """Read a preference value for an app domain
+        """Read one setting from another app's settings domain the plugin declared and the user switched on: macOS defaults, GSettings on Linux, the user's registry on Windows
 
-        domain: non-empty
-        key: non-empty
+        domain: `<store>:<domain>`, the store this OS keeps settings in:
+            `defaults:com.apple.dock` (macOS), `gsettings:org.gnome.desktop.interface`
+            (Linux; a relocatable schema adds `:<path>`), or
+            `registry:Software\\7-Zip\\FM`, a key under HKEY_CURRENT_USER at or
+            below a declared one (Windows).
+            non-empty
+        key: The setting: a defaults key, a GSettings key, or a registry value
+            name (`""` for the key's default value).
         """
         params: dict[str, Any] = {
             "domain": domain,
@@ -6226,19 +6232,22 @@ class MethodsMixin:
         result = await self.call(METHOD_NATIVE_WORLD_MODEL, params)
         return result
 
-    async def native_write_app_preference(self, *, domain: str, key: str, value: Any) -> bool:
-        """Write a preference value for an app domain
+    async def native_write_app_preference(self, *, domain: str, key: str, value: Any) -> None:
+        """Change (or, with null, reset) one setting in another app's settings domain the plugin declared for writing and the user switched on
 
-        domain: non-empty
-        key: non-empty
+        domain: As for `native.read_app_preference`; declared under
+            `requires.preferences.write`.
+            non-empty
+        value: Opaque by design, as the read's result is. A GSettings value must
+            fit the key's type; an existing registry value keeps its type.
+            `null` removes the setting (GSettings: resets it to its default).
         """
         params: dict[str, Any] = {
             "domain": domain,
             "key": key,
             "value": value,
         }
-        result = await self.call(METHOD_NATIVE_WRITE_APP_PREFERENCE, params)
-        return bool((result or {}).get("ok", False))
+        await self.call(METHOD_NATIVE_WRITE_APP_PREFERENCE, params)
 
     async def native_write_file(self, *, contents: str, path: str) -> bool:
         """Write string contents to a file
