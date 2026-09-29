@@ -1066,7 +1066,10 @@ class MethodsMixin:
         return result
 
     async def artifact_delete(self, *, ref: str) -> None:
-        """Delete an installed model from the caller's own model namespace (ref: <plugin>/<model>)"""
+        """Delete an installed model from the caller's own model namespace (ref: <plugin>/<model>)
+
+        ref: non-empty
+        """
         params: dict[str, Any] = {
             "ref": ref,
         }
@@ -1084,6 +1087,7 @@ class MethodsMixin:
             already hold. The platform refuses otherwise (D4).
             wire uint64 (64-bit) · min 0
         name: The blob's name, as declared in this plugin's `provides.blobs`.
+            non-empty
         new_generation: Start a new generation instead of appending to the current one — the
             way a provider shrinks. A new generation is a NEW backing file, so
             offsets restart at zero and consumers reopen; `length` is then the
@@ -1106,6 +1110,7 @@ class MethodsMixin:
         """Where a blob stands: its current generation, published length and version. For a restarted provider (which generation to write) and a starting consumer (what to open)
 
         name: The blob's name, as its provider declared it in `provides.blobs`.
+            non-empty
         provider: The providing plugin. Omitted: the caller's own blob. Another
             plugin's blob is answerable only to a consumer granted to read it.
         """
@@ -1121,6 +1126,7 @@ class MethodsMixin:
         """Append an entry to a log-kind collection
 
         name: Collection name. Must be a `kind: "log"` collection.
+            non-empty
         payload: Entry payload — validated against the collection's `fields` schema.
         """
         params: dict[str, Any] = {
@@ -1136,8 +1142,10 @@ class MethodsMixin:
         key: The fold key — stamped into the payload's key field. Appending another
             record with the same key annotates the first (compacted-changelog
             shape); a compacted read folds them into one record.
+            non-empty
         name: Collection name. Must be a keyed (`id_strategy: by_field`) `log`
             collection.
+            non-empty
         payload: Entry payload — validated against the collection's `fields` schema (the
             key field is supplied via `key`, not here).
         """
@@ -1150,7 +1158,10 @@ class MethodsMixin:
         return (result or {}).get("entry")
 
     async def collection_count(self, *, name: str) -> CollectionCountResponse:
-        """Total record count for a collection"""
+        """Total record count for a collection
+
+        name: non-empty
+        """
         params: dict[str, Any] = {
             "name": name,
         }
@@ -1163,6 +1174,7 @@ class MethodsMixin:
         ids: Record ids to remove. Always an array; single-record callers wrap
             one id. SDK helpers (`Delete` vs `DeleteMany`) hide the wrapping.
             default []
+        name: non-empty
         """
         params: dict[str, Any] = {
             "name": name,
@@ -1173,7 +1185,11 @@ class MethodsMixin:
         return result
 
     async def collection_fetch(self, *, id: str, name: str) -> CollectionFetchResponse:
-        """Fetch a single record from a collection by id"""
+        """Fetch a single record from a collection by id
+
+        id: non-empty
+        name: non-empty
+        """
         params: dict[str, Any] = {
             "id": id,
             "name": name,
@@ -1182,7 +1198,11 @@ class MethodsMixin:
         return result
 
     async def collection_fetch_compacted(self, *, id: str, name: str) -> CollectionFetchCompactedResponse:
-        """Fetch a keyed log's folded current state for one key (compacted point-read)"""
+        """Fetch a keyed log's folded current state for one key (compacted point-read)
+
+        id: non-empty
+        name: non-empty
+        """
         params: dict[str, Any] = {
             "id": id,
             "name": name,
@@ -1191,7 +1211,10 @@ class MethodsMixin:
         return result
 
     async def collection_get(self, *, name: str) -> CollectionGetResponse:
-        """Read collection data with optional merge metadata"""
+        """Read collection data with optional merge metadata
+
+        name: non-empty
+        """
         params: dict[str, Any] = {
             "name": name,
         }
@@ -1201,6 +1224,7 @@ class MethodsMixin:
     async def collection_list(self, *, name: str, opts: "ListOpts" | None = None) -> CollectionListResponse:
         """List records in a collection (paginated)
 
+        name: non-empty
         opts: default {}
         """
         params: dict[str, Any] = {
@@ -1215,6 +1239,8 @@ class MethodsMixin:
         """Partial update of an existing record
 
         fields: Object of fields to merge over the existing record.
+        id: non-empty
+        name: non-empty
         """
         params: dict[str, Any] = {
             "fields": fields,
@@ -1247,6 +1273,7 @@ class MethodsMixin:
             collection at runtime declares its label here. Same persistence
             semantics as `roles`: last-write-wins, and a put omitting `label`
             leaves the prior setting in place.
+        name: non-empty
         roles: Optional per-payload-field display roles. Used by the Settings
             UI / discovery HUD to know which payload field is the primary
             label, which is the subtitle, etc. Equivalent to the `roles`
@@ -1281,6 +1308,7 @@ class MethodsMixin:
         entries: The desired set. After the call, the records in scope are exactly these.
             default []
         label: Same semantics as `collection.put`'s `label`.
+        name: non-empty
         roles: Same semantics as `collection.put`'s `roles`.
         scope: What the call is allowed to delete. Required — see `ReplaceScope`.
         """
@@ -1302,6 +1330,7 @@ class MethodsMixin:
 
         description: default ""
         name: Collection name (lowercase, underscores).
+            non-empty
         words_text: default ""
         """
         params: dict[str, Any] = {
@@ -1333,7 +1362,12 @@ class MethodsMixin:
         return (result or {}).get("owned") or []
 
     async def commands_add_alias(self, *, action: str, default_pattern: str, new_pattern: str) -> None:
-        """Add an extra spoken form (alias) for an existing command"""
+        """Add an extra spoken form (alias) for an existing command
+
+        action: non-empty
+        default_pattern: non-empty
+        new_pattern: non-empty
+        """
         params: dict[str, Any] = {
             "action": action,
             "default_pattern": default_pattern,
@@ -1360,7 +1394,10 @@ class MethodsMixin:
         return (result or {}).get("findings") or []
 
     async def commands_delete(self, *, canonical: str) -> None:
-        """Delete a user command by canonical name"""
+        """Delete a user command by canonical name
+
+        canonical: non-empty
+        """
         params: dict[str, Any] = {
             "canonical": canonical,
         }
@@ -1432,7 +1469,12 @@ class MethodsMixin:
         return result
 
     async def commands_remove_alias(self, *, action: str, default_pattern: str, new_pattern: str) -> CommandsRemoveAliasResponse:
-        """Remove an added spoken form (alias) from a command"""
+        """Remove an added spoken form (alias) from a command
+
+        action: non-empty
+        default_pattern: non-empty
+        new_pattern: non-empty
+        """
         params: dict[str, Any] = {
             "action": action,
             "default_pattern": default_pattern,
@@ -1442,14 +1484,21 @@ class MethodsMixin:
         return result
 
     async def commands_reset(self, *, canonical: str) -> None:
-        """Reset a command override to the plugin default"""
+        """Reset a command override to the plugin default
+
+        canonical: non-empty
+        """
         params: dict[str, Any] = {
             "canonical": canonical,
         }
         await self.call(METHOD_COMMANDS_RESET, params)
 
     async def commands_reset_override(self, *, action: str, default_pattern: str) -> CommandsResetOverrideResponse:
-        """Remove a user command-phrase override (revert to the plugin default)"""
+        """Remove a user command-phrase override (revert to the plugin default)
+
+        action: non-empty
+        default_pattern: non-empty
+        """
         params: dict[str, Any] = {
             "action": action,
             "default_pattern": default_pattern,
@@ -1514,7 +1563,12 @@ class MethodsMixin:
         return result
 
     async def commands_set_override(self, *, action: str, default_pattern: str, new_pattern: str) -> None:
-        """Set a user command-phrase override (replace a command's spoken form)"""
+        """Set a user command-phrase override (replace a command's spoken form)
+
+        action: non-empty
+        default_pattern: non-empty
+        new_pattern: non-empty
+        """
         params: dict[str, Any] = {
             "action": action,
             "default_pattern": default_pattern,
@@ -1527,6 +1581,7 @@ class MethodsMixin:
 
         signal: Raw control-stream signal string (e.g. "open hud", "hide discovery").
             Forwarded verbatim to the Swift shell via the actuator's control stream.
+            non-empty
         """
         params: dict[str, Any] = {
             "signal": signal,
@@ -1554,6 +1609,7 @@ class MethodsMixin:
         name: Registered effect name (e.g. `suppress_notifications`). Must be
             declared in the plugin's manifest `consumes.effects.asserts` and
             match an entry in the closed `effects::REGISTERED_EFFECTS` registry.
+            non-empty
         """
         params: dict[str, Any] = {
             "name": name,
@@ -1565,6 +1621,7 @@ class MethodsMixin:
         """Query whether this plugin holds top-of-stack for the named effect
 
         name: Registered effect name to query.
+            non-empty
         """
         params: dict[str, Any] = {
             "name": name,
@@ -1578,6 +1635,7 @@ class MethodsMixin:
         name: Registered effect name to retract. The plugin's frame is removed
             from this effect's ownership stack. If no frame exists, the call
             is a no-op (`retracted=false`, no error).
+            non-empty
         """
         params: dict[str, Any] = {
             "name": name,
@@ -1592,6 +1650,7 @@ class MethodsMixin:
             log line.
             default null
         event_type: Event type discriminator (e.g. "session_start", "match", "miss").
+            non-empty
         session_id: Logical session id this event belongs to (8-char prefix used by
             the event-stream tooling). Defaults to "?" if absent.
             default "?"
@@ -1616,6 +1675,7 @@ class MethodsMixin:
             default null
         event_type: Convention-based event type (e.g. "clipboard.copied"). The
             `_platform.*` namespace is reserved for the actuator.
+            non-empty
         """
         params: dict[str, Any] = {
             "event_type": event_type,
@@ -1637,6 +1697,7 @@ class MethodsMixin:
             wire uint64 (64-bit) · min 0
         url: `https://` only, to a host this plugin declares in `requires.network`
             and the user has allowed.
+            non-empty
         """
         params: dict[str, Any] = {
             "url": url,
@@ -1670,6 +1731,7 @@ class MethodsMixin:
             now fails the call by name. Absent still means the default.
             default "top-right"
         channel: Channel name. Must be unique across all plugins.
+            non-empty
         description: Optional human-readable description shown in dev tooling.
             default ""
         draggable: Whether the shell lets the user drag this window and remembers its
@@ -1727,6 +1789,7 @@ class MethodsMixin:
 
         channel: Channel name to hide. Sends a `close <channel>` (or
             `hide <channel>` for built-in channels) to the Swift shell.
+            non-empty
         """
         params: dict[str, Any] = {
             "channel": channel,
@@ -1739,6 +1802,7 @@ class MethodsMixin:
         channel: Name of the HUD channel to push fragments into. Must be owned by
             the calling plugin (verified via
             `HudChannelRegistry::verify_owner`).
+            non-empty
         fragments: The fragments to patch into the channel, in order.
 
             Declared 2026-09-19 (census). The handler already deserialized
@@ -1757,6 +1821,7 @@ class MethodsMixin:
         """Remove a HUD broadcast channel
 
         channel: Channel name to remove. Must be owned by the calling plugin.
+            non-empty
         """
         params: dict[str, Any] = {
             "channel": channel,
@@ -1768,6 +1833,7 @@ class MethodsMixin:
         """Report actual rendered size for a HUD channel window
 
         channel: Channel name whose actual rendered size is being reported.
+            non-empty
         height: Actual rendered height in points (used by world-model entries
             instead of `min_height` when known).
             wire uint32 · min 0
@@ -1783,6 +1849,7 @@ class MethodsMixin:
 
         channel: Channel name to show. Sends an `open <channel>` message to the
             Swift shell.
+            non-empty
         """
         params: dict[str, Any] = {
             "channel": channel,
@@ -1805,6 +1872,7 @@ class MethodsMixin:
         """Perform a clipboard action (copy, paste, or set text)
 
         action: Action: "copy", "paste", or "set".
+            non-empty
         text: Text to set (only used by `action: "set"`).
             default null
         """
@@ -1821,7 +1889,10 @@ class MethodsMixin:
         return (result or {}).get("entries") or []
 
     async def input_clipboard_read(self, *, content_type: str) -> InputClipboardReadResponse:
-        """Read clipboard contents by type"""
+        """Read clipboard contents by type
+
+        content_type: non-empty
+        """
         params: dict[str, Any] = {
             "content_type": content_type,
         }
@@ -1834,7 +1905,10 @@ class MethodsMixin:
         return (result or {}).get("items") or []
 
     async def input_clipboard_read_format(self, *, format: str) -> InputClipboardReadFormatResponse:
-        """Read clipboard contents in a specific pasteboard type (UTI)"""
+        """Read clipboard contents in a specific pasteboard type (UTI)
+
+        format: non-empty
+        """
         params: dict[str, Any] = {
             "format": format,
         }
@@ -1842,7 +1916,10 @@ class MethodsMixin:
         return result
 
     async def input_clipboard_write(self, *, content_type: str, data: str) -> bool:
-        """Write typed content to clipboard"""
+        """Write typed content to clipboard
+
+        content_type: non-empty
+        """
         params: dict[str, Any] = {
             "content_type": content_type,
             "data": data,
@@ -1909,6 +1986,7 @@ class MethodsMixin:
             zero-distance dragged event at the current cursor position — macOS
             only treats a window as grabbed once a dragged event follows the
             press, so drag-based operations need it between press and release.
+            non-empty
         """
         params: dict[str, Any] = {
             "direction": direction,
@@ -1973,6 +2051,7 @@ class MethodsMixin:
         code: Raw macOS keycode.
             wire uint16 · min 0 · max 65535
         direction: One of "press", "release", or "click".
+            non-empty
         """
         params: dict[str, Any] = {
             "code": code,
@@ -2000,6 +2079,7 @@ class MethodsMixin:
         amount: Amount in pixels/units. Defaults to 5.
             wire int32 · default 5
         direction: Direction: "up", "down", "left", or "right".
+            non-empty
         unit: Scroll unit: "line" (discrete, default) or "pixel" (continuous/smooth).
             Pixel units are needed for horizontal scroll in most browsers.
             default "line"
@@ -2018,7 +2098,10 @@ class MethodsMixin:
         await self.call(METHOD_INPUT_SELECT_ALL)
 
     async def input_switch_input_source(self, *, source_id: str) -> bool:
-        """Switch keyboard input source"""
+        """Switch keyboard input source
+
+        source_id: non-empty
+        """
         params: dict[str, Any] = {
             "source_id": source_id,
         }
@@ -2084,6 +2167,7 @@ class MethodsMixin:
         """Bring an app to front by bundle ID
 
         all_windows: default false
+        bundle_id: non-empty
         """
         params: dict[str, Any] = {
             "bundle_id": bundle_id,
@@ -2138,7 +2222,10 @@ class MethodsMixin:
         return result
 
     async def native_app_bundle_path(self, *, bundle_id: str) -> NativeAppBundlePathResponse:
-        """Get the filesystem path to an app bundle by bundle ID"""
+        """Get the filesystem path to an app bundle by bundle ID
+
+        bundle_id: non-empty
+        """
         params: dict[str, Any] = {
             "bundle_id": bundle_id,
         }
@@ -2146,7 +2233,10 @@ class MethodsMixin:
         return result
 
     async def native_app_focused_window_id(self, *, bundle_id: str) -> str:
-        """Get focused window ID for app by bundle ID"""
+        """Get focused window ID for app by bundle ID
+
+        bundle_id: non-empty
+        """
         params: dict[str, Any] = {
             "bundle_id": bundle_id,
         }
@@ -2156,6 +2246,7 @@ class MethodsMixin:
     async def native_app_icon(self, *, bundle_id: str, size: int | None = None) -> NativeAppIconResponse:
         """Get app icon as PNG (base64)
 
+        bundle_id: non-empty
         size: wire uint32 · default 64 · min 0
         """
         params: dict[str, Any] = {
@@ -2167,7 +2258,10 @@ class MethodsMixin:
         return result
 
     async def native_app_icon_path(self, *, bundle_id: str) -> str:
-        """Get path to app icon"""
+        """Get path to app icon
+
+        bundle_id: non-empty
+        """
         params: dict[str, Any] = {
             "bundle_id": bundle_id,
         }
@@ -2175,7 +2269,10 @@ class MethodsMixin:
         return result
 
     async def native_app_is_agent(self, *, bundle_id: str) -> NativeAppIsAgentResponse:
-        """Check if app is an LSUIElement (agent/background). Exists only on macOS; elsewhere it is refused with platform_no_analogue"""
+        """Check if app is an LSUIElement (agent/background). Exists only on macOS; elsewhere it is refused with platform_no_analogue
+
+        bundle_id: non-empty
+        """
         params: dict[str, Any] = {
             "bundle_id": bundle_id,
         }
@@ -2183,7 +2280,10 @@ class MethodsMixin:
         return result
 
     async def native_app_is_running(self, *, bundle_id: str) -> NativeAppIsRunningResponse:
-        """Check if an app is running by bundle ID"""
+        """Check if an app is running by bundle ID
+
+        bundle_id: non-empty
+        """
         params: dict[str, Any] = {
             "bundle_id": bundle_id,
         }
@@ -2191,7 +2291,10 @@ class MethodsMixin:
         return result
 
     async def native_app_launch_at_login(self, *, bundle_id: str) -> NativeAppLaunchAtLoginResponse:
-        """Check if app is in login items"""
+        """Check if app is in login items
+
+        bundle_id: non-empty
+        """
         params: dict[str, Any] = {
             "bundle_id": bundle_id,
         }
@@ -2199,7 +2302,10 @@ class MethodsMixin:
         return result
 
     async def native_app_metadata(self, *, bundle_id: str) -> NativeAppMetadataResponse:
-        """Get bundle metadata for an application"""
+        """Get bundle metadata for an application
+
+        bundle_id: non-empty
+        """
         params: dict[str, Any] = {
             "bundle_id": bundle_id,
         }
@@ -2207,7 +2313,10 @@ class MethodsMixin:
         return result
 
     async def native_app_path(self, *, bundle_id: str) -> str:
-        """Get an app path by bundle ID"""
+        """Get an app path by bundle ID
+
+        bundle_id: non-empty
+        """
         params: dict[str, Any] = {
             "bundle_id": bundle_id,
         }
@@ -2215,7 +2324,10 @@ class MethodsMixin:
         return result
 
     async def native_app_pid(self, *, bundle_id: str) -> int:
-        """Get PID of running app by bundle ID"""
+        """Get PID of running app by bundle ID
+
+        bundle_id: non-empty
+        """
         params: dict[str, Any] = {
             "bundle_id": bundle_id,
         }
@@ -2233,7 +2345,10 @@ class MethodsMixin:
         return (result or {}).get("mechanisms") or []
 
     async def native_app_version(self, *, bundle_id: str) -> str:
-        """Get an app version by bundle ID"""
+        """Get an app version by bundle ID
+
+        bundle_id: non-empty
+        """
         params: dict[str, Any] = {
             "bundle_id": bundle_id,
         }
@@ -2246,7 +2361,10 @@ class MethodsMixin:
         return (result or {}).get("apps") or []
 
     async def native_app_windows(self, *, bundle_id: str) -> list[WindowDetail]:
-        """List all windows belonging to a specific app by bundle ID"""
+        """List all windows belonging to a specific app by bundle ID
+
+        bundle_id: non-empty
+        """
         params: dict[str, Any] = {
             "bundle_id": bundle_id,
         }
@@ -2254,7 +2372,10 @@ class MethodsMixin:
         return (result or {}).get("windows") or []
 
     async def native_app_windows_count(self, *, bundle_id: str) -> int:
-        """Count windows for an app by bundle ID"""
+        """Count windows for an app by bundle ID
+
+        bundle_id: non-empty
+        """
         params: dict[str, Any] = {
             "bundle_id": bundle_id,
         }
@@ -2262,7 +2383,10 @@ class MethodsMixin:
         return result
 
     async def native_apps_for_path(self, *, path: str) -> list[InstalledApp]:
-        """Applications the OS registers as able to open a given file (Launch Services)"""
+        """Applications the OS registers as able to open a given file (Launch Services)
+
+        path: non-empty
+        """
         params: dict[str, Any] = {
             "path": path,
         }
@@ -2270,7 +2394,10 @@ class MethodsMixin:
         return (result or {}).get("apps") or []
 
     async def native_audio_device_volume(self, *, device_uid: str) -> NativeAudioDeviceVolumeResponse:
-        """Get volume state for a specific audio device by UID"""
+        """Get volume state for a specific audio device by UID
+
+        device_uid: non-empty
+        """
         params: dict[str, Any] = {
             "device_uid": device_uid,
         }
@@ -2323,7 +2450,10 @@ class MethodsMixin:
         return result
 
     async def native_automation_permission(self, *, bundle_id: str) -> NativeAutomationPermissionResponse:
-        """Check if automation permission is granted for target app. Exists only on macOS; elsewhere it is refused with platform_no_analogue"""
+        """Check if automation permission is granted for target app. Exists only on macOS; elsewhere it is refused with platform_no_analogue
+
+        bundle_id: non-empty
+        """
         params: dict[str, Any] = {
             "bundle_id": bundle_id,
         }
@@ -2378,7 +2508,10 @@ class MethodsMixin:
         return result
 
     async def native_ax_perform_action(self, *, action: str, element: "AccessibleRef") -> bool:
-        """Perform an action on an accessibility element: press (its default action, what a click does), toggle, focus, expand, collapse, increment, decrement, scroll_into_view, show_menu, or one of the element's own actions by its OS name. The element's actions list says which it offers"""
+        """Perform an action on an accessibility element: press (its default action, what a click does), toggle, focus, expand, collapse, increment, decrement, scroll_into_view, show_menu, or one of the element's own actions by its OS name. The element's actions list says which it offers
+
+        action: non-empty
+        """
         params: dict[str, Any] = {
             "action": action,
             "element": element,
@@ -2400,7 +2533,10 @@ class MethodsMixin:
         return result
 
     async def native_ax_set_attribute(self, *, attribute: str, element: "AccessibleRef", value: Any) -> bool:
-        """Set an accessibility element's value (text, or a number for a slider or spin button) or focus it (focused: true). Returns whether it took"""
+        """Set an accessibility element's value (text, or a number for a slider or spin button) or focus it (focused: true). Returns whether it took
+
+        attribute: non-empty
+        """
         params: dict[str, Any] = {
             "attribute": attribute,
             "element": element,
@@ -2410,7 +2546,10 @@ class MethodsMixin:
         return bool((result or {}).get("result", False))
 
     async def native_ax_unobserve(self, *, subscription_id: str) -> bool:
-        """Stop observing accessibility changes. A plugin can end only its own subscriptions"""
+        """Stop observing accessibility changes. A plugin can end only its own subscriptions
+
+        subscription_id: non-empty
+        """
         params: dict[str, Any] = {
             "subscription_id": subscription_id,
         }
@@ -2477,6 +2616,7 @@ class MethodsMixin:
         device_identifier: Identifier for the paired BLE device. Accepts a CoreBluetooth
             peripheral UUID (e.g. "12345678-...") or a device name to match
             among connected BLE HID peripherals (e.g. "Shortcut Remote").
+            non-empty
         """
         params: dict[str, Any] = {
             "device_identifier": device_identifier,
@@ -2488,8 +2628,11 @@ class MethodsMixin:
         """Subscribe to GATT notifications on a BLE characteristic
 
         characteristic_uuid: GATT characteristic UUID to subscribe to (must support notify).
+            non-empty
         device_identifier: CoreBluetooth peripheral UUID or device name.
+            non-empty
         service_uuid: GATT service UUID containing the characteristic.
+            non-empty
         """
         params: dict[str, Any] = {
             "characteristic_uuid": characteristic_uuid,
@@ -2503,6 +2646,7 @@ class MethodsMixin:
         """Subscribe to all notify characteristics on listed services, then write — single GATT cycle
 
         device_identifier: CoreBluetooth peripheral UUID or device name.
+            non-empty
         subscribe_services: GATT service UUIDs to subscribe to all notify characteristics on.
             default []
         writes: Writes to perform after subscribing. The last `with_response` write
@@ -2522,11 +2666,14 @@ class MethodsMixin:
         """Write bytes to a GATT characteristic on a paired BLE device
 
         characteristic_uuid: GATT characteristic UUID (e.g. "FFF1").
+            non-empty
         data: Bytes to write to the characteristic.
             default []
         device_identifier: Identifier for the paired BLE device. Accepts a CoreBluetooth
             peripheral UUID or a device name (see ble_discover_services).
+            non-empty
         service_uuid: GATT service UUID (e.g. "FFF0").
+            non-empty
         write_type: Write type: "with_response" (default, reliable) or "without_response" (fire-and-forget).
             default "with_response"
         """
@@ -2602,7 +2749,11 @@ class MethodsMixin:
         return result
 
     async def native_calendar_events_range(self, *, end: str, start: str) -> list[CalendarEvent]:
-        """Get calendar events in a date range (ISO 8601)"""
+        """Get calendar events in a date range (ISO 8601)
+
+        end: non-empty
+        start: non-empty
+        """
         params: dict[str, Any] = {
             "end": end,
             "start": start,
@@ -2636,7 +2787,10 @@ class MethodsMixin:
         return result
 
     async def native_capture_window(self, *, window_id: str) -> NativeCaptureWindowResponse:
-        """Capture a single window as PNG (base64)"""
+        """Capture a single window as PNG (base64)
+
+        window_id: non-empty
+        """
         params: dict[str, Any] = {
             "window_id": window_id,
         }
@@ -2644,7 +2798,10 @@ class MethodsMixin:
         return result
 
     async def native_cascade_windows(self, *, bundle_id: str) -> bool:
-        """Cascade all windows for an app"""
+        """Cascade all windows for an app
+
+        bundle_id: non-empty
+        """
         params: dict[str, Any] = {
             "bundle_id": bundle_id,
         }
@@ -2652,14 +2809,20 @@ class MethodsMixin:
         return bool((result or {}).get("ok", False))
 
     async def native_center_window(self, *, window_id: str) -> None:
-        """Center a window on its current display"""
+        """Center a window on its current display
+
+        window_id: non-empty
+        """
         params: dict[str, Any] = {
             "window_id": window_id,
         }
         await self.call(METHOD_NATIVE_CENTER_WINDOW, params)
 
     async def native_check_permission(self, *, permission: str) -> NativeCheckPermissionResponse:
-        """Check a permission status (screen_recording, camera, etc.)"""
+        """Check a permission status (screen_recording, camera, etc.)
+
+        permission: non-empty
+        """
         params: dict[str, Any] = {
             "permission": permission,
         }
@@ -2667,7 +2830,10 @@ class MethodsMixin:
         return result
 
     async def native_clear_file_quarantine(self, *, path: str) -> bool:
-        """Remove the quarantine extended attribute from a file"""
+        """Remove the quarantine extended attribute from a file
+
+        path: non-empty
+        """
         params: dict[str, Any] = {
             "path": path,
         }
@@ -2675,7 +2841,10 @@ class MethodsMixin:
         return bool((result or {}).get("ok", False))
 
     async def native_clear_notifications(self, *, bundle_id: str) -> bool:
-        """Clear all delivered notifications for an app"""
+        """Clear all delivered notifications for an app
+
+        bundle_id: non-empty
+        """
         params: dict[str, Any] = {
             "bundle_id": bundle_id,
         }
@@ -2707,7 +2876,10 @@ class MethodsMixin:
         return result
 
     async def native_close_window(self, *, window_id: str) -> bool:
-        """Close a window by ID"""
+        """Close a window by ID
+
+        window_id: non-empty
+        """
         params: dict[str, Any] = {
             "window_id": window_id,
         }
@@ -2743,7 +2915,11 @@ class MethodsMixin:
         return result
 
     async def native_copy_file(self, *, destination: str, source: str) -> bool:
-        """Copy a file or directory"""
+        """Copy a file or directory
+
+        destination: non-empty
+        source: non-empty
+        """
         params: dict[str, Any] = {
             "destination": destination,
             "source": source,
@@ -2767,7 +2943,10 @@ class MethodsMixin:
         return result
 
     async def native_create_directory(self, *, path: str) -> bool:
-        """Create a directory (with intermediate directories)"""
+        """Create a directory (with intermediate directories)
+
+        path: non-empty
+        """
         params: dict[str, Any] = {
             "path": path,
         }
@@ -2837,8 +3016,12 @@ class MethodsMixin:
             default []
         bus: `session` (the default) or `system` (Properties.Get / GetAll only).
             default null
+        interface: non-empty
+        method: non-empty
         path: The object path (`/org/mpris/MediaPlayer2`).
+            non-empty
         service: The well-known service name (`org.mpris.MediaPlayer2.spotify`).
+            non-empty
         signature: The arguments' D-Bus signature (`su`); empty or absent for none.
             default null
         """
@@ -2858,7 +3041,10 @@ class MethodsMixin:
         return result
 
     async def native_default_app_for_mime_type(self, *, mime_type: str) -> NativeDefaultAppForMimeTypeResponse:
-        """Get the application that opens files of a MIME type by default, by the identity the app operations use"""
+        """Get the application that opens files of a MIME type by default, by the identity the app operations use
+
+        mime_type: non-empty
+        """
         params: dict[str, Any] = {
             "mime_type": mime_type,
         }
@@ -2866,7 +3052,10 @@ class MethodsMixin:
         return result
 
     async def native_default_app_for_uti(self, *, uti: str) -> NativeDefaultAppForUtiResponse:
-        """Get the default application for a UTI. Exists only on macOS; elsewhere it is refused with platform_no_analogue"""
+        """Get the default application for a UTI. Exists only on macOS; elsewhere it is refused with platform_no_analogue
+
+        uti: non-empty
+        """
         params: dict[str, Any] = {
             "uti": uti,
         }
@@ -2889,7 +3078,10 @@ class MethodsMixin:
         return result
 
     async def native_delete_file(self, *, path: str) -> bool:
-        """Delete a file or empty directory"""
+        """Delete a file or empty directory
+
+        path: non-empty
+        """
         params: dict[str, Any] = {
             "path": path,
         }
@@ -2907,7 +3099,10 @@ class MethodsMixin:
         return (result or {}).get("barcodes") or []
 
     async def native_detect_barcodes_file(self, *, path: str) -> list[BarcodeResult]:
-        """Detect barcodes and QR codes from an image file"""
+        """Detect barcodes and QR codes from an image file
+
+        path: non-empty
+        """
         params: dict[str, Any] = {
             "path": path,
         }
@@ -2928,6 +3123,7 @@ class MethodsMixin:
         """List files and directories at a path
 
         include_hidden: default false
+        path: non-empty
         """
         params: dict[str, Any] = {
             "path": path,
@@ -2950,7 +3146,10 @@ class MethodsMixin:
         return result
 
     async def native_disk_usage(self, *, path: str) -> NativeDiskUsageResponse:
-        """Get disk usage for a path (like du -sh)"""
+        """Get disk usage for a path (like du -sh)
+
+        path: non-empty
+        """
         params: dict[str, Any] = {
             "path": path,
         }
@@ -2958,7 +3157,10 @@ class MethodsMixin:
         return result
 
     async def native_dismiss_notification(self, *, id: str) -> None:
-        """Dismiss a delivered notification (partial — no-op)"""
+        """Dismiss a delivered notification (partial — no-op)
+
+        id: non-empty
+        """
         params: dict[str, Any] = {
             "id": id,
         }
@@ -3092,7 +3294,10 @@ class MethodsMixin:
         return result
 
     async def native_eject_disk(self, *, mount_point: str) -> bool:
-        """Eject a mounted volume by path"""
+        """Eject a mounted volume by path
+
+        mount_point: non-empty
+        """
         params: dict[str, Any] = {
             "mount_point": mount_point,
         }
@@ -3105,7 +3310,10 @@ class MethodsMixin:
         return bool((result or {}).get("ok", False))
 
     async def native_env_var(self, *, name: str) -> NativeEnvVarResponse:
-        """Read an environment variable"""
+        """Read an environment variable
+
+        name: non-empty
+        """
         params: dict[str, Any] = {
             "name": name,
         }
@@ -3118,7 +3326,10 @@ class MethodsMixin:
         return result
 
     async def native_extended_attributes(self, *, path: str) -> Any:
-        """Read extended attributes (xattrs) from a file"""
+        """Read extended attributes (xattrs) from a file
+
+        path: non-empty
+        """
         params: dict[str, Any] = {
             "path": path,
         }
@@ -3146,7 +3357,10 @@ class MethodsMixin:
         return result
 
     async def native_file_acl(self, *, path: str) -> str:
-        """Get file ACL as string"""
+        """Get file ACL as string
+
+        path: non-empty
+        """
         params: dict[str, Any] = {
             "path": path,
         }
@@ -3154,7 +3368,10 @@ class MethodsMixin:
         return result
 
     async def native_file_creation_date(self, *, path: str) -> str:
-        """Get file creation date as ISO string"""
+        """Get file creation date as ISO string
+
+        path: non-empty
+        """
         params: dict[str, Any] = {
             "path": path,
         }
@@ -3162,7 +3379,10 @@ class MethodsMixin:
         return result
 
     async def native_file_exists(self, *, path: str) -> NativeFileExistsResponse:
-        """Check if a file or directory exists"""
+        """Check if a file or directory exists
+
+        path: non-empty
+        """
         params: dict[str, Any] = {
             "path": path,
         }
@@ -3170,7 +3390,10 @@ class MethodsMixin:
         return result
 
     async def native_file_extended_attributes(self, *, path: str) -> list[str]:
-        """List extended attributes on a file"""
+        """List extended attributes on a file
+
+        path: non-empty
+        """
         params: dict[str, Any] = {
             "path": path,
         }
@@ -3181,6 +3404,7 @@ class MethodsMixin:
         """Compute SHA-256 hash of a file
 
         algorithm: default ""
+        path: non-empty
         """
         params: dict[str, Any] = {
             "path": path,
@@ -3191,7 +3415,10 @@ class MethodsMixin:
         return result
 
     async def native_file_metadata(self, *, path: str) -> NativeFileMetadataResponse:
-        """Get metadata for a file or directory (size, dates, permissions)"""
+        """Get metadata for a file or directory (size, dates, permissions)
+
+        path: non-empty
+        """
         params: dict[str, Any] = {
             "path": path,
         }
@@ -3199,7 +3426,10 @@ class MethodsMixin:
         return result
 
     async def native_file_mime_type(self, *, path: str) -> str:
-        """Get a file's MIME type (text/plain, image/png), the file-type name every OS shares"""
+        """Get a file's MIME type (text/plain, image/png), the file-type name every OS shares
+
+        path: non-empty
+        """
         params: dict[str, Any] = {
             "path": path,
         }
@@ -3207,7 +3437,10 @@ class MethodsMixin:
         return result
 
     async def native_file_modification_date(self, *, path: str) -> str:
-        """Get file modification date as ISO string"""
+        """Get file modification date as ISO string
+
+        path: non-empty
+        """
         params: dict[str, Any] = {
             "path": path,
         }
@@ -3215,7 +3448,10 @@ class MethodsMixin:
         return result
 
     async def native_file_owner(self, *, path: str) -> NativeFileOwnerResponse:
-        """Get the owner user and group of a file"""
+        """Get the owner user and group of a file
+
+        path: non-empty
+        """
         params: dict[str, Any] = {
             "path": path,
         }
@@ -3223,7 +3459,10 @@ class MethodsMixin:
         return result
 
     async def native_file_quarantine(self, *, path: str) -> NativeFileQuarantineResponse:
-        """Check if a file has a quarantine flag"""
+        """Check if a file has a quarantine flag
+
+        path: non-empty
+        """
         params: dict[str, Any] = {
             "path": path,
         }
@@ -3236,7 +3475,10 @@ class MethodsMixin:
         return result
 
     async def native_file_size(self, *, path: str) -> int:
-        """Get file size in bytes"""
+        """Get file size in bytes
+
+        path: non-empty
+        """
         params: dict[str, Any] = {
             "path": path,
         }
@@ -3246,6 +3488,7 @@ class MethodsMixin:
     async def native_file_tags(self, *, path: str, tags: list[str] | None = None) -> Any:
         """Read or write Finder tags on a file
 
+        path: non-empty
         tags: default null
         """
         params: dict[str, Any] = {
@@ -3257,7 +3500,10 @@ class MethodsMixin:
         return result
 
     async def native_file_type(self, *, path: str) -> NativeFileTypeResponse:
-        """Get the UTI type of a file. Exists only on macOS; elsewhere it is refused with platform_no_analogue"""
+        """Get the UTI type of a file. Exists only on macOS; elsewhere it is refused with platform_no_analogue
+
+        path: non-empty
+        """
         params: dict[str, Any] = {
             "path": path,
         }
@@ -3265,7 +3511,10 @@ class MethodsMixin:
         return result
 
     async def native_file_uti(self, *, path: str) -> str:
-        """Get the UTI (Uniform Type Identifier) for a file. Exists only on macOS; elsewhere it is refused with platform_no_analogue"""
+        """Get the UTI (Uniform Type Identifier) for a file. Exists only on macOS; elsewhere it is refused with platform_no_analogue
+
+        path: non-empty
+        """
         params: dict[str, Any] = {
             "path": path,
         }
@@ -3358,7 +3607,10 @@ class MethodsMixin:
         return result
 
     async def native_force_quit_app(self, *, bundle_id: str) -> bool:
-        """Force-quit an app by bundle ID"""
+        """Force-quit an app by bundle ID
+
+        bundle_id: non-empty
+        """
         params: dict[str, Any] = {
             "bundle_id": bundle_id,
         }
@@ -3366,7 +3618,11 @@ class MethodsMixin:
         return bool((result or {}).get("result", False))
 
     async def native_format_date(self, *, style: str, when: str) -> NativeFormatDateResponse:
-        """Format an instant for the user, ON THE PLATFORM. `when` is an RFC 3339 instant; `style` is one of date, time, date_time. Rendered in the USER'S LOCAL ZONE and their locale's own conventions - including calendars and digits no format pattern can express: a Lao user correctly sees the Buddhist year 2569 where a caller formatting with a CLDR pattern would render 2026, and an Odia user sees Odia digits. Prefer this over native.date_format whenever you are DISPLAYING a date rather than inspecting the locale's format. Output is NOT byte-identical across operating systems and is not meant to be - each renders its own platform's conventions for that locale."""
+        """Format an instant for the user, ON THE PLATFORM. `when` is an RFC 3339 instant; `style` is one of date, time, date_time. Rendered in the USER'S LOCAL ZONE and their locale's own conventions - including calendars and digits no format pattern can express: a Lao user correctly sees the Buddhist year 2569 where a caller formatting with a CLDR pattern would render 2026, and an Odia user sees Odia digits. Prefer this over native.date_format whenever you are DISPLAYING a date rather than inspecting the locale's format. Output is NOT byte-identical across operating systems and is not meant to be - each renders its own platform's conventions for that locale.
+
+        style: non-empty
+        when: non-empty
+        """
         params: dict[str, Any] = {
             "style": style,
             "when": when,
@@ -3395,7 +3651,11 @@ class MethodsMixin:
         return result
 
     async def native_generate_pdf(self, *, html: str, output_path: str) -> bool:
-        """Generate a PDF from HTML content"""
+        """Generate a PDF from HTML content
+
+        html: non-empty
+        output_path: non-empty
+        """
         params: dict[str, Any] = {
             "html": html,
             "output_path": output_path,
@@ -3404,7 +3664,10 @@ class MethodsMixin:
         return bool((result or {}).get("ok", False))
 
     async def native_get_window_info(self, *, window_id: str) -> NativeGetWindowInfoResponse:
-        """Get detailed info for a single window"""
+        """Get detailed info for a single window
+
+        window_id: non-empty
+        """
         params: dict[str, Any] = {
             "window_id": window_id,
         }
@@ -3415,6 +3678,7 @@ class MethodsMixin:
         """Find files matching a glob pattern
 
         max_results: wire uint32 · default 0 · min 0
+        pattern: non-empty
         """
         params: dict[str, Any] = {
             "pattern": pattern,
@@ -3458,6 +3722,7 @@ class MethodsMixin:
         """Seize exclusive access to a HID device, suppressing native macOS events
 
         device_id: Device ID (e.g. "0x28bd:0x0202:0x48f42695").
+            non-empty
         """
         params: dict[str, Any] = {
             "device_id": device_id,
@@ -3474,6 +3739,7 @@ class MethodsMixin:
         """Return the parsed HID element tree (buttons, axes, dials) for a connected device
 
         device_id: Device ID (e.g. "0x28bd:0x0202:0x48f42695").
+            non-empty
         """
         params: dict[str, Any] = {
             "device_id": device_id,
@@ -3485,6 +3751,7 @@ class MethodsMixin:
         """Release exclusive access to a HID device, restoring native macOS behavior
 
         device_id: Device ID (e.g. "0x28bd:0x0202:0x48f42695").
+            non-empty
         """
         params: dict[str, Any] = {
             "device_id": device_id,
@@ -3498,9 +3765,11 @@ class MethodsMixin:
         data: Raw report bytes to send.
             default []
         device_id: Device ID (e.g. "0x28bd:0x0202:0x48f42695").
+            non-empty
         report_id: HID report ID.
             wire uint32 · min 0
         report_type: Report type: "output" or "feature".
+            non-empty
         """
         params: dict[str, Any] = {
             "device_id": device_id,
@@ -3513,7 +3782,10 @@ class MethodsMixin:
         return result
 
     async def native_hide_app(self, *, bundle_id: str) -> None:
-        """Hide an app by bundle ID"""
+        """Hide an app by bundle ID
+
+        bundle_id: non-empty
+        """
         params: dict[str, Any] = {
             "bundle_id": bundle_id,
         }
@@ -3540,7 +3812,10 @@ class MethodsMixin:
         return result
 
     async def native_hostname_resolve(self, *, hostname: str) -> list[str]:
-        """Resolve a hostname to IP addresses"""
+        """Resolve a hostname to IP addresses
+
+        hostname: non-empty
+        """
         params: dict[str, Any] = {
             "hostname": hostname,
         }
@@ -3593,7 +3868,10 @@ class MethodsMixin:
         return result
 
     async def native_is_app_hidden(self, *, bundle_id: str) -> bool:
-        """Check if an application is hidden"""
+        """Check if an application is hidden
+
+        bundle_id: non-empty
+        """
         params: dict[str, Any] = {
             "bundle_id": bundle_id,
         }
@@ -3601,7 +3879,10 @@ class MethodsMixin:
         return bool((result or {}).get("result", False))
 
     async def native_is_directory(self, *, path: str) -> NativeIsDirectoryResponse:
-        """Check if a path is a directory"""
+        """Check if a path is a directory
+
+        path: non-empty
+        """
         params: dict[str, Any] = {
             "path": path,
         }
@@ -3609,7 +3890,10 @@ class MethodsMixin:
         return result
 
     async def native_is_file_hidden(self, *, path: str) -> NativeIsFileHiddenResponse:
-        """Check if file has hidden flag"""
+        """Check if file has hidden flag
+
+        path: non-empty
+        """
         params: dict[str, Any] = {
             "path": path,
         }
@@ -3642,14 +3926,20 @@ class MethodsMixin:
         return result
 
     async def native_keychain_delete(self, *, account: str) -> None:
-        """Delete a password from this plugin's keychain drawer"""
+        """Delete a password from this plugin's keychain drawer
+
+        account: non-empty
+        """
         params: dict[str, Any] = {
             "account": account,
         }
         await self.call(METHOD_NATIVE_KEYCHAIN_DELETE, params)
 
     async def native_keychain_read(self, *, account: str) -> NativeKeychainReadResponse:
-        """Read a password from this plugin's keychain drawer"""
+        """Read a password from this plugin's keychain drawer
+
+        account: non-empty
+        """
         params: dict[str, Any] = {
             "account": account,
         }
@@ -3657,7 +3947,11 @@ class MethodsMixin:
         return result
 
     async def native_keychain_write(self, *, account: str, password: str) -> None:
-        """Store a password in this plugin's keychain drawer"""
+        """Store a password in this plugin's keychain drawer
+
+        account: non-empty
+        password: non-empty
+        """
         params: dict[str, Any] = {
             "account": account,
             "password": password,
@@ -3686,6 +3980,7 @@ class MethodsMixin:
     async def native_launch_app(self, *, bundle_id: str, new_instance: bool | None = None) -> None:
         """Launch an application by bundle ID
 
+        bundle_id: non-empty
         new_instance: default false
         """
         params: dict[str, Any] = {
@@ -3780,7 +4075,10 @@ class MethodsMixin:
         return result
 
     async def native_maximize_window(self, *, window_id: str) -> bool:
-        """Maximize window to fill screen"""
+        """Maximize window to fill screen
+
+        window_id: non-empty
+        """
         params: dict[str, Any] = {
             "window_id": window_id,
         }
@@ -3846,7 +4144,10 @@ class MethodsMixin:
         return result
 
     async def native_minimize_window(self, *, window_id: str) -> None:
-        """Minimize a window by ID"""
+        """Minimize a window by ID
+
+        window_id: non-empty
+        """
         params: dict[str, Any] = {
             "window_id": window_id,
         }
@@ -3894,7 +4195,11 @@ class MethodsMixin:
         return result
 
     async def native_move_file(self, *, destination: str, source: str) -> bool:
-        """Move or rename a file or directory"""
+        """Move or rename a file or directory
+
+        destination: non-empty
+        source: non-empty
+        """
         params: dict[str, Any] = {
             "destination": destination,
             "source": source,
@@ -3906,6 +4211,7 @@ class MethodsMixin:
         """Move a window to a different display
 
         display_id: wire uint32 · min 0
+        window_id: non-empty
         """
         params: dict[str, Any] = {
             "display_id": display_id,
@@ -3917,6 +4223,7 @@ class MethodsMixin:
         """DEPRECATED, silent no-op on modern macOS: the private CGS move APIs this calls are dead (verified on Sequoia 2026-07-25) — the window does not move and the call still reports true. Kept for older systems. For a working move, drive the visible path the bundled windows plugin uses: mouse-hold the title bar + Ctrl+N. space_id here is an opaque CGS space id from native.list_spaces, NOT the 1-based ordinal that native.switch_space takes
 
         space_id: wire uint64 (64-bit) · min 0
+        window_id: non-empty
         """
         params: dict[str, Any] = {
             "space_id": space_id,
@@ -3958,7 +4265,10 @@ class MethodsMixin:
         return result
 
     async def native_network_reachable(self, *, host: str) -> NativeNetworkReachableResponse:
-        """Check if a host is reachable via network"""
+        """Check if a host is reachable via network
+
+        host: non-empty
+        """
         params: dict[str, Any] = {
             "host": host,
         }
@@ -3976,7 +4286,10 @@ class MethodsMixin:
         return result
 
     async def native_new_app_window(self, *, bundle_id: str) -> bool:
-        """Open a new window of an app on the current Space, without switching to an existing window on another Space"""
+        """Open a new window of an app on the current Space, without switching to an existing window on another Space
+
+        bundle_id: non-empty
+        """
         params: dict[str, Any] = {
             "bundle_id": bundle_id,
         }
@@ -3999,6 +4312,7 @@ class MethodsMixin:
         body: default null
         sound: default null
         subtitle: default null
+        title: non-empty
         """
         params: dict[str, Any] = {
             "title": title,
@@ -4039,7 +4353,10 @@ class MethodsMixin:
         return (result or {}).get("regions") or []
 
     async def native_ocr_file(self, *, path: str) -> list[OcrRegion]:
-        """OCR text from an image file path"""
+        """OCR text from an image file path
+
+        path: non-empty
+        """
         params: dict[str, Any] = {
             "path": path,
         }
@@ -4085,14 +4402,20 @@ class MethodsMixin:
         return result
 
     async def native_open_app_settings(self, *, bundle_id: str) -> None:
-        """Open an app's preferences window"""
+        """Open an app's preferences window
+
+        bundle_id: non-empty
+        """
         params: dict[str, Any] = {
             "bundle_id": bundle_id,
         }
         await self.call(METHOD_NATIVE_OPEN_APP_SETTINGS, params)
 
     async def native_open_finder_window(self, *, path: str) -> None:
-        """Open a Finder window at a specific path. Exists only on macOS; elsewhere it is refused with platform_no_analogue"""
+        """Open a Finder window at a specific path. Exists only on macOS; elsewhere it is refused with platform_no_analogue
+
+        path: non-empty
+        """
         params: dict[str, Any] = {
             "path": path,
         }
@@ -4110,21 +4433,31 @@ class MethodsMixin:
         await self.call(METHOD_NATIVE_OPEN_SYSTEM_SETTINGS, params)
 
     async def native_open_target(self, *, target: str) -> None:
-        """Open a URL or file path with the default handler"""
+        """Open a URL or file path with the default handler
+
+        target: non-empty
+        """
         params: dict[str, Any] = {
             "target": target,
         }
         await self.call(METHOD_NATIVE_OPEN_TARGET, params)
 
     async def native_open_url(self, *, url: str) -> None:
-        """Open a URL in the default handler"""
+        """Open a URL in the default handler
+
+        url: non-empty
+        """
         params: dict[str, Any] = {
             "url": url,
         }
         await self.call(METHOD_NATIVE_OPEN_URL, params)
 
     async def native_open_with_app(self, *, bundle_id: str, target: str) -> None:
-        """Open a URL or path with a specific application"""
+        """Open a URL or path with a specific application
+
+        bundle_id: non-empty
+        target: non-empty
+        """
         params: dict[str, Any] = {
             "bundle_id": bundle_id,
             "target": target,
@@ -4140,6 +4473,7 @@ class MethodsMixin:
         """Extract text from a PDF file
 
         page: wire uint64 (64-bit) · default 0 · min 0
+        path: non-empty
         """
         params: dict[str, Any] = {
             "path": path,
@@ -4150,7 +4484,10 @@ class MethodsMixin:
         return result
 
     async def native_pdf_page_count(self, *, path: str) -> int:
-        """Get the page count of a PDF file"""
+        """Get the page count of a PDF file
+
+        path: non-empty
+        """
         params: dict[str, Any] = {
             "path": path,
         }
@@ -4158,7 +4495,10 @@ class MethodsMixin:
         return result
 
     async def native_pin_window_above(self, *, pinned: bool, window_id: str) -> None:
-        """Pin or unpin a window above all others"""
+        """Pin or unpin a window above all others
+
+        window_id: non-empty
+        """
         params: dict[str, Any] = {
             "pinned": pinned,
             "window_id": window_id,
@@ -4171,7 +4511,10 @@ class MethodsMixin:
         return result
 
     async def native_ping(self, *, host: str) -> float:
-        """Ping a host and return latency in milliseconds"""
+        """Ping a host and return latency in milliseconds
+
+        host: non-empty
+        """
         params: dict[str, Any] = {
             "host": host,
         }
@@ -4184,7 +4527,10 @@ class MethodsMixin:
         return result
 
     async def native_play_sound(self, *, name: str) -> None:
-        """Play a named system sound"""
+        """Play a named system sound
+
+        name: non-empty
+        """
         params: dict[str, Any] = {
             "name": name,
         }
@@ -4365,6 +4711,7 @@ class MethodsMixin:
     async def native_quick_look(self, *, path: str, size: int | None = None) -> NativeQuickLookResponse:
         """Generate Quick Look thumbnail as PNG (base64)
 
+        path: non-empty
         size: wire uint32 · default 512 · min 0
         """
         params: dict[str, Any] = {
@@ -4376,7 +4723,10 @@ class MethodsMixin:
         return result
 
     async def native_quit_app(self, *, bundle_id: str) -> bool:
-        """Gracefully quit an app by bundle ID"""
+        """Gracefully quit an app by bundle ID
+
+        bundle_id: non-empty
+        """
         params: dict[str, Any] = {
             "bundle_id": bundle_id,
         }
@@ -4384,7 +4734,10 @@ class MethodsMixin:
         return bool((result or {}).get("result", False))
 
     async def native_raise_window(self, *, window_id: str) -> None:
-        """Raise a window to the front"""
+        """Raise a window to the front
+
+        window_id: non-empty
+        """
         params: dict[str, Any] = {
             "window_id": window_id,
         }
@@ -4396,7 +4749,11 @@ class MethodsMixin:
         return result
 
     async def native_read_app_preference(self, *, domain: str, key: str) -> Any:
-        """Read a preference value for an app domain"""
+        """Read a preference value for an app domain
+
+        domain: non-empty
+        key: non-empty
+        """
         params: dict[str, Any] = {
             "domain": domain,
             "key": key,
@@ -4405,7 +4762,10 @@ class MethodsMixin:
         return result
 
     async def native_read_file(self, *, path: str) -> NativeReadFileResponse:
-        """Read file contents as UTF-8 string"""
+        """Read file contents as UTF-8 string
+
+        path: non-empty
+        """
         params: dict[str, Any] = {
             "path": path,
         }
@@ -4416,6 +4776,7 @@ class MethodsMixin:
         """Read a file as base64-encoded binary
 
         max_bytes: wire uint64 (64-bit) · default null · min 0
+        path: non-empty
         """
         params: dict[str, Any] = {
             "path": path,
@@ -4426,7 +4787,10 @@ class MethodsMixin:
         return result
 
     async def native_read_plist(self, *, path: str) -> Any:
-        """Read a property list file as JSON"""
+        """Read a property list file as JSON
+
+        path: non-empty
+        """
         params: dict[str, Any] = {
             "path": path,
         }
@@ -4434,7 +4798,10 @@ class MethodsMixin:
         return result
 
     async def native_recent_documents(self, *, bundle_id: str) -> list[str]:
-        """Get recent documents for an app (by bundle ID)"""
+        """Get recent documents for an app (by bundle ID)
+
+        bundle_id: non-empty
+        """
         params: dict[str, Any] = {
             "bundle_id": bundle_id,
         }
@@ -4462,7 +4829,11 @@ class MethodsMixin:
         return result
 
     async def native_rename_file(self, *, new_name: str, path: str) -> bool:
-        """Rename a file or directory (same parent, new name)"""
+        """Rename a file or directory (same parent, new name)
+
+        new_name: non-empty
+        path: non-empty
+        """
         params: dict[str, Any] = {
             "new_name": new_name,
             "path": path,
@@ -4481,7 +4852,10 @@ class MethodsMixin:
         return result
 
     async def native_restart_app(self, *, bundle_id: str) -> bool:
-        """Quit and relaunch an app by bundle ID"""
+        """Quit and relaunch an app by bundle ID
+
+        bundle_id: non-empty
+        """
         params: dict[str, Any] = {
             "bundle_id": bundle_id,
         }
@@ -4489,7 +4863,10 @@ class MethodsMixin:
         return bool((result or {}).get("ok", False))
 
     async def native_reveal_in_finder(self, *, path: str) -> None:
-        """Reveal file in Finder"""
+        """Reveal file in Finder
+
+        path: non-empty
+        """
         params: dict[str, Any] = {
             "path": path,
         }
@@ -4504,6 +4881,7 @@ class MethodsMixin:
         """Execute an AppleScript via osascript. Exists only on macOS; elsewhere it is refused with platform_no_analogue
 
         script: AppleScript source to execute via `osascript`.
+            non-empty
         """
         params: dict[str, Any] = {
             "script": script,
@@ -4512,7 +4890,10 @@ class MethodsMixin:
         return result
 
     async def native_run_jxa(self, *, script: str) -> NativeRunJxaResponse:
-        """Run JavaScript for Automation (JXA) code. Exists only on macOS; elsewhere it is refused with platform_no_analogue"""
+        """Run JavaScript for Automation (JXA) code. Exists only on macOS; elsewhere it is refused with platform_no_analogue
+
+        script: non-empty
+        """
         params: dict[str, Any] = {
             "script": script,
         }
@@ -4523,6 +4904,7 @@ class MethodsMixin:
         """Run a Shortcuts.app shortcut by name. Exists only on macOS; elsewhere it is refused with platform_no_analogue
 
         input: default null
+        name: non-empty
         """
         params: dict[str, Any] = {
             "name": name,
@@ -4638,7 +5020,10 @@ class MethodsMixin:
         return result
 
     async def native_search_contacts(self, *, query: str) -> list[ContactInfo]:
-        """Search contacts by name"""
+        """Search contacts by name
+
+        query: non-empty
+        """
         params: dict[str, Any] = {
             "query": query,
         }
@@ -4674,7 +5059,10 @@ class MethodsMixin:
         return bool((result or {}).get("ok", False))
 
     async def native_set_app_hidden(self, *, bundle_id: str, hidden: bool) -> bool:
-        """Hide or unhide an app"""
+        """Hide or unhide an app
+
+        bundle_id: non-empty
+        """
         params: dict[str, Any] = {
             "bundle_id": bundle_id,
             "hidden": hidden,
@@ -4683,7 +5071,10 @@ class MethodsMixin:
         return bool((result or {}).get("ok", False))
 
     async def native_set_app_muted(self, *, app: str, muted: bool) -> bool:
-        """Mute or unmute one app in the system mixer; false when the app has no audio stream. Exists only on Linux and Windows; elsewhere it is refused with platform_no_analogue"""
+        """Mute or unmute one app in the system mixer; false when the app has no audio stream. Exists only on Linux and Windows; elsewhere it is refused with platform_no_analogue
+
+        app: non-empty
+        """
         params: dict[str, Any] = {
             "app": app,
             "muted": muted,
@@ -4694,6 +5085,7 @@ class MethodsMixin:
     async def native_set_app_volume(self, *, app: str, volume: float) -> bool:
         """Set one app's volume (0.0-1.0) in the system mixer; false when the app has no audio stream. Exists only on Linux and Windows; elsewhere it is refused with platform_no_analogue
 
+        app: non-empty
         volume: wire double
         """
         params: dict[str, Any] = {
@@ -4707,6 +5099,8 @@ class MethodsMixin:
         """Set the default audio input or output device
 
         device_type: "input" or "output".
+            non-empty
+        uid: non-empty
         """
         params: dict[str, Any] = {
             "device_type": device_type,
@@ -4717,6 +5111,7 @@ class MethodsMixin:
     async def native_set_audio_device_volume(self, *, device_uid: str, volume: float) -> None:
         """Set volume for a specific audio device by UID
 
+        device_uid: non-empty
         volume: wire double
         """
         params: dict[str, Any] = {
@@ -4726,7 +5121,10 @@ class MethodsMixin:
         await self.call(METHOD_NATIVE_SET_AUDIO_DEVICE_VOLUME, params)
 
     async def native_set_audio_input_device(self, *, name: str) -> bool:
-        """Set active audio input device by name"""
+        """Set active audio input device by name
+
+        name: non-empty
+        """
         params: dict[str, Any] = {
             "name": name,
         }
@@ -4734,7 +5132,10 @@ class MethodsMixin:
         return bool((result or {}).get("ok", False))
 
     async def native_set_audio_output_device(self, *, name: str) -> bool:
-        """Set active audio output device by name"""
+        """Set active audio output device by name
+
+        name: non-empty
+        """
         params: dict[str, Any] = {
             "name": name,
         }
@@ -4809,7 +5210,10 @@ class MethodsMixin:
         return bool((result or {}).get("ok", False))
 
     async def native_set_dock_minimize_effect(self, *, effect: str) -> bool:
-        """Set Dock minimize animation (genie/scale). Exists only on macOS; elsewhere it is refused with platform_no_analogue"""
+        """Set Dock minimize animation (genie/scale). Exists only on macOS; elsewhere it is refused with platform_no_analogue
+
+        effect: non-empty
+        """
         params: dict[str, Any] = {
             "effect": effect,
         }
@@ -4817,7 +5221,10 @@ class MethodsMixin:
         return bool((result or {}).get("ok", False))
 
     async def native_set_dock_position(self, *, position: str) -> bool:
-        """Set the Dock position (left, bottom, right). Exists only on macOS; elsewhere it is refused with platform_no_analogue"""
+        """Set the Dock position (left, bottom, right). Exists only on macOS; elsewhere it is refused with platform_no_analogue
+
+        position: non-empty
+        """
         params: dict[str, Any] = {
             "position": position,
         }
@@ -4852,7 +5259,11 @@ class MethodsMixin:
         return bool((result or {}).get("ok", False))
 
     async def native_set_extended_attribute(self, *, name: str, path: str, value: str) -> bool:
-        """Set an extended attribute on a file"""
+        """Set an extended attribute on a file
+
+        name: non-empty
+        path: non-empty
+        """
         params: dict[str, Any] = {
             "name": name,
             "path": path,
@@ -4862,7 +5273,10 @@ class MethodsMixin:
         return bool((result or {}).get("ok", False))
 
     async def native_set_file_hidden(self, *, hidden: bool, path: str) -> bool:
-        """Set file hidden flag"""
+        """Set file hidden flag
+
+        path: non-empty
+        """
         params: dict[str, Any] = {
             "hidden": hidden,
             "path": path,
@@ -4871,7 +5285,11 @@ class MethodsMixin:
         return bool((result or {}).get("ok", False))
 
     async def native_set_file_permissions(self, *, mode: str, path: str) -> bool:
-        """Set file permissions (chmod octal mode). Exists only on macOS and Linux; elsewhere it is refused with platform_no_analogue"""
+        """Set file permissions (chmod octal mode). Exists only on macOS and Linux; elsewhere it is refused with platform_no_analogue
+
+        mode: non-empty
+        path: non-empty
+        """
         params: dict[str, Any] = {
             "mode": mode,
             "path": path,
@@ -4896,7 +5314,10 @@ class MethodsMixin:
         return bool((result or {}).get("ok", False))
 
     async def native_set_highlight_color(self, *, color: str) -> bool:
-        """Set system highlight/accent color"""
+        """Set system highlight/accent color
+
+        color: non-empty
+        """
         params: dict[str, Any] = {
             "color": color,
         }
@@ -4907,6 +5328,7 @@ class MethodsMixin:
         """Set a hot corner action
 
         action: wire uint32 · min 0
+        corner: non-empty
         """
         params: dict[str, Any] = {
             "action": action,
@@ -4916,7 +5338,10 @@ class MethodsMixin:
         return bool((result or {}).get("ok", False))
 
     async def native_set_input_source(self, *, source_id: str) -> bool:
-        """Switch to a keyboard input source by ID"""
+        """Switch to a keyboard input source by ID
+
+        source_id: non-empty
+        """
         params: dict[str, Any] = {
             "source_id": source_id,
         }
@@ -5004,7 +5429,10 @@ class MethodsMixin:
         return bool((result or {}).get("ok", False))
 
     async def native_set_power_mode(self, *, mode: str) -> bool:
-        """Set the power mode (power-saver, balanced or performance); false when refused or not offered"""
+        """Set the power mode (power-saver, balanced or performance); false when refused or not offered
+
+        mode: non-empty
+        """
         params: dict[str, Any] = {
             "mode": mode,
         }
@@ -5020,7 +5448,10 @@ class MethodsMixin:
         return bool((result or {}).get("ok", False))
 
     async def native_set_screenshot_format(self, *, format: str) -> bool:
-        """Set screenshot file format (png/jpg/pdf/tiff). Exists only on macOS; elsewhere it is refused with platform_no_analogue"""
+        """Set screenshot file format (png/jpg/pdf/tiff). Exists only on macOS; elsewhere it is refused with platform_no_analogue
+
+        format: non-empty
+        """
         params: dict[str, Any] = {
             "format": format,
         }
@@ -5036,7 +5467,10 @@ class MethodsMixin:
         return bool((result or {}).get("ok", False))
 
     async def native_set_screenshot_location(self, *, path: str) -> bool:
-        """Set the screenshot save location. Exists only on macOS; elsewhere it is refused with platform_no_analogue"""
+        """Set the screenshot save location. Exists only on macOS; elsewhere it is refused with platform_no_analogue
+
+        path: non-empty
+        """
         params: dict[str, Any] = {
             "path": path,
         }
@@ -5117,7 +5551,11 @@ class MethodsMixin:
         return bool((result or {}).get("ok", False))
 
     async def native_set_url_scheme_handler(self, *, bundle_id: str, scheme: str) -> bool:
-        """Register an application as the handler for a URL scheme"""
+        """Register an application as the handler for a URL scheme
+
+        bundle_id: non-empty
+        scheme: non-empty
+        """
         params: dict[str, Any] = {
             "bundle_id": bundle_id,
             "scheme": scheme,
@@ -5144,7 +5582,10 @@ class MethodsMixin:
         await self.call(METHOD_NATIVE_SET_VOLUME, params)
 
     async def native_set_wallpaper(self, *, path: str) -> bool:
-        """Set the desktop wallpaper to an image file"""
+        """Set the desktop wallpaper to an image file
+
+        path: non-empty
+        """
         params: dict[str, Any] = {
             "path": path,
         }
@@ -5155,6 +5596,7 @@ class MethodsMixin:
         """Set window transparency
 
         alpha: wire double
+        window_id: non-empty
         """
         params: dict[str, Any] = {
             "alpha": alpha,
@@ -5163,7 +5605,11 @@ class MethodsMixin:
         await self.call(METHOD_NATIVE_SET_WINDOW_ALPHA, params)
 
     async def native_set_window_level(self, *, level: str, window_id: str) -> bool:
-        """Set a window's level (floating, normal, below)"""
+        """Set a window's level (floating, normal, below)
+
+        level: non-empty
+        window_id: non-empty
+        """
         params: dict[str, Any] = {
             "level": level,
             "window_id": window_id,
@@ -5174,6 +5620,7 @@ class MethodsMixin:
     async def native_set_window_position(self, *, window_id: str, x: int, y: int) -> None:
         """Move a window to x,y without changing size
 
+        window_id: non-empty
         x: wire int32
         y: wire int32
         """
@@ -5185,7 +5632,10 @@ class MethodsMixin:
         await self.call(METHOD_NATIVE_SET_WINDOW_POSITION, params)
 
     async def native_set_window_shadow(self, *, enabled: bool, window_id: str) -> None:
-        """Enable or disable the drop shadow for a window. Exists only on macOS; elsewhere it is refused with platform_no_analogue"""
+        """Enable or disable the drop shadow for a window. Exists only on macOS; elsewhere it is refused with platform_no_analogue
+
+        window_id: non-empty
+        """
         params: dict[str, Any] = {
             "enabled": enabled,
             "window_id": window_id,
@@ -5197,6 +5647,7 @@ class MethodsMixin:
 
         h: wire int32
         w: wire int32
+        window_id: non-empty
         """
         params: dict[str, Any] = {
             "h": h,
@@ -5206,7 +5657,10 @@ class MethodsMixin:
         await self.call(METHOD_NATIVE_SET_WINDOW_SIZE, params)
 
     async def native_set_window_sticky(self, *, sticky: bool, window_id: str) -> None:
-        """Set a window to appear on all spaces (sticky)"""
+        """Set a window to appear on all spaces (sticky)
+
+        window_id: non-empty
+        """
         params: dict[str, Any] = {
             "sticky": sticky,
             "window_id": window_id,
@@ -5266,6 +5720,7 @@ class MethodsMixin:
         """Speak text using the system text-to-speech engine
 
         rate: wire double · default null
+        text: non-empty
         voice: default null
         """
         params: dict[str, Any] = {
@@ -5291,6 +5746,7 @@ class MethodsMixin:
         """Recognize speech from an audio file (returns transcript)
 
         locale: default ""
+        path: non-empty
         """
         params: dict[str, Any] = {
             "path": path,
@@ -5309,6 +5765,7 @@ class MethodsMixin:
         """Search files via Spotlight
 
         limit: wire uint32 · default 20 · min 0
+        query: non-empty
         scope: default null
         """
         params: dict[str, Any] = {
@@ -5367,7 +5824,11 @@ class MethodsMixin:
         return result
 
     async def native_symlink(self, *, link: str, source: str) -> bool:
-        """Create a symbolic link"""
+        """Create a symbolic link
+
+        link: non-empty
+        source: non-empty
+        """
         params: dict[str, Any] = {
             "link": link,
             "source": source,
@@ -5489,7 +5950,10 @@ class MethodsMixin:
         return bool((result or {}).get("ok", False))
 
     async def native_toggle_fullscreen(self, *, window_id: str) -> None:
-        """Toggle native fullscreen for a window"""
+        """Toggle native fullscreen for a window
+
+        window_id: non-empty
+        """
         params: dict[str, Any] = {
             "window_id": window_id,
         }
@@ -5514,7 +5978,10 @@ class MethodsMixin:
         return result
 
     async def native_transparency_consent(self, *, service: str) -> str:
-        """Check TCC consent status for a service (e.g. kTCCServiceAccessibility). Exists only on macOS; elsewhere it is refused with platform_no_analogue"""
+        """Check TCC consent status for a service (e.g. kTCCServiceAccessibility). Exists only on macOS; elsewhere it is refused with platform_no_analogue
+
+        service: non-empty
+        """
         params: dict[str, Any] = {
             "service": service,
         }
@@ -5522,7 +5989,10 @@ class MethodsMixin:
         return result
 
     async def native_trash(self, *, path: str) -> bool:
-        """Move file to Trash"""
+        """Move file to Trash
+
+        path: non-empty
+        """
         params: dict[str, Any] = {
             "path": path,
         }
@@ -5545,21 +6015,30 @@ class MethodsMixin:
         return result
 
     async def native_unhide_app(self, *, bundle_id: str) -> None:
-        """Unhide a hidden application"""
+        """Unhide a hidden application
+
+        bundle_id: non-empty
+        """
         params: dict[str, Any] = {
             "bundle_id": bundle_id,
         }
         await self.call(METHOD_NATIVE_UNHIDE_APP, params)
 
     async def native_unminimize_window(self, *, window_id: str) -> None:
-        """Restore a minimized window by ID"""
+        """Restore a minimized window by ID
+
+        window_id: non-empty
+        """
         params: dict[str, Any] = {
             "window_id": window_id,
         }
         await self.call(METHOD_NATIVE_UNMINIMIZE_WINDOW, params)
 
     async def native_unobserve_windows(self, *, subscription_id: str) -> bool:
-        """Stop observing window events (STUB)"""
+        """Stop observing window events (STUB)
+
+        subscription_id: non-empty
+        """
         params: dict[str, Any] = {
             "subscription_id": subscription_id,
         }
@@ -5567,7 +6046,11 @@ class MethodsMixin:
         return bool((result or {}).get("result", False))
 
     async def native_unzip(self, *, destination: str, source: str) -> bool:
-        """Extract a zip archive to a directory"""
+        """Extract a zip archive to a directory
+
+        destination: non-empty
+        source: non-empty
+        """
         params: dict[str, Any] = {
             "destination": destination,
             "source": source,
@@ -5576,7 +6059,10 @@ class MethodsMixin:
         return bool((result or {}).get("ok", False))
 
     async def native_url_scheme_handler(self, *, scheme: str) -> NativeURLSchemeHandlerResponse:
-        """Get the bundle ID registered as the handler for a URL scheme"""
+        """Get the bundle ID registered as the handler for a URL scheme
+
+        scheme: non-empty
+        """
         params: dict[str, Any] = {
             "scheme": scheme,
         }
@@ -5641,7 +6127,10 @@ class MethodsMixin:
         return (result or {}).get("networks") or []
 
     async def native_window_app(self, *, window_id: str) -> str:
-        """Get the owning app bundle ID for a window"""
+        """Get the owning app bundle ID for a window
+
+        window_id: non-empty
+        """
         params: dict[str, Any] = {
             "window_id": window_id,
         }
@@ -5649,7 +6138,10 @@ class MethodsMixin:
         return result
 
     async def native_window_bounds(self, *, window_id: str) -> NativeWindowBoundsResponse:
-        """Get a window position and size by ID"""
+        """Get a window position and size by ID
+
+        window_id: non-empty
+        """
         params: dict[str, Any] = {
             "window_id": window_id,
         }
@@ -5657,7 +6149,10 @@ class MethodsMixin:
         return result
 
     async def native_window_display_id(self, *, window_id: str) -> int:
-        """Get display ID for window"""
+        """Get display ID for window
+
+        window_id: non-empty
+        """
         params: dict[str, Any] = {
             "window_id": window_id,
         }
@@ -5665,7 +6160,10 @@ class MethodsMixin:
         return result
 
     async def native_window_is_fullscreen(self, *, window_id: str) -> bool:
-        """Check if window is fullscreen"""
+        """Check if window is fullscreen
+
+        window_id: non-empty
+        """
         params: dict[str, Any] = {
             "window_id": window_id,
         }
@@ -5673,7 +6171,10 @@ class MethodsMixin:
         return result
 
     async def native_window_is_minimized(self, *, window_id: str) -> bool:
-        """Check if window is minimized"""
+        """Check if window is minimized
+
+        window_id: non-empty
+        """
         params: dict[str, Any] = {
             "window_id": window_id,
         }
@@ -5681,7 +6182,10 @@ class MethodsMixin:
         return result
 
     async def native_window_layer(self, *, window_id: str) -> int:
-        """Get window layer level"""
+        """Get window layer level
+
+        window_id: non-empty
+        """
         params: dict[str, Any] = {
             "window_id": window_id,
         }
@@ -5700,7 +6204,10 @@ class MethodsMixin:
         return result
 
     async def native_window_subrole(self, *, window_id: str) -> str:
-        """Get window subrole"""
+        """Get window subrole
+
+        window_id: non-empty
+        """
         params: dict[str, Any] = {
             "window_id": window_id,
         }
@@ -5708,7 +6215,10 @@ class MethodsMixin:
         return result
 
     async def native_window_title(self, *, window_id: str) -> str:
-        """Get a window title by ID"""
+        """Get a window title by ID
+
+        window_id: non-empty
+        """
         params: dict[str, Any] = {
             "window_id": window_id,
         }
@@ -5719,6 +6229,7 @@ class MethodsMixin:
         """Read the instances of one WMI class the plugin declared and the user switched on. Exists only on Windows; elsewhere it is refused with platform_no_analogue
 
         class_: The class (`Win32_Battery`).
+            non-empty
         limit: Instances to return at most, 1 to 1000 (default 200); more sets
             `truncated`.
             wire uint32 · default null · min 0
@@ -5764,7 +6275,11 @@ class MethodsMixin:
         return result
 
     async def native_write_app_preference(self, *, domain: str, key: str, value: Any) -> bool:
-        """Write a preference value for an app domain"""
+        """Write a preference value for an app domain
+
+        domain: non-empty
+        key: non-empty
+        """
         params: dict[str, Any] = {
             "domain": domain,
             "key": key,
@@ -5774,7 +6289,10 @@ class MethodsMixin:
         return bool((result or {}).get("ok", False))
 
     async def native_write_file(self, *, contents: str, path: str) -> bool:
-        """Write string contents to a file"""
+        """Write string contents to a file
+
+        path: non-empty
+        """
         params: dict[str, Any] = {
             "contents": contents,
             "path": path,
@@ -5793,7 +6311,11 @@ class MethodsMixin:
         return result
 
     async def native_zip(self, *, destination: str, source: str) -> bool:
-        """Create a zip archive from files or a directory"""
+        """Create a zip archive from files or a directory
+
+        destination: non-empty
+        source: non-empty
+        """
         params: dict[str, Any] = {
             "destination": destination,
             "source": source,
@@ -5805,6 +6327,7 @@ class MethodsMixin:
         """Ask for one more network host at runtime (a plugin declaring requestable hosts). It appears on the plugin's page, off until the user allows it
 
         host: One exact host (no wildcard, no port, no path).
+            non-empty
         reason: Shown to the user beside the switch — why the plugin wants it.
             default ""
         """
@@ -5821,6 +6344,7 @@ class MethodsMixin:
 
         channel: The channel on which nothing is true now. Must be owned by the
             calling plugin.
+            non-empty
         """
         params: dict[str, Any] = {
             "channel": channel,
@@ -5844,6 +6368,7 @@ class MethodsMixin:
         """Remove the caller's overlay of that id
 
         id: The overlay to remove; nothing happens if it is not showing.
+            non-empty
         """
         params: dict[str, Any] = {
             "id": id,
@@ -5857,6 +6382,7 @@ class MethodsMixin:
         id: The caller's name for this overlay (letters, digits, `_`, `-`, `.`;
             up to 64). Showing it again replaces its shapes. Overlays are kept
             per caller, so one plugin cannot replace or clear another's.
+            non-empty
         shapes: Up to 64 shapes: outlines, fills, circles and a countdown ring. No
             text or images: nothing drawn can pass for a prompt. An empty list
             clears the overlay.
@@ -5873,7 +6399,9 @@ class MethodsMixin:
 
         action: Action: "add", "remove", "restore", "reset", "patch", "rename", or
             "revert".
+            non-empty
         collection: Collection name to override.
+            non-empty
         field: Field key for the "unpatch" action — removes ONE field from the
             tenant's patch of `id` (the per-field inverse of "patch"; the patch
             entry is dropped when its last field goes). The settings form's
@@ -5946,11 +6474,14 @@ class MethodsMixin:
             (`audio_*`, `transcript`, `vocabulary_update`) are the platform's to
             send; a plugin forging one into its own pipeline was previously
             unchecked here.
+            non-empty
         name: Pipeline to configure. The caller must have introduced it.
+            non-empty
         stage: Stage within that pipeline, spelled as the pipeline definition spells
             it — a role like `_platform.stt` or a qualified stage name. Required:
             before per-stage channels existed this operation could only ever reach
             the terminal stage, and silently did nothing for any other.
+            non-empty
         """
         params: dict[str, Any] = {
             "event_type": event_type,
@@ -5966,6 +6497,7 @@ class MethodsMixin:
         """Start a named pipeline
 
         ephemeral: default false
+        name: non-empty
         param_overrides: default {}
         """
         params: dict[str, Any] = {
@@ -5991,6 +6523,7 @@ class MethodsMixin:
             detected dictation stop phrase, from the transcript's word_onsets_ms.
             Absent = process everything.
             wire uint64 (64-bit) · default null · min 0
+        name: non-empty
         """
         params: dict[str, Any] = {
             "name": name,
@@ -6003,6 +6536,7 @@ class MethodsMixin:
     async def pipelines_warm(self, *, name: str, param_overrides: dict[str, Any] | None = None) -> PipelinesWarmResponse:
         """Pre-spawn + pre-load a pipeline's recognizer stages (grammar built off the hold path)
 
+        name: non-empty
         param_overrides: Per-stage param overrides applied to the warmed consumer stages, mirroring
             `pipelines.run`. Lets a caller prewarm the model it will actually run (e.g.
             a user-selected STT model) instead of only the pipeline's default.
@@ -6029,6 +6563,7 @@ class MethodsMixin:
             Downloads, not a location.
             default null
         path: Path of the file to export, relative to the caller's data dir.
+            non-empty
         """
         params: dict[str, Any] = {
             "path": path,
@@ -6094,7 +6629,10 @@ class MethodsMixin:
         await self.call(METHOD_PLUGIN_REPORT_HEALTH, params)
 
     async def privacy_get_recording(self, *, name: str) -> PrivacyGetRecordingResponse:
-        """Read the effective recording flag for a log-kind collection (privacy control plane)"""
+        """Read the effective recording flag for a log-kind collection (privacy control plane)
+
+        name: non-empty
+        """
         params: dict[str, Any] = {
             "name": name,
         }
@@ -6102,7 +6640,10 @@ class MethodsMixin:
         return result
 
     async def privacy_set_recording(self, *, enabled: bool, name: str) -> None:
-        """Toggle the recording flag on a log-kind collection (privacy control plane)"""
+        """Toggle the recording flag on a log-kind collection (privacy control plane)
+
+        name: non-empty
+        """
         params: dict[str, Any] = {
             "enabled": enabled,
             "name": name,
@@ -6119,6 +6660,7 @@ class MethodsMixin:
 
         privilege: Privilege name — must appear in the calling plugin's
             `optional_privileges`.
+            non-empty
         """
         params: dict[str, Any] = {
             "privilege": privilege,
@@ -6131,6 +6673,7 @@ class MethodsMixin:
 
         privilege: Privilege name — must appear in the calling plugin's
             `optional_privileges`.
+            non-empty
         reason: Short attributed reason shown to the user next to the Approve
             button (e.g. "script 'headphones' uses query:power"). Untrusted
             text; capped server-side.
@@ -6190,8 +6733,10 @@ class MethodsMixin:
         max_active: wire uint32 · default null · min 0
         model: Model dir name under app-support `models/` (single component, no
             traversal), e.g. `"sherpa-offline-nemo"`.
+            non-empty
         stage: Registered stage id whose binary's `probe` subcommand runs the re-decode,
             e.g. `"voice.sherpa_commands"`. Validated against the stage registry.
+            non-empty
         """
         params: dict[str, Any] = {
             "items": items,
@@ -6204,7 +6749,10 @@ class MethodsMixin:
         return result
 
     async def secrets_delete(self, *, name: str) -> SecretsDeleteResponse:
-        """Remove a stored credential. Deleting a name that was never set is not an error"""
+        """Remove a stored credential. Deleting a name that was never set is not an error
+
+        name: non-empty
+        """
         params: dict[str, Any] = {
             "name": name,
         }
@@ -6212,7 +6760,10 @@ class MethodsMixin:
         return result
 
     async def secrets_is_set(self, *, name: str) -> SecretsIsSetResponse:
-        """Whether this plugin has stored a credential under this name. The only question askable about a value that cannot be read"""
+        """Whether this plugin has stored a credential under this name. The only question askable about a value that cannot be read
+
+        name: non-empty
+        """
         params: dict[str, Any] = {
             "name": name,
         }
@@ -6229,10 +6780,12 @@ class MethodsMixin:
 
         host: The ONE host the value may be sent to — one this plugin may already
             reach (declared, or requested with `network.request_host`).
+            non-empty
         label: What the user sees on the row, e.g. "Weather script — API key".
             default ""
         name: The secret's name in this plugin's drawer (ASCII letters, digits,
             `_`, `-`, `.`).
+            non-empty
         """
         params: dict[str, Any] = {
             "host": host,
@@ -6261,7 +6814,9 @@ class MethodsMixin:
             refused at substitution rather than treated as usable anywhere.
         name: The secret's name within this plugin. What a manifest or a script
             header refers to.
+            non-empty
         value: The value. This is the only direction a value travels over the wire.
+            non-empty
         """
         params: dict[str, Any] = {
             "name": name,
@@ -6322,6 +6877,7 @@ class MethodsMixin:
 
         signals: Datastar signal expression, e.g. `{activeGroup: 2, activeDialModeIndex: 1}`.
             Sent as a `datastar-patch-signals` SSE event to all active settings streams.
+            non-empty
         """
         params: dict[str, Any] = {
             "signals": signals,
@@ -6329,7 +6885,10 @@ class MethodsMixin:
         await self.call(METHOD_SETTINGS_PATCH_SIGNALS, params)
 
     async def settings_redirect(self, *, tab: str) -> None:
-        """Navigate the settings UI to a tab declared by the calling plugin"""
+        """Navigate the settings UI to a tab declared by the calling plugin
+
+        tab: non-empty
+        """
         params: dict[str, Any] = {
             "tab": tab,
         }
@@ -6395,6 +6954,7 @@ class MethodsMixin:
 
         canonical: Existing canonical command id (the previous canonical phrase) of
             the rule being updated. Required.
+            non-empty
         check_only: Check the candidate and report any conflict without saving it or
             removing the command it would replace.
             default null
@@ -6435,7 +6995,10 @@ class MethodsMixin:
         return result
 
     async def speech_announce(self, *, text: str) -> None:
-        """Post a VoiceOver announcement (spoken in the person's VoiceOver voice when VoiceOver is running; ignored otherwise)"""
+        """Post a VoiceOver announcement (spoken in the person's VoiceOver voice when VoiceOver is running; ignored otherwise)
+
+        text: non-empty
+        """
         params: dict[str, Any] = {
             "text": text,
         }
@@ -6448,6 +7011,7 @@ class MethodsMixin:
             and speaks now. Defaults to normal.
             default null
         text: The words. Plain language, no markup; the system voice reads it as is.
+            non-empty
         """
         params: dict[str, Any] = {
             "text": text,
@@ -6464,6 +7028,7 @@ class MethodsMixin:
         """Launch an app and post a 'Launching' notification to the HUD
 
         bundle_id: Bundle ID of the application to launch (e.g. "com.apple.Safari").
+            non-empty
         new_instance: Whether to launch a fresh instance even if the app is already running.
             default false
         """
@@ -6484,6 +7049,7 @@ class MethodsMixin:
             Pass any positive integer for a custom duration.
             wire uint32 · default null · min 0
         title: Notification title (rendered as `<h1 id="title">`).
+            non-empty
         """
         params: dict[str, Any] = {
             "body": body,
@@ -6497,6 +7063,7 @@ class MethodsMixin:
         """Start a shell command via /bin/bash -c, run by the actuator outside any plugin sandbox (security-sensitive; not on Windows)
 
         command: Shell command to execute via `/bin/bash -c`.
+            non-empty
         """
         params: dict[str, Any] = {
             "command": command,
@@ -6509,7 +7076,10 @@ class MethodsMixin:
         return result
 
     async def trial_end(self, *, trial_id: str) -> TrialEndResponse:
-        """Close a calibration trial — clears the tag and spawns release RPCs to fixture owners"""
+        """Close a calibration trial — clears the tag and spawns release RPCs to fixture owners
+
+        trial_id: non-empty
+        """
         params: dict[str, Any] = {
             "trial_id": trial_id,
         }
@@ -6520,6 +7090,8 @@ class MethodsMixin:
         """Enter a command's context for a trial — writes mode-gated requires_tags (platform write) or forwards trial_apply_fixture to a dynamic command's owner — and returns the entered context (kind + tags + fixture_handle)
 
         command_id: Command id from `commands.enumerate` — `<owner_plugin>:<pattern>`.
+            non-empty
+        trial_id: non-empty
         """
         params: dict[str, Any] = {
             "command_id": command_id,
@@ -6529,7 +7101,12 @@ class MethodsMixin:
         return result
 
     async def trial_register_fixture(self, *, fixture_handle: str, owner_plugin_id: str, trial_id: str) -> None:
-        """Register a fixture handle under an open trial so trial_end can release it"""
+        """Register a fixture handle under an open trial so trial_end can release it
+
+        fixture_handle: non-empty
+        owner_plugin_id: non-empty
+        trial_id: non-empty
+        """
         params: dict[str, Any] = {
             "fixture_handle": fixture_handle,
             "owner_plugin_id": owner_plugin_id,
@@ -6541,6 +7118,7 @@ class MethodsMixin:
         """Resolve concrete prompt phrases for a command whose vocabulary the caller can't derive — forwards trial_samples to a dynamic command's owner (empty when the owner doesn't implement the optional hook; the host then falls back to its own default).
 
         command_id: Command id from `commands.enumerate` — `<owner_plugin>:<pattern>`.
+            non-empty
         """
         params: dict[str, Any] = {
             "command_id": command_id,

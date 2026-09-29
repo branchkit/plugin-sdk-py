@@ -1840,6 +1840,7 @@ ActionsListResponse = TypedDict("ActionsListResponse", {
 })
 
 ArtifactDeleteRequest = TypedDict("ArtifactDeleteRequest", {
+    # non-empty
     "ref": str,
 })
 
@@ -1855,6 +1856,7 @@ BlobPublishRequest = TypedDict("BlobPublishRequest", {
     # wire uint64 (64-bit) · min 0
     "length": int,
     # The blob's name, as declared in this plugin's `provides.blobs`.
+    # non-empty
     "name": str,
     # Start a new generation instead of appending to the current one — the
     # way a provider shrinks. A new generation is a NEW backing file, so
@@ -1894,6 +1896,7 @@ BlobPublishResponse = TypedDict("BlobPublishResponse", {
 
 BlobStateRequest = TypedDict("BlobStateRequest", {
     # The blob's name, as its provider declared it in `provides.blobs`.
+    # non-empty
     "name": str,
     # The providing plugin. Omitted: the caller's own blob. Another
     # plugin's blob is answerable only to a consumer granted to read it.
@@ -1916,6 +1919,7 @@ BlobStateResponse = TypedDict("BlobStateResponse", {
 
 CollectionAppendRequest = TypedDict("CollectionAppendRequest", {
     # Collection name. Must be a `kind: "log"` collection.
+    # non-empty
     "name": str,
     # Entry payload — validated against the collection's `fields` schema.
     "payload": Any,
@@ -1930,9 +1934,11 @@ CollectionAppendKeyedRequest = TypedDict("CollectionAppendKeyedRequest", {
     # The fold key — stamped into the payload's key field. Appending another
     # record with the same key annotates the first (compacted-changelog
     # shape); a compacted read folds them into one record.
+    # non-empty
     "key": str,
     # Collection name. Must be a keyed (`id_strategy: by_field`) `log`
     # collection.
+    # non-empty
     "name": str,
     # Entry payload — validated against the collection's `fields` schema (the
     # key field is supplied via `key`, not here).
@@ -1945,6 +1951,7 @@ CollectionAppendKeyedResponse = TypedDict("CollectionAppendKeyedResponse", {
 })
 
 CollectionCountRequest = TypedDict("CollectionCountRequest", {
+    # non-empty
     "name": str,
 })
 
@@ -1958,6 +1965,7 @@ CollectionDeleteRecordsRequest = TypedDict("CollectionDeleteRecordsRequest", {
     # one id. SDK helpers (`Delete` vs `DeleteMany`) hide the wrapping.
     # default []
     "ids": NotRequired[list[str]],
+    # non-empty
     "name": str,
 })
 
@@ -1971,7 +1979,9 @@ CollectionDeleteRecordsResponse = TypedDict("CollectionDeleteRecordsResponse", {
 })
 
 CollectionFetchRequest = TypedDict("CollectionFetchRequest", {
+    # non-empty
     "id": str,
+    # non-empty
     "name": str,
 })
 
@@ -1981,7 +1991,9 @@ CollectionFetchResponse = TypedDict("CollectionFetchResponse", {
 })
 
 CollectionFetchCompactedRequest = TypedDict("CollectionFetchCompactedRequest", {
+    # non-empty
     "id": str,
+    # non-empty
     "name": str,
 })
 
@@ -1991,6 +2003,7 @@ CollectionFetchCompactedResponse = TypedDict("CollectionFetchCompactedResponse",
 })
 
 CollectionGetRequest = TypedDict("CollectionGetRequest", {
+    # non-empty
     "name": str,
 })
 
@@ -2006,6 +2019,7 @@ CollectionGetResponse = TypedDict("CollectionGetResponse", {
 })
 
 CollectionListRequest = TypedDict("CollectionListRequest", {
+    # non-empty
     "name": str,
     # default {}
     "opts": NotRequired["ListOpts"],
@@ -2021,7 +2035,9 @@ CollectionListResponse = TypedDict("CollectionListResponse", {
 CollectionPatchRequest = TypedDict("CollectionPatchRequest", {
     # Object of fields to merge over the existing record.
     "fields": Any,
+    # non-empty
     "id": str,
+    # non-empty
     "name": str,
 })
 
@@ -2050,6 +2066,7 @@ CollectionPutRequest = TypedDict("CollectionPutRequest", {
     # semantics as `roles`: last-write-wins, and a put omitting `label`
     # leaves the prior setting in place.
     "label": NotRequired[str],
+    # non-empty
     "name": str,
     # Optional per-payload-field display roles. Used by the Settings
     # UI / discovery HUD to know which payload field is the primary
@@ -2080,6 +2097,7 @@ CollectionReplaceRequest = TypedDict("CollectionReplaceRequest", {
     "entries": NotRequired[list["CollectionPutEntry"]],
     # Same semantics as `collection.put`'s `label`.
     "label": NotRequired[str],
+    # non-empty
     "name": str,
     # Same semantics as `collection.put`'s `roles`.
     "roles": NotRequired[dict[str, "FieldDisplay"]],
@@ -2108,6 +2126,7 @@ CollectionsCreateUserRequest = TypedDict("CollectionsCreateUserRequest", {
     # default ""
     "description": NotRequired[str],
     # Collection name (lowercase, underscores).
+    # non-empty
     "name": str,
     # default ""
     "words_text": NotRequired[str],
@@ -2133,8 +2152,11 @@ CollectionsOwnedResponse = TypedDict("CollectionsOwnedResponse", {
 })
 
 CommandsAddAliasRequest = TypedDict("CommandsAddAliasRequest", {
+    # non-empty
     "action": str,
+    # non-empty
     "default_pattern": str,
+    # non-empty
     "new_pattern": str,
 })
 
@@ -2153,6 +2175,7 @@ CommandsConfusabilityResponse = TypedDict("CommandsConfusabilityResponse", {
 })
 
 CommandsDeleteRequest = TypedDict("CommandsDeleteRequest", {
+    # non-empty
     "canonical": str,
 })
 
@@ -2219,8 +2242,11 @@ CommandsPushResponse = TypedDict("CommandsPushResponse", {
 })
 
 CommandsRemoveAliasRequest = TypedDict("CommandsRemoveAliasRequest", {
+    # non-empty
     "action": str,
+    # non-empty
     "default_pattern": str,
+    # non-empty
     "new_pattern": str,
 })
 
@@ -2231,11 +2257,14 @@ CommandsRemoveAliasResponse = TypedDict("CommandsRemoveAliasResponse", {
 })
 
 CommandsResetRequest = TypedDict("CommandsResetRequest", {
+    # non-empty
     "canonical": str,
 })
 
 CommandsResetOverrideRequest = TypedDict("CommandsResetOverrideRequest", {
+    # non-empty
     "action": str,
+    # non-empty
     "default_pattern": str,
 })
 
@@ -2354,14 +2383,18 @@ CommandsResolveResponse = TypedDict("CommandsResolveResponse", {
 })
 
 CommandsSetOverrideRequest = TypedDict("CommandsSetOverrideRequest", {
+    # non-empty
     "action": str,
+    # non-empty
     "default_pattern": str,
+    # non-empty
     "new_pattern": str,
 })
 
 ControlSignalRequest = TypedDict("ControlSignalRequest", {
     # Raw control-stream signal string (e.g. "open hud", "hide discovery").
     # Forwarded verbatim to the Swift shell via the actuator's control stream.
+    # non-empty
     "signal": str,
 })
 
@@ -2391,6 +2424,7 @@ EffectsAssertRequest = TypedDict("EffectsAssertRequest", {
     # Registered effect name (e.g. `suppress_notifications`). Must be
     # declared in the plugin's manifest `consumes.effects.asserts` and
     # match an entry in the closed `effects::REGISTERED_EFFECTS` registry.
+    # non-empty
     "name": str,
 })
 
@@ -2422,6 +2456,7 @@ EffectsAssertResponse = TypedDict("EffectsAssertResponse", {
 
 EffectsIsActiveRequest = TypedDict("EffectsIsActiveRequest", {
     # Registered effect name to query.
+    # non-empty
     "name": str,
 })
 
@@ -2440,6 +2475,7 @@ EffectsRetractRequest = TypedDict("EffectsRetractRequest", {
     # Registered effect name to retract. The plugin's frame is removed
     # from this effect's ownership stack. If no frame exists, the call
     # is a no-op (`retracted=false`, no error).
+    # non-empty
     "name": str,
 })
 
@@ -2460,6 +2496,7 @@ EventsAppendRequest = TypedDict("EventsAppendRequest", {
     # default null
     "data": NotRequired[Any],
     # Event type discriminator (e.g. "session_start", "match", "miss").
+    # non-empty
     "event_type": str,
     # Logical session id this event belongs to (8-char prefix used by
     # the event-stream tooling). Defaults to "?" if absent.
@@ -2478,6 +2515,7 @@ EventsEmitRequest = TypedDict("EventsEmitRequest", {
     "data": NotRequired[Any],
     # Convention-based event type (e.g. "clipboard.copied"). The
     # `_platform.*` namespace is reserved for the actuator.
+    # non-empty
     "event_type": str,
 })
 
@@ -2495,6 +2533,7 @@ HttpRequestRequest = TypedDict("HttpRequestRequest", {
     "timeout_ms": NotRequired[int],
     # `https://` only, to a host this plugin declares in `requires.network`
     # and the user has allowed.
+    # non-empty
     "url": str,
 })
 
@@ -2524,6 +2563,7 @@ HUDCreateChannelRequest = TypedDict("HUDCreateChannelRequest", {
     # default "top-right"
     "anchor": NotRequired["Anchor"],
     # Channel name. Must be unique across all plugins.
+    # non-empty
     "channel": str,
     # Optional human-readable description shown in dev tooling.
     # default ""
@@ -2564,6 +2604,7 @@ HUDCreateChannelRequest = TypedDict("HUDCreateChannelRequest", {
 HUDHideRequest = TypedDict("HUDHideRequest", {
     # Channel name to hide. Sends a `close <channel>` (or
     # `hide <channel>` for built-in channels) to the Swift shell.
+    # non-empty
     "channel": str,
 })
 
@@ -2571,6 +2612,7 @@ HUDPushRequest = TypedDict("HUDPushRequest", {
     # Name of the HUD channel to push fragments into. Must be owned by
     # the calling plugin (verified via
     # `HudChannelRegistry::verify_owner`).
+    # non-empty
     "channel": str,
     # The fragments to patch into the channel, in order.
     #
@@ -2583,6 +2625,7 @@ HUDPushRequest = TypedDict("HUDPushRequest", {
 
 HUDRemoveChannelRequest = TypedDict("HUDRemoveChannelRequest", {
     # Channel name to remove. Must be owned by the calling plugin.
+    # non-empty
     "channel": str,
 })
 
@@ -2595,6 +2638,7 @@ HUDRemoveChannelResponse = TypedDict("HUDRemoveChannelResponse", {
 
 HUDSetSizeRequest = TypedDict("HUDSetSizeRequest", {
     # Channel name whose actual rendered size is being reported.
+    # non-empty
     "channel": str,
     # Actual rendered height in points (used by world-model entries
     # instead of `min_height` when known).
@@ -2605,6 +2649,7 @@ HUDSetSizeRequest = TypedDict("HUDSetSizeRequest", {
 HUDShowRequest = TypedDict("HUDShowRequest", {
     # Channel name to show. Sends an `open <channel>` message to the
     # Swift shell.
+    # non-empty
     "channel": str,
 })
 
@@ -2616,6 +2661,7 @@ InputClickRequest = TypedDict("InputClickRequest", {
 
 InputClipboardActionRequest = TypedDict("InputClipboardActionRequest", {
     # Action: "copy", "paste", or "set".
+    # non-empty
     "action": str,
     # Text to set (only used by `action: "set"`).
     # default null
@@ -2627,6 +2673,7 @@ InputClipboardHistoryResponse = TypedDict("InputClipboardHistoryResponse", {
 })
 
 InputClipboardReadRequest = TypedDict("InputClipboardReadRequest", {
+    # non-empty
     "content_type": str,
 })
 
@@ -2643,6 +2690,7 @@ InputClipboardReadAllResponse = TypedDict("InputClipboardReadAllResponse", {
 })
 
 InputClipboardReadFormatRequest = TypedDict("InputClipboardReadFormatRequest", {
+    # non-empty
     "format": str,
 })
 
@@ -2651,6 +2699,7 @@ InputClipboardReadFormatResponse = TypedDict("InputClipboardReadFormatResponse",
 })
 
 InputClipboardWriteRequest = TypedDict("InputClipboardWriteRequest", {
+    # non-empty
     "content_type": str,
     "data": str,
 })
@@ -2700,6 +2749,7 @@ InputMouseButtonRequest = TypedDict("InputMouseButtonRequest", {
     # zero-distance dragged event at the current cursor position — macOS
     # only treats a window as grabbed once a dragged event follows the
     # press, so drag-based operations need it between press and release.
+    # non-empty
     "direction": str,
 })
 
@@ -2752,6 +2802,7 @@ InputRawKeyRequest = TypedDict("InputRawKeyRequest", {
     # wire uint16 · min 0 · max 65535
     "code": int,
     # One of "press", "release", or "click".
+    # non-empty
     "direction": str,
 })
 
@@ -2767,6 +2818,7 @@ InputScrollRequest = TypedDict("InputScrollRequest", {
     # wire int32 · default 5
     "amount": NotRequired[int],
     # Direction: "up", "down", "left", or "right".
+    # non-empty
     "direction": str,
     # Scroll unit: "line" (discrete, default) or "pixel" (continuous/smooth).
     # Pixel units are needed for horizontal scroll in most browsers.
@@ -2775,6 +2827,7 @@ InputScrollRequest = TypedDict("InputScrollRequest", {
 })
 
 InputSwitchInputSourceRequest = TypedDict("InputSwitchInputSourceRequest", {
+    # non-empty
     "source_id": str,
 })
 
@@ -2826,6 +2879,7 @@ NativeAccessibilityEnabledResponse = TypedDict("NativeAccessibilityEnabledRespon
 NativeActivateAppRequest = TypedDict("NativeActivateAppRequest", {
     # default false
     "all_windows": NotRequired[bool],
+    # non-empty
     "bundle_id": str,
 })
 
@@ -2862,6 +2916,7 @@ NativeApfsSnapshotsResponse = TypedDict("NativeApfsSnapshotsResponse", {
 })
 
 NativeAppBundlePathRequest = TypedDict("NativeAppBundlePathRequest", {
+    # non-empty
     "bundle_id": str,
 })
 
@@ -2870,10 +2925,12 @@ NativeAppBundlePathResponse = TypedDict("NativeAppBundlePathResponse", {
 })
 
 NativeAppFocusedWindowIDRequest = TypedDict("NativeAppFocusedWindowIDRequest", {
+    # non-empty
     "bundle_id": str,
 })
 
 NativeAppIconRequest = TypedDict("NativeAppIconRequest", {
+    # non-empty
     "bundle_id": str,
     # wire uint32 · default 64 · min 0
     "size": NotRequired[int],
@@ -2887,10 +2944,12 @@ NativeAppIconResponse = TypedDict("NativeAppIconResponse", {
 })
 
 NativeAppIconPathRequest = TypedDict("NativeAppIconPathRequest", {
+    # non-empty
     "bundle_id": str,
 })
 
 NativeAppIsAgentRequest = TypedDict("NativeAppIsAgentRequest", {
+    # non-empty
     "bundle_id": str,
 })
 
@@ -2899,6 +2958,7 @@ NativeAppIsAgentResponse = TypedDict("NativeAppIsAgentResponse", {
 })
 
 NativeAppIsRunningRequest = TypedDict("NativeAppIsRunningRequest", {
+    # non-empty
     "bundle_id": str,
 })
 
@@ -2907,6 +2967,7 @@ NativeAppIsRunningResponse = TypedDict("NativeAppIsRunningResponse", {
 })
 
 NativeAppLaunchAtLoginRequest = TypedDict("NativeAppLaunchAtLoginRequest", {
+    # non-empty
     "bundle_id": str,
 })
 
@@ -2915,6 +2976,7 @@ NativeAppLaunchAtLoginResponse = TypedDict("NativeAppLaunchAtLoginResponse", {
 })
 
 NativeAppMetadataRequest = TypedDict("NativeAppMetadataRequest", {
+    # non-empty
     "bundle_id": str,
 })
 
@@ -2929,10 +2991,12 @@ NativeAppMetadataResponse = TypedDict("NativeAppMetadataResponse", {
 })
 
 NativeAppPathRequest = TypedDict("NativeAppPathRequest", {
+    # non-empty
     "bundle_id": str,
 })
 
 NativeAppPidRequest = TypedDict("NativeAppPidRequest", {
+    # non-empty
     "bundle_id": str,
 })
 
@@ -2945,6 +3009,7 @@ NativeAppVerificationResponse = TypedDict("NativeAppVerificationResponse", {
 })
 
 NativeAppVersionRequest = TypedDict("NativeAppVersionRequest", {
+    # non-empty
     "bundle_id": str,
 })
 
@@ -2953,6 +3018,7 @@ NativeAppVolumesResponse = TypedDict("NativeAppVolumesResponse", {
 })
 
 NativeAppWindowsRequest = TypedDict("NativeAppWindowsRequest", {
+    # non-empty
     "bundle_id": str,
 })
 
@@ -2961,10 +3027,12 @@ NativeAppWindowsResponse = TypedDict("NativeAppWindowsResponse", {
 })
 
 NativeAppWindowsCountRequest = TypedDict("NativeAppWindowsCountRequest", {
+    # non-empty
     "bundle_id": str,
 })
 
 NativeAppsForPathRequest = TypedDict("NativeAppsForPathRequest", {
+    # non-empty
     "path": str,
 })
 
@@ -2973,6 +3041,7 @@ NativeAppsForPathResponse = TypedDict("NativeAppsForPathResponse", {
 })
 
 NativeAudioDeviceVolumeRequest = TypedDict("NativeAudioDeviceVolumeRequest", {
+    # non-empty
     "device_uid": str,
 })
 
@@ -3015,6 +3084,7 @@ NativeAutomaticLoginUserResponse = TypedDict("NativeAutomaticLoginUserResponse",
 })
 
 NativeAutomationPermissionRequest = TypedDict("NativeAutomationPermissionRequest", {
+    # non-empty
     "bundle_id": str,
 })
 
@@ -3088,6 +3158,7 @@ NativeAxObserveResponse = TypedDict("NativeAxObserveResponse", {
 })
 
 NativeAxPerformActionRequest = TypedDict("NativeAxPerformActionRequest", {
+    # non-empty
     "action": str,
     "element": "AccessibleRef",
 })
@@ -3103,6 +3174,7 @@ NativeAxReadAttributesRequest = TypedDict("NativeAxReadAttributesRequest", {
 })
 
 NativeAxSetAttributeRequest = TypedDict("NativeAxSetAttributeRequest", {
+    # non-empty
     "attribute": str,
     "element": "AccessibleRef",
     "value": Any,
@@ -3113,6 +3185,7 @@ NativeAxSetAttributeResponse = TypedDict("NativeAxSetAttributeResponse", {
 })
 
 NativeAxUnobserveRequest = TypedDict("NativeAxUnobserveRequest", {
+    # non-empty
     "subscription_id": str,
 })
 
@@ -3169,6 +3242,7 @@ NativeBleDiscoverServicesRequest = TypedDict("NativeBleDiscoverServicesRequest",
     # Identifier for the paired BLE device. Accepts a CoreBluetooth
     # peripheral UUID (e.g. "12345678-...") or a device name to match
     # among connected BLE HID peripherals (e.g. "Shortcut Remote").
+    # non-empty
     "device_identifier": str,
 })
 
@@ -3178,10 +3252,13 @@ NativeBleDiscoverServicesResponse = TypedDict("NativeBleDiscoverServicesResponse
 
 NativeBleSubscribeRequest = TypedDict("NativeBleSubscribeRequest", {
     # GATT characteristic UUID to subscribe to (must support notify).
+    # non-empty
     "characteristic_uuid": str,
     # CoreBluetooth peripheral UUID or device name.
+    # non-empty
     "device_identifier": str,
     # GATT service UUID containing the characteristic.
+    # non-empty
     "service_uuid": str,
 })
 
@@ -3191,6 +3268,7 @@ NativeBleSubscribeResponse = TypedDict("NativeBleSubscribeResponse", {
 
 NativeBleSubscribeAllThenWriteRequest = TypedDict("NativeBleSubscribeAllThenWriteRequest", {
     # CoreBluetooth peripheral UUID or device name.
+    # non-empty
     "device_identifier": str,
     # GATT service UUIDs to subscribe to all notify characteristics on.
     # default []
@@ -3206,14 +3284,17 @@ NativeBleSubscribeAllThenWriteResponse = TypedDict("NativeBleSubscribeAllThenWri
 
 NativeBleWriteRequest = TypedDict("NativeBleWriteRequest", {
     # GATT characteristic UUID (e.g. "FFF1").
+    # non-empty
     "characteristic_uuid": str,
     # Bytes to write to the characteristic.
     # default []
     "data": NotRequired[list[int]],
     # Identifier for the paired BLE device. Accepts a CoreBluetooth
     # peripheral UUID or a device name (see ble_discover_services).
+    # non-empty
     "device_identifier": str,
     # GATT service UUID (e.g. "FFF0").
+    # non-empty
     "service_uuid": str,
     # Write type: "with_response" (default, reliable) or "without_response" (fire-and-forget).
     # default "with_response"
@@ -3269,7 +3350,9 @@ NativeBundleForRemotePortResponse = TypedDict("NativeBundleForRemotePortResponse
 })
 
 NativeCalendarEventsRangeRequest = TypedDict("NativeCalendarEventsRangeRequest", {
+    # non-empty
     "end": str,
+    # non-empty
     "start": str,
 })
 
@@ -3298,6 +3381,7 @@ NativeCapsLockStateResponse = TypedDict("NativeCapsLockStateResponse", {
 })
 
 NativeCaptureWindowRequest = TypedDict("NativeCaptureWindowRequest", {
+    # non-empty
     "window_id": str,
 })
 
@@ -3309,6 +3393,7 @@ NativeCaptureWindowResponse = TypedDict("NativeCaptureWindowResponse", {
 })
 
 NativeCascadeWindowsRequest = TypedDict("NativeCascadeWindowsRequest", {
+    # non-empty
     "bundle_id": str,
 })
 
@@ -3317,10 +3402,12 @@ NativeCascadeWindowsResponse = TypedDict("NativeCascadeWindowsResponse", {
 })
 
 NativeCenterWindowRequest = TypedDict("NativeCenterWindowRequest", {
+    # non-empty
     "window_id": str,
 })
 
 NativeCheckPermissionRequest = TypedDict("NativeCheckPermissionRequest", {
+    # non-empty
     "permission": str,
 })
 
@@ -3330,6 +3417,7 @@ NativeCheckPermissionResponse = TypedDict("NativeCheckPermissionResponse", {
 })
 
 NativeClearFileQuarantineRequest = TypedDict("NativeClearFileQuarantineRequest", {
+    # non-empty
     "path": str,
 })
 
@@ -3338,6 +3426,7 @@ NativeClearFileQuarantineResponse = TypedDict("NativeClearFileQuarantineResponse
 })
 
 NativeClearNotificationsRequest = TypedDict("NativeClearNotificationsRequest", {
+    # non-empty
     "bundle_id": str,
 })
 
@@ -3366,6 +3455,7 @@ NativeClipboardImageDimensionsResponse = TypedDict("NativeClipboardImageDimensio
 })
 
 NativeCloseWindowRequest = TypedDict("NativeCloseWindowRequest", {
+    # non-empty
     "window_id": str,
 })
 
@@ -3401,7 +3491,9 @@ NativeContactsPermissionResponse = TypedDict("NativeContactsPermissionResponse",
 })
 
 NativeCopyFileRequest = TypedDict("NativeCopyFileRequest", {
+    # non-empty
     "destination": str,
+    # non-empty
     "source": str,
 })
 
@@ -3414,6 +3506,7 @@ NativeCpuInfoResponse = TypedDict("NativeCpuInfoResponse", {
 })
 
 NativeCreateDirectoryRequest = TypedDict("NativeCreateDirectoryRequest", {
+    # non-empty
     "path": str,
 })
 
@@ -3510,11 +3603,15 @@ NativeDbusCallRequest = TypedDict("NativeDbusCallRequest", {
     # `session` (the default) or `system` (Properties.Get / GetAll only).
     # default null
     "bus": NotRequired[str],
+    # non-empty
     "interface": str,
+    # non-empty
     "method": str,
     # The object path (`/org/mpris/MediaPlayer2`).
+    # non-empty
     "path": str,
     # The well-known service name (`org.mpris.MediaPlayer2.spotify`).
+    # non-empty
     "service": str,
     # The arguments' D-Bus signature (`su`); empty or absent for none.
     # default null
@@ -3530,6 +3627,7 @@ NativeDbusCallResponse = TypedDict("NativeDbusCallResponse", {
 })
 
 NativeDefaultAppForMimeTypeRequest = TypedDict("NativeDefaultAppForMimeTypeRequest", {
+    # non-empty
     "mime_type": str,
 })
 
@@ -3538,6 +3636,7 @@ NativeDefaultAppForMimeTypeResponse = TypedDict("NativeDefaultAppForMimeTypeResp
 })
 
 NativeDefaultAppForUtiRequest = TypedDict("NativeDefaultAppForUtiRequest", {
+    # non-empty
     "uti": str,
 })
 
@@ -3558,6 +3657,7 @@ NativeDefaultPrinterResponse = TypedDict("NativeDefaultPrinterResponse", {
 })
 
 NativeDeleteFileRequest = TypedDict("NativeDeleteFileRequest", {
+    # non-empty
     "path": str,
 })
 
@@ -3574,6 +3674,7 @@ NativeDetectBarcodesResponse = TypedDict("NativeDetectBarcodesResponse", {
 })
 
 NativeDetectBarcodesFileRequest = TypedDict("NativeDetectBarcodesFileRequest", {
+    # non-empty
     "path": str,
 })
 
@@ -3592,6 +3693,7 @@ NativeDifferentiateWithoutColorResponse = TypedDict("NativeDifferentiateWithoutC
 NativeDirectoryContentsRequest = TypedDict("NativeDirectoryContentsRequest", {
     # default false
     "include_hidden": NotRequired[bool],
+    # non-empty
     "path": str,
 })
 
@@ -3615,6 +3717,7 @@ NativeDiskSpaceResponse = TypedDict("NativeDiskSpaceResponse", {
 })
 
 NativeDiskUsageRequest = TypedDict("NativeDiskUsageRequest", {
+    # non-empty
     "path": str,
 })
 
@@ -3623,6 +3726,7 @@ NativeDiskUsageResponse = TypedDict("NativeDiskUsageResponse", {
 })
 
 NativeDismissNotificationRequest = TypedDict("NativeDismissNotificationRequest", {
+    # non-empty
     "id": str,
 })
 
@@ -3713,6 +3817,7 @@ NativeDwellClickResponse = TypedDict("NativeDwellClickResponse", {
 })
 
 NativeEjectDiskRequest = TypedDict("NativeEjectDiskRequest", {
+    # non-empty
     "mount_point": str,
 })
 
@@ -3725,6 +3830,7 @@ NativeEmptyTrashResponse = TypedDict("NativeEmptyTrashResponse", {
 })
 
 NativeEnvVarRequest = TypedDict("NativeEnvVarRequest", {
+    # non-empty
     "name": str,
 })
 
@@ -3738,6 +3844,7 @@ NativeEpochTimeResponse = TypedDict("NativeEpochTimeResponse", {
 })
 
 NativeExtendedAttributesRequest = TypedDict("NativeExtendedAttributesRequest", {
+    # non-empty
     "path": str,
 })
 
@@ -3758,14 +3865,17 @@ NativeFastUserSwitchingResponse = TypedDict("NativeFastUserSwitchingResponse", {
 })
 
 NativeFileAclRequest = TypedDict("NativeFileAclRequest", {
+    # non-empty
     "path": str,
 })
 
 NativeFileCreationDateRequest = TypedDict("NativeFileCreationDateRequest", {
+    # non-empty
     "path": str,
 })
 
 NativeFileExistsRequest = TypedDict("NativeFileExistsRequest", {
+    # non-empty
     "path": str,
 })
 
@@ -3774,6 +3884,7 @@ NativeFileExistsResponse = TypedDict("NativeFileExistsResponse", {
 })
 
 NativeFileExtendedAttributesRequest = TypedDict("NativeFileExtendedAttributesRequest", {
+    # non-empty
     "path": str,
 })
 
@@ -3784,6 +3895,7 @@ NativeFileExtendedAttributesResponse = TypedDict("NativeFileExtendedAttributesRe
 NativeFileHashRequest = TypedDict("NativeFileHashRequest", {
     # default ""
     "algorithm": NotRequired[str],
+    # non-empty
     "path": str,
 })
 
@@ -3792,6 +3904,7 @@ NativeFileHashResponse = TypedDict("NativeFileHashResponse", {
 })
 
 NativeFileMetadataRequest = TypedDict("NativeFileMetadataRequest", {
+    # non-empty
     "path": str,
 })
 
@@ -3810,14 +3923,17 @@ NativeFileMetadataResponse = TypedDict("NativeFileMetadataResponse", {
 })
 
 NativeFileMimeTypeRequest = TypedDict("NativeFileMimeTypeRequest", {
+    # non-empty
     "path": str,
 })
 
 NativeFileModificationDateRequest = TypedDict("NativeFileModificationDateRequest", {
+    # non-empty
     "path": str,
 })
 
 NativeFileOwnerRequest = TypedDict("NativeFileOwnerRequest", {
+    # non-empty
     "path": str,
 })
 
@@ -3826,6 +3942,7 @@ NativeFileOwnerResponse = TypedDict("NativeFileOwnerResponse", {
 })
 
 NativeFileQuarantineRequest = TypedDict("NativeFileQuarantineRequest", {
+    # non-empty
     "path": str,
 })
 
@@ -3838,16 +3955,19 @@ NativeFileSharingEnabledResponse = TypedDict("NativeFileSharingEnabledResponse",
 })
 
 NativeFileSizeRequest = TypedDict("NativeFileSizeRequest", {
+    # non-empty
     "path": str,
 })
 
 NativeFileTagsRequest = TypedDict("NativeFileTagsRequest", {
+    # non-empty
     "path": str,
     # default null
     "tags": NotRequired[list[str]],
 })
 
 NativeFileTypeRequest = TypedDict("NativeFileTypeRequest", {
+    # non-empty
     "path": str,
 })
 
@@ -3856,6 +3976,7 @@ NativeFileTypeResponse = TypedDict("NativeFileTypeResponse", {
 })
 
 NativeFileUtiRequest = TypedDict("NativeFileUtiRequest", {
+    # non-empty
     "path": str,
 })
 
@@ -3924,6 +4045,7 @@ NativeFontSmoothingResponse = TypedDict("NativeFontSmoothingResponse", {
 })
 
 NativeForceQuitAppRequest = TypedDict("NativeForceQuitAppRequest", {
+    # non-empty
     "bundle_id": str,
 })
 
@@ -3932,7 +4054,9 @@ NativeForceQuitAppResponse = TypedDict("NativeForceQuitAppResponse", {
 })
 
 NativeFormatDateRequest = TypedDict("NativeFormatDateRequest", {
+    # non-empty
     "style": str,
+    # non-empty
     "when": str,
 })
 
@@ -3957,7 +4081,9 @@ NativeGatewayAddressResponse = TypedDict("NativeGatewayAddressResponse", {
 })
 
 NativeGeneratePdfRequest = TypedDict("NativeGeneratePdfRequest", {
+    # non-empty
     "html": str,
+    # non-empty
     "output_path": str,
 })
 
@@ -3966,6 +4092,7 @@ NativeGeneratePdfResponse = TypedDict("NativeGeneratePdfResponse", {
 })
 
 NativeGetWindowInfoRequest = TypedDict("NativeGetWindowInfoRequest", {
+    # non-empty
     "window_id": str,
 })
 
@@ -3986,6 +4113,7 @@ NativeGetWindowInfoResponse = TypedDict("NativeGetWindowInfoResponse", {
 NativeGlobFilesRequest = TypedDict("NativeGlobFilesRequest", {
     # wire uint32 · default 0 · min 0
     "max_results": NotRequired[int],
+    # non-empty
     "pattern": str,
 })
 
@@ -4019,6 +4147,7 @@ NativeHardwareUuidResponse = TypedDict("NativeHardwareUuidResponse", {
 
 NativeHidClaimRequest = TypedDict("NativeHidClaimRequest", {
     # Device ID (e.g. "0x28bd:0x0202:0x48f42695").
+    # non-empty
     "device_id": str,
 })
 
@@ -4032,6 +4161,7 @@ NativeHidDevicesResponse = TypedDict("NativeHidDevicesResponse", {
 
 NativeHidElementsRequest = TypedDict("NativeHidElementsRequest", {
     # Device ID (e.g. "0x28bd:0x0202:0x48f42695").
+    # non-empty
     "device_id": str,
 })
 
@@ -4041,6 +4171,7 @@ NativeHidElementsResponse = TypedDict("NativeHidElementsResponse", {
 
 NativeHidReleaseRequest = TypedDict("NativeHidReleaseRequest", {
     # Device ID (e.g. "0x28bd:0x0202:0x48f42695").
+    # non-empty
     "device_id": str,
 })
 
@@ -4053,11 +4184,13 @@ NativeHidSendReportRequest = TypedDict("NativeHidSendReportRequest", {
     # default []
     "data": NotRequired[list[int]],
     # Device ID (e.g. "0x28bd:0x0202:0x48f42695").
+    # non-empty
     "device_id": str,
     # HID report ID.
     # wire uint32 · min 0
     "report_id": int,
     # Report type: "output" or "feature".
+    # non-empty
     "report_type": str,
 })
 
@@ -4066,6 +4199,7 @@ NativeHidSendReportResponse = TypedDict("NativeHidSendReportResponse", {
 })
 
 NativeHideAppRequest = TypedDict("NativeHideAppRequest", {
+    # non-empty
     "bundle_id": str,
 })
 
@@ -4086,6 +4220,7 @@ NativeHostnameResponse = TypedDict("NativeHostnameResponse", {
 })
 
 NativeHostnameResolveRequest = TypedDict("NativeHostnameResolveRequest", {
+    # non-empty
     "hostname": str,
 })
 
@@ -4130,6 +4265,7 @@ NativeIpv6AddressResponse = TypedDict("NativeIpv6AddressResponse", {
 })
 
 NativeIsAppHiddenRequest = TypedDict("NativeIsAppHiddenRequest", {
+    # non-empty
     "bundle_id": str,
 })
 
@@ -4138,6 +4274,7 @@ NativeIsAppHiddenResponse = TypedDict("NativeIsAppHiddenResponse", {
 })
 
 NativeIsDirectoryRequest = TypedDict("NativeIsDirectoryRequest", {
+    # non-empty
     "path": str,
 })
 
@@ -4146,6 +4283,7 @@ NativeIsDirectoryResponse = TypedDict("NativeIsDirectoryResponse", {
 })
 
 NativeIsFileHiddenRequest = TypedDict("NativeIsFileHiddenRequest", {
+    # non-empty
     "path": str,
 })
 
@@ -4165,10 +4303,12 @@ NativeKeyboardLayoutResponse = TypedDict("NativeKeyboardLayoutResponse", {
 })
 
 NativeKeychainDeleteRequest = TypedDict("NativeKeychainDeleteRequest", {
+    # non-empty
     "account": str,
 })
 
 NativeKeychainReadRequest = TypedDict("NativeKeychainReadRequest", {
+    # non-empty
     "account": str,
 })
 
@@ -4177,7 +4317,9 @@ NativeKeychainReadResponse = TypedDict("NativeKeychainReadResponse", {
 })
 
 NativeKeychainWriteRequest = TypedDict("NativeKeychainWriteRequest", {
+    # non-empty
     "account": str,
+    # non-empty
     "password": str,
 })
 
@@ -4197,6 +4339,7 @@ NativeLastRebootResponse = TypedDict("NativeLastRebootResponse", {
 })
 
 NativeLaunchAppRequest = TypedDict("NativeLaunchAppRequest", {
+    # non-empty
     "bundle_id": str,
     # default false
     "new_instance": NotRequired[bool],
@@ -4267,6 +4410,7 @@ NativeMagnifierEnabledResponse = TypedDict("NativeMagnifierEnabledResponse", {
 })
 
 NativeMaximizeWindowRequest = TypedDict("NativeMaximizeWindowRequest", {
+    # non-empty
     "window_id": str,
 })
 
@@ -4312,6 +4456,7 @@ NativeMicrophonePermissionResponse = TypedDict("NativeMicrophonePermissionRespon
 })
 
 NativeMinimizeWindowRequest = TypedDict("NativeMinimizeWindowRequest", {
+    # non-empty
     "window_id": str,
 })
 
@@ -4341,7 +4486,9 @@ NativeMouseKeysResponse = TypedDict("NativeMouseKeysResponse", {
 })
 
 NativeMoveFileRequest = TypedDict("NativeMoveFileRequest", {
+    # non-empty
     "destination": str,
+    # non-empty
     "source": str,
 })
 
@@ -4352,12 +4499,14 @@ NativeMoveFileResponse = TypedDict("NativeMoveFileResponse", {
 NativeMoveWindowToDisplayRequest = TypedDict("NativeMoveWindowToDisplayRequest", {
     # wire uint32 · min 0
     "display_id": int,
+    # non-empty
     "window_id": str,
 })
 
 NativeMoveWindowToSpaceRequest = TypedDict("NativeMoveWindowToSpaceRequest", {
     # wire uint64 (64-bit) · min 0
     "space_id": int,
+    # non-empty
     "window_id": str,
 })
 
@@ -4390,6 +4539,7 @@ NativeNetworkQualityResponse = TypedDict("NativeNetworkQualityResponse", {
 })
 
 NativeNetworkReachableRequest = TypedDict("NativeNetworkReachableRequest", {
+    # non-empty
     "host": str,
 })
 
@@ -4402,6 +4552,7 @@ NativeNetworkSsidResponse = TypedDict("NativeNetworkSsidResponse", {
 })
 
 NativeNewAppWindowRequest = TypedDict("NativeNewAppWindowRequest", {
+    # non-empty
     "bundle_id": str,
 })
 
@@ -4424,6 +4575,7 @@ NativeNotifyRequest = TypedDict("NativeNotifyRequest", {
     "sound": NotRequired[str],
     # default null
     "subtitle": NotRequired[str],
+    # non-empty
     "title": str,
 })
 
@@ -4453,6 +4605,7 @@ NativeOcrClipboardResponse = TypedDict("NativeOcrClipboardResponse", {
 })
 
 NativeOcrFileRequest = TypedDict("NativeOcrFileRequest", {
+    # non-empty
     "path": str,
 })
 
@@ -4493,10 +4646,12 @@ NativeOnScreenKeyboardEnabledResponse = TypedDict("NativeOnScreenKeyboardEnabled
 })
 
 NativeOpenAppSettingsRequest = TypedDict("NativeOpenAppSettingsRequest", {
+    # non-empty
     "bundle_id": str,
 })
 
 NativeOpenFinderWindowRequest = TypedDict("NativeOpenFinderWindowRequest", {
+    # non-empty
     "path": str,
 })
 
@@ -4506,15 +4661,19 @@ NativeOpenSystemSettingsRequest = TypedDict("NativeOpenSystemSettingsRequest", {
 })
 
 NativeOpenTargetRequest = TypedDict("NativeOpenTargetRequest", {
+    # non-empty
     "target": str,
 })
 
 NativeOpenURLRequest = TypedDict("NativeOpenURLRequest", {
+    # non-empty
     "url": str,
 })
 
 NativeOpenWithAppRequest = TypedDict("NativeOpenWithAppRequest", {
+    # non-empty
     "bundle_id": str,
+    # non-empty
     "target": str,
 })
 
@@ -4525,15 +4684,18 @@ NativeOptimizedChargingResponse = TypedDict("NativeOptimizedChargingResponse", {
 NativePdfExtractTextRequest = TypedDict("NativePdfExtractTextRequest", {
     # wire uint64 (64-bit) · default 0 · min 0
     "page": NotRequired[int],
+    # non-empty
     "path": str,
 })
 
 NativePdfPageCountRequest = TypedDict("NativePdfPageCountRequest", {
+    # non-empty
     "path": str,
 })
 
 NativePinWindowAboveRequest = TypedDict("NativePinWindowAboveRequest", {
     "pinned": bool,
+    # non-empty
     "window_id": str,
 })
 
@@ -4542,6 +4704,7 @@ NativePinchToZoomResponse = TypedDict("NativePinchToZoomResponse", {
 })
 
 NativePingRequest = TypedDict("NativePingRequest", {
+    # non-empty
     "host": str,
 })
 
@@ -4550,6 +4713,7 @@ NativePlayFeedbackWhenVolumeChangedResponse = TypedDict("NativePlayFeedbackWhenV
 })
 
 NativePlaySoundRequest = TypedDict("NativePlaySoundRequest", {
+    # non-empty
     "name": str,
 })
 
@@ -4671,6 +4835,7 @@ NativePublicIPResponse = TypedDict("NativePublicIPResponse", {
 })
 
 NativeQuickLookRequest = TypedDict("NativeQuickLookRequest", {
+    # non-empty
     "path": str,
     # wire uint32 · default 512 · min 0
     "size": NotRequired[int],
@@ -4684,6 +4849,7 @@ NativeQuickLookResponse = TypedDict("NativeQuickLookResponse", {
 })
 
 NativeQuitAppRequest = TypedDict("NativeQuitAppRequest", {
+    # non-empty
     "bundle_id": str,
 })
 
@@ -4692,6 +4858,7 @@ NativeQuitAppResponse = TypedDict("NativeQuitAppResponse", {
 })
 
 NativeRaiseWindowRequest = TypedDict("NativeRaiseWindowRequest", {
+    # non-empty
     "window_id": str,
 })
 
@@ -4700,11 +4867,14 @@ NativeRandomUuidResponse = TypedDict("NativeRandomUuidResponse", {
 })
 
 NativeReadAppPreferenceRequest = TypedDict("NativeReadAppPreferenceRequest", {
+    # non-empty
     "domain": str,
+    # non-empty
     "key": str,
 })
 
 NativeReadFileRequest = TypedDict("NativeReadFileRequest", {
+    # non-empty
     "path": str,
 })
 
@@ -4715,6 +4885,7 @@ NativeReadFileResponse = TypedDict("NativeReadFileResponse", {
 NativeReadFileBinaryRequest = TypedDict("NativeReadFileBinaryRequest", {
     # wire uint64 (64-bit) · default null · min 0
     "max_bytes": NotRequired[int],
+    # non-empty
     "path": str,
 })
 
@@ -4723,10 +4894,12 @@ NativeReadFileBinaryResponse = TypedDict("NativeReadFileBinaryResponse", {
 })
 
 NativeReadPlistRequest = TypedDict("NativeReadPlistRequest", {
+    # non-empty
     "path": str,
 })
 
 NativeRecentDocumentsRequest = TypedDict("NativeRecentDocumentsRequest", {
+    # non-empty
     "bundle_id": str,
 })
 
@@ -4751,7 +4924,9 @@ NativeRemoteLoginEnabledResponse = TypedDict("NativeRemoteLoginEnabledResponse",
 })
 
 NativeRenameFileRequest = TypedDict("NativeRenameFileRequest", {
+    # non-empty
     "new_name": str,
+    # non-empty
     "path": str,
 })
 
@@ -4775,6 +4950,7 @@ NativeResourceUsageResponse = TypedDict("NativeResourceUsageResponse", {
 })
 
 NativeRestartAppRequest = TypedDict("NativeRestartAppRequest", {
+    # non-empty
     "bundle_id": str,
 })
 
@@ -4783,6 +4959,7 @@ NativeRestartAppResponse = TypedDict("NativeRestartAppResponse", {
 })
 
 NativeRevealInFinderRequest = TypedDict("NativeRevealInFinderRequest", {
+    # non-empty
     "path": str,
 })
 
@@ -4792,6 +4969,7 @@ NativeRosettaInstalledResponse = TypedDict("NativeRosettaInstalledResponse", {
 
 NativeRunApplescriptRequest = TypedDict("NativeRunApplescriptRequest", {
     # AppleScript source to execute via `osascript`.
+    # non-empty
     "script": str,
 })
 
@@ -4803,6 +4981,7 @@ NativeRunApplescriptResponse = TypedDict("NativeRunApplescriptResponse", {
 })
 
 NativeRunJxaRequest = TypedDict("NativeRunJxaRequest", {
+    # non-empty
     "script": str,
 })
 
@@ -4813,6 +4992,7 @@ NativeRunJxaResponse = TypedDict("NativeRunJxaResponse", {
 NativeRunShortcutRequest = TypedDict("NativeRunShortcutRequest", {
     # default null
     "input": NotRequired[str],
+    # non-empty
     "name": str,
 })
 
@@ -4897,6 +5077,7 @@ NativeScrollDirectionNaturalResponse = TypedDict("NativeScrollDirectionNaturalRe
 })
 
 NativeSearchContactsRequest = TypedDict("NativeSearchContactsRequest", {
+    # non-empty
     "query": str,
 })
 
@@ -4929,6 +5110,7 @@ NativeSetAirportPowerResponse = TypedDict("NativeSetAirportPowerResponse", {
 })
 
 NativeSetAppHiddenRequest = TypedDict("NativeSetAppHiddenRequest", {
+    # non-empty
     "bundle_id": str,
     "hidden": bool,
 })
@@ -4938,6 +5120,7 @@ NativeSetAppHiddenResponse = TypedDict("NativeSetAppHiddenResponse", {
 })
 
 NativeSetAppMutedRequest = TypedDict("NativeSetAppMutedRequest", {
+    # non-empty
     "app": str,
     "muted": bool,
 })
@@ -4947,6 +5130,7 @@ NativeSetAppMutedResponse = TypedDict("NativeSetAppMutedResponse", {
 })
 
 NativeSetAppVolumeRequest = TypedDict("NativeSetAppVolumeRequest", {
+    # non-empty
     "app": str,
     # wire double
     "volume": float,
@@ -4958,17 +5142,21 @@ NativeSetAppVolumeResponse = TypedDict("NativeSetAppVolumeResponse", {
 
 NativeSetAudioDeviceRequest = TypedDict("NativeSetAudioDeviceRequest", {
     # "input" or "output".
+    # non-empty
     "device_type": str,
+    # non-empty
     "uid": str,
 })
 
 NativeSetAudioDeviceVolumeRequest = TypedDict("NativeSetAudioDeviceVolumeRequest", {
+    # non-empty
     "device_uid": str,
     # wire double
     "volume": float,
 })
 
 NativeSetAudioInputDeviceRequest = TypedDict("NativeSetAudioInputDeviceRequest", {
+    # non-empty
     "name": str,
 })
 
@@ -4977,6 +5165,7 @@ NativeSetAudioInputDeviceResponse = TypedDict("NativeSetAudioInputDeviceResponse
 })
 
 NativeSetAudioOutputDeviceRequest = TypedDict("NativeSetAudioOutputDeviceRequest", {
+    # non-empty
     "name": str,
 })
 
@@ -5040,6 +5229,7 @@ NativeSetDockMagnificationResponse = TypedDict("NativeSetDockMagnificationRespon
 })
 
 NativeSetDockMinimizeEffectRequest = TypedDict("NativeSetDockMinimizeEffectRequest", {
+    # non-empty
     "effect": str,
 })
 
@@ -5048,6 +5238,7 @@ NativeSetDockMinimizeEffectResponse = TypedDict("NativeSetDockMinimizeEffectResp
 })
 
 NativeSetDockPositionRequest = TypedDict("NativeSetDockPositionRequest", {
+    # non-empty
     "position": str,
 })
 
@@ -5081,7 +5272,9 @@ NativeSetDwellClickResponse = TypedDict("NativeSetDwellClickResponse", {
 })
 
 NativeSetExtendedAttributeRequest = TypedDict("NativeSetExtendedAttributeRequest", {
+    # non-empty
     "name": str,
+    # non-empty
     "path": str,
     "value": str,
 })
@@ -5092,6 +5285,7 @@ NativeSetExtendedAttributeResponse = TypedDict("NativeSetExtendedAttributeRespon
 
 NativeSetFileHiddenRequest = TypedDict("NativeSetFileHiddenRequest", {
     "hidden": bool,
+    # non-empty
     "path": str,
 })
 
@@ -5100,7 +5294,9 @@ NativeSetFileHiddenResponse = TypedDict("NativeSetFileHiddenResponse", {
 })
 
 NativeSetFilePermissionsRequest = TypedDict("NativeSetFilePermissionsRequest", {
+    # non-empty
     "mode": str,
+    # non-empty
     "path": str,
 })
 
@@ -5125,6 +5321,7 @@ NativeSetFinderShowHiddenResponse = TypedDict("NativeSetFinderShowHiddenResponse
 })
 
 NativeSetHighlightColorRequest = TypedDict("NativeSetHighlightColorRequest", {
+    # non-empty
     "color": str,
 })
 
@@ -5135,6 +5332,7 @@ NativeSetHighlightColorResponse = TypedDict("NativeSetHighlightColorResponse", {
 NativeSetHotCornerRequest = TypedDict("NativeSetHotCornerRequest", {
     # wire uint32 · min 0
     "action": int,
+    # non-empty
     "corner": str,
 })
 
@@ -5143,6 +5341,7 @@ NativeSetHotCornerResponse = TypedDict("NativeSetHotCornerResponse", {
 })
 
 NativeSetInputSourceRequest = TypedDict("NativeSetInputSourceRequest", {
+    # non-empty
     "source_id": str,
 })
 
@@ -5222,6 +5421,7 @@ NativeSetOnScreenKeyboardEnabledResponse = TypedDict("NativeSetOnScreenKeyboardE
 })
 
 NativeSetPowerModeRequest = TypedDict("NativeSetPowerModeRequest", {
+    # non-empty
     "mode": str,
 })
 
@@ -5238,6 +5438,7 @@ NativeSetScreenReaderEnabledResponse = TypedDict("NativeSetScreenReaderEnabledRe
 })
 
 NativeSetScreenshotFormatRequest = TypedDict("NativeSetScreenshotFormatRequest", {
+    # non-empty
     "format": str,
 })
 
@@ -5254,6 +5455,7 @@ NativeSetScreenshotIncludeShadowResponse = TypedDict("NativeSetScreenshotInclude
 })
 
 NativeSetScreenshotLocationRequest = TypedDict("NativeSetScreenshotLocationRequest", {
+    # non-empty
     "path": str,
 })
 
@@ -5329,7 +5531,9 @@ NativeSetTrackpadSpeedResponse = TypedDict("NativeSetTrackpadSpeedResponse", {
 })
 
 NativeSetURLSchemeHandlerRequest = TypedDict("NativeSetURLSchemeHandlerRequest", {
+    # non-empty
     "bundle_id": str,
+    # non-empty
     "scheme": str,
 })
 
@@ -5351,6 +5555,7 @@ NativeSetVolumeRequest = TypedDict("NativeSetVolumeRequest", {
 })
 
 NativeSetWallpaperRequest = TypedDict("NativeSetWallpaperRequest", {
+    # non-empty
     "path": str,
 })
 
@@ -5361,11 +5566,14 @@ NativeSetWallpaperResponse = TypedDict("NativeSetWallpaperResponse", {
 NativeSetWindowAlphaRequest = TypedDict("NativeSetWindowAlphaRequest", {
     # wire double
     "alpha": float,
+    # non-empty
     "window_id": str,
 })
 
 NativeSetWindowLevelRequest = TypedDict("NativeSetWindowLevelRequest", {
+    # non-empty
     "level": str,
+    # non-empty
     "window_id": str,
 })
 
@@ -5374,6 +5582,7 @@ NativeSetWindowLevelResponse = TypedDict("NativeSetWindowLevelResponse", {
 })
 
 NativeSetWindowPositionRequest = TypedDict("NativeSetWindowPositionRequest", {
+    # non-empty
     "window_id": str,
     # wire int32
     "x": int,
@@ -5383,6 +5592,7 @@ NativeSetWindowPositionRequest = TypedDict("NativeSetWindowPositionRequest", {
 
 NativeSetWindowShadowRequest = TypedDict("NativeSetWindowShadowRequest", {
     "enabled": bool,
+    # non-empty
     "window_id": str,
 })
 
@@ -5391,11 +5601,13 @@ NativeSetWindowSizeRequest = TypedDict("NativeSetWindowSizeRequest", {
     "h": int,
     # wire int32
     "w": int,
+    # non-empty
     "window_id": str,
 })
 
 NativeSetWindowStickyRequest = TypedDict("NativeSetWindowStickyRequest", {
     "sticky": bool,
+    # non-empty
     "window_id": str,
 })
 
@@ -5438,6 +5650,7 @@ NativeSpacesSpanDisplaysResponse = TypedDict("NativeSpacesSpanDisplaysResponse",
 NativeSpeakRequest = TypedDict("NativeSpeakRequest", {
     # wire double · default null
     "rate": NotRequired[float],
+    # non-empty
     "text": str,
     # default null
     "voice": NotRequired[str],
@@ -5454,6 +5667,7 @@ NativeSpeechRecognitionAvailableResponse = TypedDict("NativeSpeechRecognitionAva
 NativeSpeechRecognizeFileRequest = TypedDict("NativeSpeechRecognizeFileRequest", {
     # default ""
     "locale": NotRequired[str],
+    # non-empty
     "path": str,
 })
 
@@ -5464,6 +5678,7 @@ NativeSpellingLanguageResponse = TypedDict("NativeSpellingLanguageResponse", {
 NativeSpotlightRequest = TypedDict("NativeSpotlightRequest", {
     # wire uint32 · default 20 · min 0
     "limit": NotRequired[int],
+    # non-empty
     "query": str,
     # default null
     "scope": NotRequired[list[str]],
@@ -5507,7 +5722,9 @@ NativeSwitchSpaceWhenSwitchingAppResponse = TypedDict("NativeSwitchSpaceWhenSwit
 })
 
 NativeSymlinkRequest = TypedDict("NativeSymlinkRequest", {
+    # non-empty
     "link": str,
+    # non-empty
     "source": str,
 })
 
@@ -5633,6 +5850,7 @@ NativeToggleBluetoothResponse = TypedDict("NativeToggleBluetoothResponse", {
 })
 
 NativeToggleFullscreenRequest = TypedDict("NativeToggleFullscreenRequest", {
+    # non-empty
     "window_id": str,
 })
 
@@ -5649,10 +5867,12 @@ NativeTouchIDAvailableResponse = TypedDict("NativeTouchIDAvailableResponse", {
 })
 
 NativeTransparencyConsentRequest = TypedDict("NativeTransparencyConsentRequest", {
+    # non-empty
     "service": str,
 })
 
 NativeTrashRequest = TypedDict("NativeTrashRequest", {
+    # non-empty
     "path": str,
 })
 
@@ -5673,14 +5893,17 @@ NativeTwentyFourHourClockResponse = TypedDict("NativeTwentyFourHourClockResponse
 })
 
 NativeUnhideAppRequest = TypedDict("NativeUnhideAppRequest", {
+    # non-empty
     "bundle_id": str,
 })
 
 NativeUnminimizeWindowRequest = TypedDict("NativeUnminimizeWindowRequest", {
+    # non-empty
     "window_id": str,
 })
 
 NativeUnobserveWindowsRequest = TypedDict("NativeUnobserveWindowsRequest", {
+    # non-empty
     "subscription_id": str,
 })
 
@@ -5689,7 +5912,9 @@ NativeUnobserveWindowsResponse = TypedDict("NativeUnobserveWindowsResponse", {
 })
 
 NativeUnzipRequest = TypedDict("NativeUnzipRequest", {
+    # non-empty
     "destination": str,
+    # non-empty
     "source": str,
 })
 
@@ -5698,6 +5923,7 @@ NativeUnzipResponse = TypedDict("NativeUnzipResponse", {
 })
 
 NativeURLSchemeHandlerRequest = TypedDict("NativeURLSchemeHandlerRequest", {
+    # non-empty
     "scheme": str,
 })
 
@@ -5761,10 +5987,12 @@ NativeWifiNetworksResponse = TypedDict("NativeWifiNetworksResponse", {
 })
 
 NativeWindowAppRequest = TypedDict("NativeWindowAppRequest", {
+    # non-empty
     "window_id": str,
 })
 
 NativeWindowBoundsRequest = TypedDict("NativeWindowBoundsRequest", {
+    # non-empty
     "window_id": str,
 })
 
@@ -5780,18 +6008,22 @@ NativeWindowBoundsResponse = TypedDict("NativeWindowBoundsResponse", {
 })
 
 NativeWindowDisplayIDRequest = TypedDict("NativeWindowDisplayIDRequest", {
+    # non-empty
     "window_id": str,
 })
 
 NativeWindowIsFullscreenRequest = TypedDict("NativeWindowIsFullscreenRequest", {
+    # non-empty
     "window_id": str,
 })
 
 NativeWindowIsMinimizedRequest = TypedDict("NativeWindowIsMinimizedRequest", {
+    # non-empty
     "window_id": str,
 })
 
 NativeWindowLayerRequest = TypedDict("NativeWindowLayerRequest", {
+    # non-empty
     "window_id": str,
 })
 
@@ -5801,15 +6033,18 @@ NativeWindowScreenshotRequest = TypedDict("NativeWindowScreenshotRequest", {
 })
 
 NativeWindowSubroleRequest = TypedDict("NativeWindowSubroleRequest", {
+    # non-empty
     "window_id": str,
 })
 
 NativeWindowTitleRequest = TypedDict("NativeWindowTitleRequest", {
+    # non-empty
     "window_id": str,
 })
 
 NativeWmiQueryRequest = TypedDict("NativeWmiQueryRequest", {
     # The class (`Win32_Battery`).
+    # non-empty
     "class": str,
     # Instances to return at most, 1 to 1000 (default 200); more sets
     # `truncated`.
@@ -5851,7 +6086,9 @@ NativeWorldModelRequest = TypedDict("NativeWorldModelRequest", {
 })
 
 NativeWriteAppPreferenceRequest = TypedDict("NativeWriteAppPreferenceRequest", {
+    # non-empty
     "domain": str,
+    # non-empty
     "key": str,
     "value": Any,
 })
@@ -5862,6 +6099,7 @@ NativeWriteAppPreferenceResponse = TypedDict("NativeWriteAppPreferenceResponse",
 
 NativeWriteFileRequest = TypedDict("NativeWriteFileRequest", {
     "contents": str,
+    # non-empty
     "path": str,
 })
 
@@ -5878,7 +6116,9 @@ NativeXcodeVersionResponse = TypedDict("NativeXcodeVersionResponse", {
 })
 
 NativeZipRequest = TypedDict("NativeZipRequest", {
+    # non-empty
     "destination": str,
+    # non-empty
     "source": str,
 })
 
@@ -5888,6 +6128,7 @@ NativeZipResponse = TypedDict("NativeZipResponse", {
 
 NetworkRequestHostRequest = TypedDict("NetworkRequestHostRequest", {
     # One exact host (no wildcard, no port, no path).
+    # non-empty
     "host": str,
     # Shown to the user beside the switch — why the plugin wants it.
     # default ""
@@ -5903,6 +6144,7 @@ NetworkRequestHostResponse = TypedDict("NetworkRequestHostResponse", {
 OutputClearRequest = TypedDict("OutputClearRequest", {
     # The channel on which nothing is true now. Must be owned by the
     # calling plugin.
+    # non-empty
     "channel": str,
 })
 
@@ -5933,6 +6175,7 @@ OutputStateResponse = TypedDict("OutputStateResponse", {
 
 OverlayClearRequest = TypedDict("OverlayClearRequest", {
     # The overlay to remove; nothing happens if it is not showing.
+    # non-empty
     "id": str,
 })
 
@@ -5944,6 +6187,7 @@ OverlayShowRequest = TypedDict("OverlayShowRequest", {
     # The caller's name for this overlay (letters, digits, `_`, `-`, `.`;
     # up to 64). Showing it again replaces its shapes. Overlays are kept
     # per caller, so one plugin cannot replace or clear another's.
+    # non-empty
     "id": str,
     # Up to 64 shapes: outlines, fills, circles and a countdown ring. No
     # text or images: nothing drawn can pass for a prompt. An empty list
@@ -5958,8 +6202,10 @@ OverlayShowResponse = TypedDict("OverlayShowResponse", {
 OverridesApplyRequest = TypedDict("OverridesApplyRequest", {
     # Action: "add", "remove", "restore", "reset", "patch", "rename", or
     # "revert".
+    # non-empty
     "action": str,
     # Collection name to override.
+    # non-empty
     "collection": str,
     # Field key for the "unpatch" action — removes ONE field from the
     # tenant's patch of `id` (the per-field inverse of "patch"; the patch
@@ -6027,13 +6273,16 @@ PipelinesInjectRequest = TypedDict("PipelinesInjectRequest", {
     # (`audio_*`, `transcript`, `vocabulary_update`) are the platform's to
     # send; a plugin forging one into its own pipeline was previously
     # unchecked here.
+    # non-empty
     "event_type": str,
     # Pipeline to configure. The caller must have introduced it.
+    # non-empty
     "name": str,
     # Stage within that pipeline, spelled as the pipeline definition spells
     # it — a role like `_platform.stt` or a qualified stage name. Required:
     # before per-stage channels existed this operation could only ever reach
     # the terminal stage, and silently did nothing for any other.
+    # non-empty
     "stage": str,
 })
 
@@ -6044,6 +6293,7 @@ PipelinesInjectResponse = TypedDict("PipelinesInjectResponse", {
 PipelinesRunRequest = TypedDict("PipelinesRunRequest", {
     # default false
     "ephemeral": NotRequired[bool],
+    # non-empty
     "name": str,
     # default {}
     "param_overrides": NotRequired[dict[str, Any]],
@@ -6067,6 +6317,7 @@ PipelinesStopRequest = TypedDict("PipelinesStopRequest", {
     # Absent = process everything.
     # wire uint64 (64-bit) · default null · min 0
     "audio_cutoff_ms": NotRequired[int],
+    # non-empty
     "name": str,
 })
 
@@ -6075,6 +6326,7 @@ PipelinesStopResponse = TypedDict("PipelinesStopResponse", {
 })
 
 PipelinesWarmRequest = TypedDict("PipelinesWarmRequest", {
+    # non-empty
     "name": str,
     # Per-stage param overrides applied to the warmed consumer stages, mirroring
     # `pipelines.run`. Lets a caller prewarm the model it will actually run (e.g.
@@ -6110,6 +6362,7 @@ PluginDataExportRequest = TypedDict("PluginDataExportRequest", {
     # default null
     "filename": NotRequired[str],
     # Path of the file to export, relative to the caller's data dir.
+    # non-empty
     "path": str,
 })
 
@@ -6162,6 +6415,7 @@ PluginReportHealthRequest = TypedDict("PluginReportHealthRequest", {
 })
 
 PrivacyGetRecordingRequest = TypedDict("PrivacyGetRecordingRequest", {
+    # non-empty
     "name": str,
 })
 
@@ -6173,6 +6427,7 @@ PrivacyGetRecordingResponse = TypedDict("PrivacyGetRecordingResponse", {
 
 PrivacySetRecordingRequest = TypedDict("PrivacySetRecordingRequest", {
     "enabled": bool,
+    # non-empty
     "name": str,
 })
 
@@ -6184,6 +6439,7 @@ PrivilegesListResponse = TypedDict("PrivilegesListResponse", {
 PrivilegesRelinquishRequest = TypedDict("PrivilegesRelinquishRequest", {
     # Privilege name — must appear in the calling plugin's
     # `optional_privileges`.
+    # non-empty
     "privilege": str,
 })
 
@@ -6197,6 +6453,7 @@ PrivilegesRelinquishResponse = TypedDict("PrivilegesRelinquishResponse", {
 PrivilegesRequestRequest = TypedDict("PrivilegesRequestRequest", {
     # Privilege name — must appear in the calling plugin's
     # `optional_privileges`.
+    # non-empty
     "privilege": str,
     # Short attributed reason shown to the user next to the Approve
     # button (e.g. "script 'headphones' uses query:power"). Untrusted
@@ -6261,9 +6518,11 @@ RecognitionRedecodeRequest = TypedDict("RecognitionRedecodeRequest", {
     "max_active": NotRequired[int],
     # Model dir name under app-support `models/` (single component, no
     # traversal), e.g. `"sherpa-offline-nemo"`.
+    # non-empty
     "model": str,
     # Registered stage id whose binary's `probe` subcommand runs the re-decode,
     # e.g. `"voice.sherpa_commands"`. Validated against the stage registry.
+    # non-empty
     "stage": str,
 })
 
@@ -6277,6 +6536,7 @@ RecognitionRedecodeResponse = TypedDict("RecognitionRedecodeResponse", {
 })
 
 SecretsDeleteRequest = TypedDict("SecretsDeleteRequest", {
+    # non-empty
     "name": str,
 })
 
@@ -6288,6 +6548,7 @@ SecretsDeleteResponse = TypedDict("SecretsDeleteResponse", {
 })
 
 SecretsIsSetRequest = TypedDict("SecretsIsSetRequest", {
+    # non-empty
     "name": str,
 })
 
@@ -6310,12 +6571,14 @@ SecretsListResponse = TypedDict("SecretsListResponse", {
 SecretsRequestSlotRequest = TypedDict("SecretsRequestSlotRequest", {
     # The ONE host the value may be sent to — one this plugin may already
     # reach (declared, or requested with `network.request_host`).
+    # non-empty
     "host": str,
     # What the user sees on the row, e.g. "Weather script — API key".
     # default ""
     "label": NotRequired[str],
     # The secret's name in this plugin's drawer (ASCII letters, digits,
     # `_`, `-`, `.`).
+    # non-empty
     "name": str,
 })
 
@@ -6341,8 +6604,10 @@ SecretsSetRequest = TypedDict("SecretsSetRequest", {
     "host": NotRequired[str],
     # The secret's name within this plugin. What a manifest or a script
     # header refers to.
+    # non-empty
     "name": str,
     # The value. This is the only direction a value travels over the wire.
+    # non-empty
     "value": str,
 })
 
@@ -6399,10 +6664,12 @@ SessionEndCleanupResponse = TypedDict("SessionEndCleanupResponse", {
 SettingsPatchSignalsRequest = TypedDict("SettingsPatchSignalsRequest", {
     # Datastar signal expression, e.g. `{activeGroup: 2, activeDialModeIndex: 1}`.
     # Sent as a `datastar-patch-signals` SSE event to all active settings streams.
+    # non-empty
     "signals": str,
 })
 
 SettingsRedirectRequest = TypedDict("SettingsRedirectRequest", {
+    # non-empty
     "tab": str,
 })
 
@@ -6456,6 +6723,7 @@ SettingsRulesCreateResponse = TypedDict("SettingsRulesCreateResponse", {
 SettingsRulesUpdateRequest = TypedDict("SettingsRulesUpdateRequest", {
     # Existing canonical command id (the previous canonical phrase) of
     # the rule being updated. Required.
+    # non-empty
     "canonical": str,
     # Check the candidate and report any conflict without saving it or
     # removing the command it would replace.
@@ -6489,6 +6757,7 @@ SettingsRulesUpdateResponse = TypedDict("SettingsRulesUpdateResponse", {
 })
 
 SpeechAnnounceRequest = TypedDict("SpeechAnnounceRequest", {
+    # non-empty
     "text": str,
 })
 
@@ -6498,11 +6767,13 @@ SpeechSayRequest = TypedDict("SpeechSayRequest", {
     # default null
     "priority": NotRequired[str],
     # The words. Plain language, no markup; the system voice reads it as is.
+    # non-empty
     "text": str,
 })
 
 SystemLaunchAppRequest = TypedDict("SystemLaunchAppRequest", {
     # Bundle ID of the application to launch (e.g. "com.apple.Safari").
+    # non-empty
     "bundle_id": str,
     # Whether to launch a fresh instance even if the app is already running.
     # default false
@@ -6519,11 +6790,13 @@ SystemNotifyRequest = TypedDict("SystemNotifyRequest", {
     # wire uint32 · default null · min 0
     "duration_secs": NotRequired[int],
     # Notification title (rendered as `<h1 id="title">`).
+    # non-empty
     "title": str,
 })
 
 SystemRunShellRequest = TypedDict("SystemRunShellRequest", {
     # Shell command to execute via `/bin/bash -c`.
+    # non-empty
     "command": str,
 })
 
@@ -6532,6 +6805,7 @@ TrialBeginResponse = TypedDict("TrialBeginResponse", {
 })
 
 TrialEndRequest = TypedDict("TrialEndRequest", {
+    # non-empty
     "trial_id": str,
 })
 
@@ -6544,7 +6818,9 @@ TrialEndResponse = TypedDict("TrialEndResponse", {
 
 TrialEnterContextRequest = TypedDict("TrialEnterContextRequest", {
     # Command id from `commands.enumerate` — `<owner_plugin>:<pattern>`.
+    # non-empty
     "command_id": str,
+    # non-empty
     "trial_id": str,
 })
 
@@ -6566,13 +6842,17 @@ TrialEnterContextResponse = TypedDict("TrialEnterContextResponse", {
 })
 
 TrialRegisterFixtureRequest = TypedDict("TrialRegisterFixtureRequest", {
+    # non-empty
     "fixture_handle": str,
+    # non-empty
     "owner_plugin_id": str,
+    # non-empty
     "trial_id": str,
 })
 
 TrialResolveSamplesRequest = TypedDict("TrialResolveSamplesRequest", {
     # Command id from `commands.enumerate` — `<owner_plugin>:<pattern>`.
+    # non-empty
     "command_id": str,
 })
 
