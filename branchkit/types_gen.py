@@ -3617,6 +3617,10 @@ NativeDownloadsDirectoryResponse = TypedDict("NativeDownloadsDirectoryResponse",
     "path": str,
 })
 
+NativeDwellClickResponse = TypedDict("NativeDwellClickResponse", {
+    "enabled": bool,
+})
+
 NativeEjectDiskRequest = TypedDict("NativeEjectDiskRequest", {
     "mount_point": str,
 })
@@ -4990,6 +4994,14 @@ NativeSetDockSizeRequest = TypedDict("NativeSetDockSizeRequest", {
 })
 
 NativeSetDockSizeResponse = TypedDict("NativeSetDockSizeResponse", {
+    "ok": bool,
+})
+
+NativeSetDwellClickRequest = TypedDict("NativeSetDwellClickRequest", {
+    "enabled": bool,
+})
+
+NativeSetDwellClickResponse = TypedDict("NativeSetDwellClickResponse", {
     "ok": bool,
 })
 

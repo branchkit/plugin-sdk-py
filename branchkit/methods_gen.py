@@ -212,6 +212,7 @@ from .contracts_gen import (
     METHOD_NATIVE_DOCK_SIZE,
     METHOD_NATIVE_DOCUMENTS_DIRECTORY,
     METHOD_NATIVE_DOWNLOADS_DIRECTORY,
+    METHOD_NATIVE_DWELL_CLICK,
     METHOD_NATIVE_EJECT_DISK,
     METHOD_NATIVE_EMPTY_TRASH,
     METHOD_NATIVE_ENV_VAR,
@@ -469,6 +470,7 @@ from .contracts_gen import (
     METHOD_NATIVE_SET_DOCK_POSITION,
     METHOD_NATIVE_SET_DOCK_SHOW_RECENTS,
     METHOD_NATIVE_SET_DOCK_SIZE,
+    METHOD_NATIVE_SET_DWELL_CLICK,
     METHOD_NATIVE_SET_EXTENDED_ATTRIBUTE,
     METHOD_NATIVE_SET_FILE_HIDDEN,
     METHOD_NATIVE_SET_FILE_PERMISSIONS,
@@ -801,6 +803,7 @@ if TYPE_CHECKING:
         NativeDockShowRecentsResponse,
         NativeDocumentsDirectoryResponse,
         NativeDownloadsDirectoryResponse,
+        NativeDwellClickResponse,
         NativeEnvVarResponse,
         NativeEpochTimeResponse,
         NativeFanSpeedsResponse,
@@ -3069,6 +3072,11 @@ class MethodsMixin:
         result = await self.call(METHOD_NATIVE_DOWNLOADS_DIRECTORY)
         return result
 
+    async def native_dwell_click(self) -> NativeDwellClickResponse:
+        """Check if the system's dwell click is on (holding the pointer still clicks). Exists only on macOS and Linux; elsewhere it is refused with platform_no_analogue"""
+        result = await self.call(METHOD_NATIVE_DWELL_CLICK)
+        return result
+
     async def native_eject_disk(self, *, mount_point: str) -> bool:
         """Eject a mounted volume by path"""
         params: dict[str, Any] = {
@@ -4834,6 +4842,14 @@ class MethodsMixin:
             "size": size,
         }
         result = await self.call(METHOD_NATIVE_SET_DOCK_SIZE, params)
+        return bool((result or {}).get("ok", False))
+
+    async def native_set_dwell_click(self, *, enabled: bool) -> bool:
+        """Turn the system's dwell click on or off (holding the pointer still clicks). Exists only on macOS and Linux; elsewhere it is refused with platform_no_analogue"""
+        params: dict[str, Any] = {
+            "enabled": enabled,
+        }
+        result = await self.call(METHOD_NATIVE_SET_DWELL_CLICK, params)
         return bool((result or {}).get("ok", False))
 
     async def native_set_extended_attribute(self, *, name: str, path: str, value: str) -> bool:
