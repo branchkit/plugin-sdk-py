@@ -4489,7 +4489,7 @@ class MethodsMixin:
         await self.call(METHOD_NATIVE_OPEN_TARGET, params)
 
     async def native_open_url(self, *, url: str) -> None:
-        """Open a URL in the default handler
+        """Open a web (http, https) or email (mailto) link in its default handler; any other scheme is refused
 
         url: non-empty
         """
