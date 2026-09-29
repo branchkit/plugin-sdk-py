@@ -3338,7 +3338,7 @@ class MethodsMixin:
         return result
 
     async def native_focus_modes(self) -> NativeFocusModesResponse:
-        """Get configured Focus modes as the raw `com.apple.ncprefs` preference value — macOS plist text, NOT JSON"""
+        """Get configured Focus modes as the raw `com.apple.ncprefs` preference value — macOS plist text, NOT JSON. Exists only on macOS; elsewhere it is refused with platform_no_analogue"""
         result = await self.call(METHOD_NATIVE_FOCUS_MODES)
         return result
 
@@ -4656,7 +4656,7 @@ class MethodsMixin:
         return (result or {}).get("contacts") or []
 
     async def native_secure_input_enabled(self) -> NativeSecureInputEnabledResponse:
-        """Check if Secure Input is currently enabled (blocks key events)"""
+        """Check if Secure Input is currently enabled (blocks key events). Exists only on macOS; elsewhere it is refused with platform_no_analogue"""
         result = await self.call(METHOD_NATIVE_SECURE_INPUT_ENABLED)
         return result
 
@@ -5324,7 +5324,7 @@ class MethodsMixin:
         return result
 
     async def native_spelling_language(self) -> NativeSpellingLanguageResponse:
-        """Get current spelling language"""
+        """Get current spelling language. Exists only on macOS; elsewhere it is refused with platform_no_analogue"""
         result = await self.call(METHOD_NATIVE_SPELLING_LANGUAGE)
         return result
 
