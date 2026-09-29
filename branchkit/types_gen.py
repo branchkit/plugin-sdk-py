@@ -3446,10 +3446,6 @@ NativeCursorInfoResponse = TypedDict("NativeCursorInfoResponse", {
     "y": int,
 })
 
-NativeCursorShakeToLocateResponse = TypedDict("NativeCursorShakeToLocateResponse", {
-    "enabled": bool,
-})
-
 NativeDarkModeResponse = TypedDict("NativeDarkModeResponse", {
     "is_dark": bool,
 })
@@ -4221,6 +4217,10 @@ NativeLocalIPResponse = TypedDict("NativeLocalIPResponse", {
 
 NativeLocaleResponse = TypedDict("NativeLocaleResponse", {
     "locale": str,
+})
+
+NativeLocatePointerEnabledResponse = TypedDict("NativeLocatePointerEnabledResponse", {
+    "enabled": bool,
 })
 
 NativeLocationEnabledResponse = TypedDict("NativeLocationEnabledResponse", {

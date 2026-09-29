@@ -173,7 +173,6 @@ from .contracts_gen import (
     METHOD_NATIVE_CURRENT_WALLPAPER,
     METHOD_NATIVE_CURSOR,
     METHOD_NATIVE_CURSOR_INFO,
-    METHOD_NATIVE_CURSOR_SHAKE_TO_LOCATE,
     METHOD_NATIVE_DARK_MODE,
     METHOD_NATIVE_DATE_FORMAT,
     METHOD_NATIVE_DBUS_CALL,
@@ -314,6 +313,7 @@ from .contracts_gen import (
     METHOD_NATIVE_LIVE_TEXT_ENABLED,
     METHOD_NATIVE_LOCALE,
     METHOD_NATIVE_LOCAL_IP,
+    METHOD_NATIVE_LOCATE_POINTER_ENABLED,
     METHOD_NATIVE_LOCATION_ENABLED,
     METHOD_NATIVE_LOGGED_IN_USERS,
     METHOD_NATIVE_LOGIN_ITEMS,
@@ -781,7 +781,6 @@ if TYPE_CHECKING:
         NativeCurrentWallpaperResponse,
         NativeCursorInfoResponse,
         NativeCursorResponse,
-        NativeCursorShakeToLocateResponse,
         NativeDarkModeResponse,
         NativeDateFormatResponse,
         NativeDbusCallResponse,
@@ -870,6 +869,7 @@ if TYPE_CHECKING:
         NativeLiveTextEnabledResponse,
         NativeLocalIPResponse,
         NativeLocaleResponse,
+        NativeLocatePointerEnabledResponse,
         NativeLocationEnabledResponse,
         NativeLowPowerModeResponse,
         NativeMacAddressResponse,
@@ -2814,11 +2814,6 @@ class MethodsMixin:
         result = await self.call(METHOD_NATIVE_CURSOR_INFO)
         return result
 
-    async def native_cursor_shake_to_locate(self) -> NativeCursorShakeToLocateResponse:
-        """Check if shake mouse to locate cursor is enabled"""
-        result = await self.call(METHOD_NATIVE_CURSOR_SHAKE_TO_LOCATE)
-        return result
-
     async def native_dark_mode(self) -> NativeDarkModeResponse:
         """Check if dark mode is active"""
         result = await self.call(METHOD_NATIVE_DARK_MODE)
@@ -3743,6 +3738,11 @@ class MethodsMixin:
     async def native_locale(self) -> NativeLocaleResponse:
         """Get current system locale identifier"""
         result = await self.call(METHOD_NATIVE_LOCALE)
+        return result
+
+    async def native_locate_pointer_enabled(self) -> NativeLocatePointerEnabledResponse:
+        """Check if the system shows where the pointer is on request: shaking it on macOS, pressing Ctrl on GNOME and Windows"""
+        result = await self.call(METHOD_NATIVE_LOCATE_POINTER_ENABLED)
         return result
 
     async def native_location_enabled(self) -> NativeLocationEnabledResponse:
