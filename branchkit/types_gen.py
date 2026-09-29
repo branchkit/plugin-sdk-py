@@ -772,6 +772,19 @@ ExternalDisk = TypedDict("ExternalDisk", {
     "total_bytes": int,
 })
 
+# One fan (`native.fan_speeds`).
+FanSpeed = TypedDict("FanSpeed", {
+    # The fan's label where the hardware gives one, else its position
+    # (`Fan 1`).
+    "label": str,
+    # wire uint32 · min 0
+    "max_rpm": NotRequired[int],
+    # wire uint32 · min 0
+    "min_rpm": NotRequired[int],
+    # wire uint32 · min 0
+    "rpm": int,
+})
+
 # Where a field appears in generic UI rendering. Each field on a
 # collection declares at most one role; surfaces (discovery HUD,
 # settings UI, etc.) interpret roles on their own terms.
@@ -806,6 +819,20 @@ Frame = TypedDict("Frame", {
     "x": int,
     # wire int32
     "y": int,
+})
+
+# A graphics processor (`native.gpu_info`).
+GpuInfo = TypedDict("GpuInfo", {
+    # The driver the OS bound to it (`amdgpu`, `i915`), where it names one.
+    "driver": NotRequired[str],
+    # As the OS names it (`Apple M4`, `NVIDIA GeForce RTX 4070`).
+    "name": str,
+    # The maker (`Apple`, `NVIDIA`, `AMD`, `Intel`), when known.
+    "vendor": NotRequired[str],
+    # Memory of its own, in bytes. None when it shares system memory or
+    # the OS does not say.
+    # wire uint64 (64-bit) · min 0
+    "vram_bytes": NotRequired[int],
 })
 
 HUDItem = TypedDict("HUDItem", {
@@ -1617,6 +1644,18 @@ SystemAppearance = TypedDict("SystemAppearance", {
     "increase_contrast": bool,
     "reduce_motion": bool,
     "reduce_transparency": bool,
+})
+
+# A device connected over Thunderbolt or USB4 (`native.thunderbolt_devices`).
+ThunderboltDevice = TypedDict("ThunderboltDevice", {
+    # Whether the OS has let the device's PCIe tunnels through. Linux asks
+    # (the `authorized` attribute); macOS authorizes devices itself, so
+    # there it is none.
+    "authorized": NotRequired[bool],
+    # The device's unique id (its switch UID), stable across connections.
+    "id": NotRequired[str],
+    "name": str,
+    "vendor": NotRequired[str],
 })
 
 # One entry in `ResolveResult.tied_candidates` — the dispatchable subset of a
@@ -3857,7 +3896,7 @@ NativeExternalDisplayNamesResponse = TypedDict("NativeExternalDisplayNamesRespon
 })
 
 NativeFanSpeedsResponse = TypedDict("NativeFanSpeedsResponse", {
-    "value": str,
+    "fans": list["FanSpeed"],
 })
 
 NativeFastUserSwitchingResponse = TypedDict("NativeFastUserSwitchingResponse", {
@@ -4118,7 +4157,7 @@ NativeGlobFilesResponse = TypedDict("NativeGlobFilesResponse", {
 })
 
 NativeGpuInfoResponse = TypedDict("NativeGpuInfoResponse", {
-    "info": str,
+    "gpus": list["GpuInfo"],
 })
 
 NativeGrayscaleEnabledResponse = TypedDict("NativeGrayscaleEnabledResponse", {
@@ -5782,7 +5821,7 @@ NativeThreeFingerDragResponse = TypedDict("NativeThreeFingerDragResponse", {
 })
 
 NativeThunderboltDevicesResponse = TypedDict("NativeThunderboltDevicesResponse", {
-    "value": str,
+    "devices": list["ThunderboltDevice"],
 })
 
 NativeTimeFormatResponse = TypedDict("NativeTimeFormatResponse", {

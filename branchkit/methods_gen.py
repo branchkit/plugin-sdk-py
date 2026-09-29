@@ -700,7 +700,9 @@ if TYPE_CHECKING:
         EffectsRetractResponse,
         EnumeratedCommand,
         ExternalDisk,
+        FanSpeed,
         FieldDisplay,
+        GpuInfo,
         HUDItem,
         HUDRemoveChannelResponse,
         HidDeviceEntry,
@@ -803,7 +805,6 @@ if TYPE_CHECKING:
         NativeDwellClickResponse,
         NativeEnvVarResponse,
         NativeEpochTimeResponse,
-        NativeFanSpeedsResponse,
         NativeFastUserSwitchingResponse,
         NativeFileExistsResponse,
         NativeFileHashResponse,
@@ -832,7 +833,6 @@ if TYPE_CHECKING:
         NativeFunctionKeysStandardResponse,
         NativeGatewayAddressResponse,
         NativeGetWindowInfoResponse,
-        NativeGpuInfoResponse,
         NativeGrayscaleEnabledResponse,
         NativeGroupWindowsByAppResponse,
         NativeHandoffEnabledResponse,
@@ -965,7 +965,6 @@ if TYPE_CHECKING:
         NativeTextReplacementsResponse,
         NativeThermalStateResponse,
         NativeThreeFingerDragResponse,
-        NativeThunderboltDevicesResponse,
         NativeTimeFormatResponse,
         NativeTimeMachineLastBackupResponse,
         NativeTimeMachineStatusResponse,
@@ -1035,6 +1034,7 @@ if TYPE_CHECKING:
         SpaceInfo,
         SpeechLocale,
         SpotlightResult,
+        ThunderboltDevice,
         TileableEntry,
         TrialBeginResponse,
         TrialEndResponse,
@@ -3346,10 +3346,10 @@ class MethodsMixin:
         result = await self.call(METHOD_NATIVE_EXTERNAL_DISPLAY_NAMES)
         return (result or {}).get("names") or []
 
-    async def native_fan_speeds(self) -> NativeFanSpeedsResponse:
-        """Get raw SMC fan lines as reported by powermetrics or ioreg — free-form text, NOT JSON, and unavailable unless a fan source can be read"""
+    async def native_fan_speeds(self) -> list[FanSpeed]:
+        """The machine's fans and their speeds in RPM, with each fan's minimum and maximum where the OS reports them. Empty on a machine without fans"""
         result = await self.call(METHOD_NATIVE_FAN_SPEEDS)
-        return result
+        return (result or {}).get("fans") or []
 
     async def native_fast_user_switching(self) -> NativeFastUserSwitchingResponse:
         """Check if fast user switching is enabled"""
@@ -3683,10 +3683,10 @@ class MethodsMixin:
         result = await self.call(METHOD_NATIVE_GLOB_FILES, params)
         return (result or {}).get("paths") or []
 
-    async def native_gpu_info(self) -> NativeGpuInfoResponse:
-        """Get GPU name and VRAM info"""
+    async def native_gpu_info(self) -> list[GpuInfo]:
+        """The machine's graphics processors: name, vendor, dedicated memory and driver. A GPU that shares system memory (Apple silicon, most integrated GPUs) reports no dedicated memory"""
         result = await self.call(METHOD_NATIVE_GPU_INFO)
-        return result
+        return (result or {}).get("gpus") or []
 
     async def native_grayscale_enabled(self) -> NativeGrayscaleEnabledResponse:
         """Check if grayscale display is enabled"""
@@ -5885,10 +5885,10 @@ class MethodsMixin:
         result = await self.call(METHOD_NATIVE_THREE_FINGER_DRAG)
         return result
 
-    async def native_thunderbolt_devices(self) -> NativeThunderboltDevicesResponse:
-        """List connected Thunderbolt devices"""
+    async def native_thunderbolt_devices(self) -> list[ThunderboltDevice]:
+        """Devices connected over Thunderbolt or USB4, not the machine's own ports: name, vendor, unique id, and whether the OS has authorized each where it asks"""
         result = await self.call(METHOD_NATIVE_THUNDERBOLT_DEVICES)
-        return result
+        return (result or {}).get("devices") or []
 
     async def native_time_format(self) -> NativeTimeFormatResponse:
         """Get user time format string"""
