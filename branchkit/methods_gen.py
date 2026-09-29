@@ -2604,7 +2604,7 @@ class MethodsMixin:
         return result
 
     async def native_battery_health(self) -> NativeBatteryHealthResponse:
-        """Get battery health status"""
+        """Get battery health status. Exists only on macOS and Linux; elsewhere it is refused with platform_no_analogue"""
         result = await self.call(METHOD_NATIVE_BATTERY_HEALTH)
         return result
 
@@ -2804,7 +2804,7 @@ class MethodsMixin:
         return (result or {}).get("events") or []
 
     async def native_calendar_permission(self) -> NativeCalendarPermissionResponse:
-        """Check if calendar access is available"""
+        """Check if calendar access is available. Exists only on macOS and Windows; elsewhere it is refused with platform_no_analogue"""
         result = await self.call(METHOD_NATIVE_CALENDAR_PERMISSION)
         return result
 
@@ -2947,7 +2947,7 @@ class MethodsMixin:
         return result
 
     async def native_contacts_permission(self) -> NativeContactsPermissionResponse:
-        """Check if contacts access is available"""
+        """Check if contacts access is available. Exists only on macOS and Windows; elsewhere it is refused with platform_no_analogue"""
         result = await self.call(METHOD_NATIVE_CONTACTS_PERMISSION)
         return result
 
@@ -3266,7 +3266,7 @@ class MethodsMixin:
         return (result or {}).get("displays") or []
 
     async def native_dnd(self) -> NativeDndResponse:
-        """Get Do Not Disturb / Focus state (via the BranchKit Focus helper shortcut)"""
+        """Get Do Not Disturb / Focus state (macOS: via the BranchKit Focus helper shortcut). Exists only on macOS and Linux; elsewhere it is refused with platform_no_analogue"""
         result = await self.call(METHOD_NATIVE_DND)
         return result
 
@@ -5239,7 +5239,7 @@ class MethodsMixin:
         await self.call(METHOD_NATIVE_SET_DARK_MODE, params)
 
     async def native_set_dnd(self, *, enabled: bool) -> None:
-        """Set Do Not Disturb on or off (idempotent; via the BranchKit Focus helper shortcut)"""
+        """Set Do Not Disturb on or off (idempotent; macOS: via the BranchKit Focus helper shortcut). Exists only on macOS and Linux; elsewhere it is refused with platform_no_analogue"""
         params: dict[str, Any] = {
             "enabled": enabled,
         }
@@ -5581,7 +5581,7 @@ class MethodsMixin:
         return bool((result or {}).get("ok", False))
 
     async def native_set_text_scale(self, *, scale: float) -> bool:
-        """Set the system text size as a factor of the default (1.0); false when refused. Exists only on Linux and Windows; elsewhere it is refused with platform_no_analogue
+        """Set the system text size as a factor of the default (1.0); false when refused. Exists only on Linux; elsewhere it is refused with platform_no_analogue
 
         scale: wire double
         """
