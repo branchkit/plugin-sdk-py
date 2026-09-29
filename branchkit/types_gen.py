@@ -1492,6 +1492,46 @@ SettingsTagSchemaInfo = TypedDict("SettingsTagSchemaInfo", {
     "source_plugin": str,
 })
 
+# One shape.
+ShapeRect = TypedDict("ShapeRect", {
+    "kind": Literal["rect"],
+    "color": str,
+    "corner_radius": NotRequired[float],
+    "height": float,
+    "stroke": NotRequired[float],
+    "width": float,
+    "x": float,
+    "y": float,
+})
+ShapeFill = TypedDict("ShapeFill", {
+    "kind": Literal["fill"],
+    "color": str,
+    "corner_radius": NotRequired[float],
+    "height": float,
+    "width": float,
+    "x": float,
+    "y": float,
+})
+ShapeCircle = TypedDict("ShapeCircle", {
+    "kind": Literal["circle"],
+    "color": str,
+    "cx": float,
+    "cy": float,
+    "radius": float,
+    "stroke": NotRequired[float],
+})
+ShapeRing = TypedDict("ShapeRing", {
+    "kind": Literal["ring"],
+    "color": str,
+    "cx": float,
+    "cy": float,
+    "duration_ms": int,
+    "follow_pointer": NotRequired[bool],
+    "radius": float,
+    "stroke": NotRequired[float],
+})
+Shape = ShapeRect | ShapeFill | ShapeCircle | ShapeRing
+
 ShortcutInfo = TypedDict("ShortcutInfo", {
     "folder": NotRequired[str],
     "name": str,
@@ -5857,6 +5897,30 @@ OutputStateResponse = TypedDict("OutputStateResponse", {
     # Whether the push changed what the channel's state means (kind, title,
     # phrase, items) rather than only its progress, footer or urgency.
     "meaning_changed": bool,
+    "ok": bool,
+})
+
+OverlayClearRequest = TypedDict("OverlayClearRequest", {
+    # The overlay to remove; nothing happens if it is not showing.
+    "id": str,
+})
+
+OverlayClearResponse = TypedDict("OverlayClearResponse", {
+    "ok": bool,
+})
+
+OverlayShowRequest = TypedDict("OverlayShowRequest", {
+    # The caller's name for this overlay (letters, digits, `_`, `-`, `.`;
+    # up to 64). Showing it again replaces its shapes. Overlays are kept
+    # per caller, so one plugin cannot replace or clear another's.
+    "id": str,
+    # Up to 64 shapes: outlines, fills, circles and a countdown ring. No
+    # text or images: nothing drawn can pass for a prompt. An empty list
+    # clears the overlay.
+    "shapes": list["Shape"],
+})
+
+OverlayShowResponse = TypedDict("OverlayShowResponse", {
     "ok": bool,
 })
 

@@ -602,6 +602,8 @@ from .contracts_gen import (
     METHOD_NETWORK_REQUEST_HOST,
     METHOD_OUTPUT_CLEAR,
     METHOD_OUTPUT_STATE,
+    METHOD_OVERLAY_CLEAR,
+    METHOD_OVERLAY_SHOW,
     METHOD_OVERRIDES_APPLY,
     METHOD_OVERRIDES_LIST,
     METHOD_PIPELINES_GRAMMAR,
@@ -1035,6 +1037,7 @@ if TYPE_CHECKING:
         SessionEndCleanupResponse,
         SettingsRulesCreateResponse,
         SettingsRulesUpdateResponse,
+        Shape,
         ShortcutInfo,
         SpaceInfo,
         SpeechLocale,
@@ -5845,6 +5848,34 @@ class MethodsMixin:
         }
         result = await self.call(METHOD_OUTPUT_STATE, params)
         return result
+
+    async def overlay_clear(self, *, id: str) -> bool:
+        """Remove the caller's overlay of that id
+
+        id: The overlay to remove; nothing happens if it is not showing.
+        """
+        params: dict[str, Any] = {
+            "id": id,
+        }
+        result = await self.call(METHOD_OVERLAY_CLEAR, params)
+        return bool((result or {}).get("ok", False))
+
+    async def overlay_show(self, *, id: str, shapes: list["Shape"]) -> bool:
+        """Draw shapes over the screen (outlines, fills, circles, a countdown ring; never text), replacing the caller's overlay of that id
+
+        id: The caller's name for this overlay (letters, digits, `_`, `-`, `.`;
+            up to 64). Showing it again replaces its shapes. Overlays are kept
+            per caller, so one plugin cannot replace or clear another's.
+        shapes: Up to 64 shapes: outlines, fills, circles and a countdown ring. No
+            text or images: nothing drawn can pass for a prompt. An empty list
+            clears the overlay.
+        """
+        params: dict[str, Any] = {
+            "id": id,
+            "shapes": shapes,
+        }
+        result = await self.call(METHOD_OVERLAY_SHOW, params)
+        return bool((result or {}).get("ok", False))
 
     async def overrides_apply(self, *, action: str, collection: str, field: str | None = None, fields: Any | None = None, id: str | None = None, new_id: str | None = None, tenant: str | None = None) -> OverridesApplyResponse:
         """Add, remove, restore, patch, rename, revert (reset one entry to its plugin default), or reset user overrides for a collection
