@@ -39,6 +39,7 @@ LOG_EVENT_OPERATION_COMPLETED = "operation.completed"
 LOG_EVENT_PLUGIN_APP_PREFERENCE = "plugin.app_preference"
 LOG_EVENT_PLUGIN_DBUS_CALL = "plugin.dbus_call"
 LOG_EVENT_PLUGIN_DEGRADED = "plugin.degraded"
+LOG_EVENT_PLUGIN_DEVICE_ACCESS = "plugin.device_access"
 LOG_EVENT_PLUGIN_DIAGNOSTIC = "plugin.diagnostic"
 LOG_EVENT_PLUGIN_EXITED = "plugin.exited"
 LOG_EVENT_PLUGIN_LIFECYCLE_OP = "plugin.lifecycle_op"
@@ -115,6 +116,7 @@ LOG_EVENT_REGISTRY: dict[str, LogEventMeta] = {
     "plugin.app_preference": {"name": "plugin.app_preference", "summary": "A plugin read or changed (or was refused) a setting in another app's settings domain through native.read_app_preference / native.write_app_preference: allowed, failed, denied (not declared, or declared for reading only), off (switched off by the user) or forbidden (no grant can reach it). The domain and key only, never the value. Audit-eligible.", "since": "0.2.0", "source": "plugins", "severity": "info", "redaction": "full"},
     "plugin.dbus_call": {"name": "plugin.dbus_call", "summary": "A plugin called (or was refused) a D-Bus method through native.dbus_call: allowed, failed, denied (not declared), off (switched off by the user) or forbidden (no grant can reach it). The method and argument signature only. Audit-eligible.", "since": "0.2.0", "source": "plugins", "severity": "info", "redaction": "full"},
     "plugin.degraded": {"name": "plugin.degraded", "summary": "A plugin is running but not fully working — its RPC channel hit the consecutive-timeout threshold (reason absent), it stopped reading its stdin (the platform's reason), or it reported the fault itself via plugin.report_health (its own reason).", "since": "0.1.0", "source": "plugins", "severity": "warn", "redaction": "full"},
+    "plugin.device_access": {"name": "plugin.device_access", "summary": "A plugin drove (or was refused) a HID or Bluetooth LE device through native.hid_* / native.ble_*: allowed, failed, denied (not declared), off (switched off by the user, or not yet allowed) or forbidden (a keyboard, pointer, system control or security key, which no grant can reach). Which device and operation, never the bytes. Audit-eligible.", "since": "0.2.0", "source": "plugins", "severity": "info", "redaction": "full"},
     "plugin.diagnostic": {"name": "plugin.diagnostic", "summary": "A plugin emitted a warn- or error-level diagnostic via plugin.debug; cross-posted to actuator.log so plugin-level failures interleave with the actuator's view of dispatch / coordination.", "since": "0.2.0", "source": "plugins", "severity": "warn", "redaction": "full"},
     "plugin.exited": {"name": "plugin.exited", "summary": "A managed plugin process exited (clean or crashed).", "since": "0.1.0", "source": "plugins", "severity": "info", "redaction": "none"},
     "plugin.lifecycle_op": {"name": "plugin.lifecycle_op", "summary": "A plugin lifecycle operation (install, uninstall, update, reload, hot-reload, enable, disable).", "since": "0.1.0", "source": "plugins", "severity": "info", "redaction": "none"},

@@ -130,9 +130,11 @@ from .contracts_gen import (
     METHOD_NATIVE_BATTERY_HEALTH,
     METHOD_NATIVE_BATTERY_MAX_CAPACITY,
     METHOD_NATIVE_BATTERY_TIME_REMAINING,
+    METHOD_NATIVE_BLE_DEVICES,
     METHOD_NATIVE_BLE_DISCOVER_SERVICES,
     METHOD_NATIVE_BLE_SUBSCRIBE,
     METHOD_NATIVE_BLE_SUBSCRIBE_ALL_THEN_WRITE,
+    METHOD_NATIVE_BLE_UNSUBSCRIBE,
     METHOD_NATIVE_BLE_WRITE,
     METHOD_NATIVE_BLUETOOTH_DEVICES,
     METHOD_NATIVE_BLUETOOTH_POWER,
@@ -273,8 +275,10 @@ from .contracts_gen import (
     METHOD_NATIVE_HARDWARE_UUID,
     METHOD_NATIVE_HIDE_APP,
     METHOD_NATIVE_HID_CLAIM,
+    METHOD_NATIVE_HID_CLOSE,
     METHOD_NATIVE_HID_DEVICES,
     METHOD_NATIVE_HID_ELEMENTS,
+    METHOD_NATIVE_HID_OPEN,
     METHOD_NATIVE_HID_RELEASE,
     METHOD_NATIVE_HID_SEND_REPORT,
     METHOD_NATIVE_HIGHLIGHT_COLOR,
@@ -660,6 +664,7 @@ if TYPE_CHECKING:
         AudioDevice,
         BackgroundItem,
         BarcodeResult,
+        BleDeviceEntry,
         BleService,
         BleWriteEntry,
         BlobPublishResponse,
@@ -751,6 +756,7 @@ if TYPE_CHECKING:
         NativeBatteryResponse,
         NativeBleSubscribeAllThenWriteResponse,
         NativeBleSubscribeResponse,
+        NativeBleUnsubscribeResponse,
         NativeBleWriteResponse,
         NativeBluetoothPowerResponse,
         NativeBoldTextEnabledResponse,
@@ -839,6 +845,8 @@ if TYPE_CHECKING:
         NativeHardwareModelResponse,
         NativeHardwareUuidResponse,
         NativeHidClaimResponse,
+        NativeHidCloseResponse,
+        NativeHidOpenResponse,
         NativeHidReleaseResponse,
         NativeHidSendReportResponse,
         NativeHighlightColorResponse,
@@ -2610,12 +2618,23 @@ class MethodsMixin:
         result = await self.call(METHOD_NATIVE_BATTERY_TIME_REMAINING)
         return result
 
-    async def native_ble_discover_services(self, *, device_identifier: str) -> list[BleService]:
-        """Discover GATT services and characteristics on a paired BLE device
+    async def native_ble_devices(self, *, service_uuid: str) -> list[BleDeviceEntry]:
+        """List the Bluetooth LE devices the OS is connected to or paired with that offer a GATT service the plugin declared
 
-        device_identifier: Identifier for the paired BLE device. Accepts a CoreBluetooth
-            peripheral UUID (e.g. "12345678-...") or a device name to match
-            among connected BLE HID peripherals (e.g. "Shortcut Remote").
+        service_uuid: A GATT service the plugin declares in `requires.devices.ble`
+            (`fff0`, or 128 bits).
+            non-empty
+        """
+        params: dict[str, Any] = {
+            "service_uuid": service_uuid,
+        }
+        result = await self.call(METHOD_NATIVE_BLE_DEVICES, params)
+        return (result or {}).get("devices") or []
+
+    async def native_ble_discover_services(self, *, device_identifier: str) -> list[BleService]:
+        """Discover the declared GATT services and their characteristics on a Bluetooth LE device the user allowed
+
+        device_identifier: The device, as `native.ble_devices` names it.
             non-empty
         """
         params: dict[str, Any] = {
@@ -2625,13 +2644,13 @@ class MethodsMixin:
         return (result or {}).get("services") or []
 
     async def native_ble_subscribe(self, *, characteristic_uuid: str, device_identifier: str, service_uuid: str) -> NativeBleSubscribeResponse:
-        """Subscribe to GATT notifications on a BLE characteristic
+        """Subscribe to a GATT characteristic's notifications; they arrive as _platform.ble.notification, addressed to the calling plugin alone
 
         characteristic_uuid: GATT characteristic UUID to subscribe to (must support notify).
             non-empty
-        device_identifier: CoreBluetooth peripheral UUID or device name.
+        device_identifier: The device, as `native.ble_devices` names it.
             non-empty
-        service_uuid: GATT service UUID containing the characteristic.
+        service_uuid: A declared GATT service containing the characteristic.
             non-empty
         """
         params: dict[str, Any] = {
@@ -2643,11 +2662,13 @@ class MethodsMixin:
         return result
 
     async def native_ble_subscribe_all_then_write(self, *, device_identifier: str, subscribe_services: list[str] | None = None, writes: list["BleWriteEntry"] | None = None) -> NativeBleSubscribeAllThenWriteResponse:
-        """Subscribe to all notify characteristics on listed services, then write — single GATT cycle
+        """Subscribe to all notify characteristics on the listed declared services, then write, in one GATT cycle
 
-        device_identifier: CoreBluetooth peripheral UUID or device name.
+        device_identifier: The device, as `native.ble_devices` names it.
             non-empty
-        subscribe_services: GATT service UUIDs to subscribe to all notify characteristics on.
+        subscribe_services: Declared GATT services to subscribe to all notify characteristics
+            on. Their notifications are the caller's until
+            `native.ble_unsubscribe` with characteristic `*`.
             default []
         writes: Writes to perform after subscribing. The last `with_response` write
             determines when the operation completes.
@@ -2662,17 +2683,33 @@ class MethodsMixin:
         result = await self.call(METHOD_NATIVE_BLE_SUBSCRIBE_ALL_THEN_WRITE, params)
         return result
 
+    async def native_ble_unsubscribe(self, *, characteristic_uuid: str, device_identifier: str, service_uuid: str) -> NativeBleUnsubscribeResponse:
+        """Stop the notifications native.ble_subscribe started on one characteristic
+
+        characteristic_uuid: The characteristic `native.ble_subscribe` subscribed to.
+            non-empty
+        device_identifier: The device, as `native.ble_devices` names it.
+            non-empty
+        service_uuid: non-empty
+        """
+        params: dict[str, Any] = {
+            "characteristic_uuid": characteristic_uuid,
+            "device_identifier": device_identifier,
+            "service_uuid": service_uuid,
+        }
+        result = await self.call(METHOD_NATIVE_BLE_UNSUBSCRIBE, params)
+        return result
+
     async def native_ble_write(self, *, characteristic_uuid: str, device_identifier: str, service_uuid: str, data: list[int] | None = None, write_type: str | None = None) -> NativeBleWriteResponse:
-        """Write bytes to a GATT characteristic on a paired BLE device
+        """Write bytes to a GATT characteristic of a declared service on a Bluetooth LE device the user allowed
 
         characteristic_uuid: GATT characteristic UUID (e.g. "FFF1").
             non-empty
         data: Bytes to write to the characteristic.
             default []
-        device_identifier: Identifier for the paired BLE device. Accepts a CoreBluetooth
-            peripheral UUID or a device name (see ble_discover_services).
+        device_identifier: The device, as `native.ble_devices` names it.
             non-empty
-        service_uuid: GATT service UUID (e.g. "FFF0").
+        service_uuid: A declared GATT service (e.g. "fff0").
             non-empty
         write_type: Write type: "with_response" (default, reliable) or "without_response" (fire-and-forget).
             default "with_response"
@@ -3715,7 +3752,7 @@ class MethodsMixin:
         return result
 
     async def native_hid_claim(self, *, device_id: str) -> NativeHidClaimResponse:
-        """Seize exclusive access to a HID device, suppressing native macOS events
+        """Hold a HID device the plugin declared exclusively, so its input reaches the plugin and not the OS. Exists only on macOS and Linux; elsewhere it is refused with platform_no_analogue
 
         device_id: Device ID (e.g. "0x28bd:0x0202:0x48f42695").
             non-empty
@@ -3726,13 +3763,25 @@ class MethodsMixin:
         result = await self.call(METHOD_NATIVE_HID_CLAIM, params)
         return result
 
+    async def native_hid_close(self, *, device_id: str) -> NativeHidCloseResponse:
+        """Stop receiving a HID device's input (and end the plugin's exclusive hold on it)
+
+        device_id: Device ID, as `native.hid_devices` lists it.
+            non-empty
+        """
+        params: dict[str, Any] = {
+            "device_id": device_id,
+        }
+        result = await self.call(METHOD_NATIVE_HID_CLOSE, params)
+        return result
+
     async def native_hid_devices(self) -> list[HidDeviceEntry]:
-        """List all connected non-Apple HID devices"""
+        """List the connected HID devices whose vendor:product the plugin declared, never a keyboard, pointer or security key"""
         result = await self.call(METHOD_NATIVE_HID_DEVICES)
         return (result or {}).get("devices") or []
 
     async def native_hid_elements(self, *, device_id: str) -> list[HidElementEntry]:
-        """Return the parsed HID element tree (buttons, axes, dials) for a connected device
+        """Return the parsed HID element tree (buttons, axes, dials) of a HID device the plugin declared and the user switched on
 
         device_id: Device ID (e.g. "0x28bd:0x0202:0x48f42695").
             non-empty
@@ -3743,8 +3792,20 @@ class MethodsMixin:
         result = await self.call(METHOD_NATIVE_HID_ELEMENTS, params)
         return (result or {}).get("elements") or []
 
+    async def native_hid_open(self, *, device_id: str) -> NativeHidOpenResponse:
+        """Start receiving a HID device's input as _platform.hid.report (and on macOS _platform.hid.input), addressed to the calling plugin alone
+
+        device_id: Device ID, as `native.hid_devices` lists it.
+            non-empty
+        """
+        params: dict[str, Any] = {
+            "device_id": device_id,
+        }
+        result = await self.call(METHOD_NATIVE_HID_OPEN, params)
+        return result
+
     async def native_hid_release(self, *, device_id: str) -> NativeHidReleaseResponse:
-        """Release exclusive access to a HID device, restoring native macOS behavior
+        """End the plugin's exclusive hold on a HID device, giving its input back to the OS. Exists only on macOS and Linux; elsewhere it is refused with platform_no_analogue
 
         device_id: Device ID (e.g. "0x28bd:0x0202:0x48f42695").
             non-empty
@@ -3756,7 +3817,7 @@ class MethodsMixin:
         return result
 
     async def native_hid_send_report(self, *, device_id: str, report_id: int, report_type: str, data: list[int] | None = None) -> NativeHidSendReportResponse:
-        """Send an output or feature report to a connected HID device
+        """Send an output or feature report to a HID device the plugin declared and the user switched on
 
         data: Raw report bytes to send.
             default []

@@ -250,6 +250,18 @@ BleCharacteristic = TypedDict("BleCharacteristic", {
     "uuid": str,
 })
 
+# A Bluetooth LE device offering the asked-for service.
+BleDeviceEntry = TypedDict("BleDeviceEntry", {
+    # Whether the user has allowed this device for this service. Until
+    # they do, calls on it are refused, and the first one puts it on the
+    # plugin's card to be allowed.
+    "allowed": bool,
+    # How the OS names it (an address, or on macOS a CoreBluetooth
+    # identifier): the `device_identifier` every other BLE call takes.
+    "id": str,
+    "name": str,
+})
+
 # A GATT service with its characteristics.
 BleService = TypedDict("BleService", {
     "characteristics": list["BleCharacteristic"],
@@ -843,16 +855,25 @@ HUDItem = TypedDict("HUDItem", {
     "title": str,
 })
 
+# A HID device as its caller may see it: one whose product the plugin
+# declared, never a keyboard, pointer, system control or security key.
 HidDeviceEntry = TypedDict("HidDeviceEntry", {
+    # Whether the user has this product switched on for the caller. Every
+    # other HID call on it is refused until they do.
+    "allowed": bool,
     # wire uint32 · min 0
     "axes": int,
     "ble_uuid": NotRequired[str],
     # wire uint32 · min 0
     "buttons": int,
+    # Device ID (`0x046d:0xc52b:…`), the handle every other HID call takes.
     "id": str,
+    # Whether the caller has it open (`native.hid_open`).
+    "open": bool,
     "product": str,
     # wire uint32 · min 0
     "product_id": int,
+    # Whether some plugin holds it exclusively (`native.hid_claim`).
     "seized": bool,
     "transport": str,
     # wire uint32 · min 0
@@ -3277,10 +3298,19 @@ NativeBatteryHealthResponse = TypedDict("NativeBatteryHealthResponse", {
     "value": str,
 })
 
+NativeBleDevicesRequest = TypedDict("NativeBleDevicesRequest", {
+    # A GATT service the plugin declares in `requires.devices.ble`
+    # (`fff0`, or 128 bits).
+    # non-empty
+    "service_uuid": str,
+})
+
+NativeBleDevicesResponse = TypedDict("NativeBleDevicesResponse", {
+    "devices": list["BleDeviceEntry"],
+})
+
 NativeBleDiscoverServicesRequest = TypedDict("NativeBleDiscoverServicesRequest", {
-    # Identifier for the paired BLE device. Accepts a CoreBluetooth
-    # peripheral UUID (e.g. "12345678-...") or a device name to match
-    # among connected BLE HID peripherals (e.g. "Shortcut Remote").
+    # The device, as `native.ble_devices` names it.
     # non-empty
     "device_identifier": str,
 })
@@ -3293,10 +3323,10 @@ NativeBleSubscribeRequest = TypedDict("NativeBleSubscribeRequest", {
     # GATT characteristic UUID to subscribe to (must support notify).
     # non-empty
     "characteristic_uuid": str,
-    # CoreBluetooth peripheral UUID or device name.
+    # The device, as `native.ble_devices` names it.
     # non-empty
     "device_identifier": str,
-    # GATT service UUID containing the characteristic.
+    # A declared GATT service containing the characteristic.
     # non-empty
     "service_uuid": str,
 })
@@ -3306,10 +3336,12 @@ NativeBleSubscribeResponse = TypedDict("NativeBleSubscribeResponse", {
 })
 
 NativeBleSubscribeAllThenWriteRequest = TypedDict("NativeBleSubscribeAllThenWriteRequest", {
-    # CoreBluetooth peripheral UUID or device name.
+    # The device, as `native.ble_devices` names it.
     # non-empty
     "device_identifier": str,
-    # GATT service UUIDs to subscribe to all notify characteristics on.
+    # Declared GATT services to subscribe to all notify characteristics
+    # on. Their notifications are the caller's until
+    # `native.ble_unsubscribe` with characteristic `*`.
     # default []
     "subscribe_services": NotRequired[list[str]],
     # Writes to perform after subscribing. The last `with_response` write
@@ -3321,6 +3353,22 @@ NativeBleSubscribeAllThenWriteResponse = TypedDict("NativeBleSubscribeAllThenWri
     "success": bool,
 })
 
+NativeBleUnsubscribeRequest = TypedDict("NativeBleUnsubscribeRequest", {
+    # The characteristic `native.ble_subscribe` subscribed to.
+    # non-empty
+    "characteristic_uuid": str,
+    # The device, as `native.ble_devices` names it.
+    # non-empty
+    "device_identifier": str,
+    # non-empty
+    "service_uuid": str,
+})
+
+NativeBleUnsubscribeResponse = TypedDict("NativeBleUnsubscribeResponse", {
+    # Whether the caller was subscribed.
+    "unsubscribed": bool,
+})
+
 NativeBleWriteRequest = TypedDict("NativeBleWriteRequest", {
     # GATT characteristic UUID (e.g. "FFF1").
     # non-empty
@@ -3328,11 +3376,10 @@ NativeBleWriteRequest = TypedDict("NativeBleWriteRequest", {
     # Bytes to write to the characteristic.
     # default []
     "data": NotRequired[list[int]],
-    # Identifier for the paired BLE device. Accepts a CoreBluetooth
-    # peripheral UUID or a device name (see ble_discover_services).
+    # The device, as `native.ble_devices` names it.
     # non-empty
     "device_identifier": str,
-    # GATT service UUID (e.g. "FFF0").
+    # A declared GATT service (e.g. "fff0").
     # non-empty
     "service_uuid": str,
     # Write type: "with_response" (default, reliable) or "without_response" (fire-and-forget).
@@ -4188,6 +4235,17 @@ NativeHidClaimResponse = TypedDict("NativeHidClaimResponse", {
     "success": bool,
 })
 
+NativeHidCloseRequest = TypedDict("NativeHidCloseRequest", {
+    # Device ID, as `native.hid_devices` lists it.
+    # non-empty
+    "device_id": str,
+})
+
+NativeHidCloseResponse = TypedDict("NativeHidCloseResponse", {
+    # Whether the caller had it open.
+    "closed": bool,
+})
+
 NativeHidDevicesResponse = TypedDict("NativeHidDevicesResponse", {
     "devices": list["HidDeviceEntry"],
 })
@@ -4202,6 +4260,16 @@ NativeHidElementsResponse = TypedDict("NativeHidElementsResponse", {
     "elements": list["HidElementEntry"],
 })
 
+NativeHidOpenRequest = TypedDict("NativeHidOpenRequest", {
+    # Device ID, as `native.hid_devices` lists it.
+    # non-empty
+    "device_id": str,
+})
+
+NativeHidOpenResponse = TypedDict("NativeHidOpenResponse", {
+    "success": bool,
+})
+
 NativeHidReleaseRequest = TypedDict("NativeHidReleaseRequest", {
     # Device ID (e.g. "0x28bd:0x0202:0x48f42695").
     # non-empty
@@ -4209,6 +4277,7 @@ NativeHidReleaseRequest = TypedDict("NativeHidReleaseRequest", {
 })
 
 NativeHidReleaseResponse = TypedDict("NativeHidReleaseResponse", {
+    # Whether the caller held it exclusively.
     "success": bool,
 })
 
@@ -7098,13 +7167,15 @@ AxNotificationEventParams = TypedDict("AxNotificationEventParams", {
 
 # Payload of the `_platform.ble.notification` event.
 BleNotificationEventParams = TypedDict("BleNotificationEventParams", {
-    # GATT characteristic UUID.
+    # GATT characteristic UUID, 128-bit lower case.
     "characteristic_uuid": str,
     # Notification payload bytes.
     "data": list[int],
-    # CoreBluetooth peripheral UUID.
+    # The device as `native.ble_devices` names it.
     "device_identifier": str,
-    # GATT service UUID.
+    # The plugin that subscribed; the event reaches it alone.
+    "owner_plugin": str,
+    # GATT service UUID, 128-bit lower case.
     "service_uuid": str,
 })
 
@@ -7227,6 +7298,8 @@ HidConnectedEventParams = TypedDict("HidConnectedEventParams", {
     # wire uint32 · min 0
     "buttons": int,
     "device_id": str,
+    # The plugin this copy is for: one that declared the product.
+    "owner_plugin": str,
     "product": str,
     # wire uint32 · min 0
     "product_id": int,
@@ -7238,6 +7311,8 @@ HidConnectedEventParams = TypedDict("HidConnectedEventParams", {
 # Payload of the `_platform.hid.disconnected` event.
 HidDisconnectedEventParams = TypedDict("HidDisconnectedEventParams", {
     "device_id": str,
+    # The plugin this copy is for: one that declared the product.
+    "owner_plugin": str,
     "product": str,
     "transport": str,
 })
@@ -7245,13 +7320,15 @@ HidDisconnectedEventParams = TypedDict("HidDisconnectedEventParams", {
 # Payload of the `_platform.hid.input` event.
 HidInputEventParams = TypedDict("HidInputEventParams", {
     "device_id": str,
+    # The plugin that opened the device; the event reaches it alone.
+    "owner_plugin": str,
     "product": str,
     # wire uint64 (64-bit) · min 0
     "timestamp": int,
     # HID usage code within the usage page.
     # wire uint32 · min 0
     "usage": int,
-    # HID usage page (e.g. 0x09 = Button, 0x07 = Keyboard, 0x01 = Generic Desktop).
+    # HID usage page (e.g. 0x09 = Button, 0x01 = Generic Desktop).
     # wire uint32 · min 0
     "usage_page": int,
     # The input value (e.g. 1 = pressed, 0 = released for buttons).
@@ -7261,14 +7338,16 @@ HidInputEventParams = TypedDict("HidInputEventParams", {
 
 # Payload of the `_platform.hid.report` event.
 HidReportEventParams = TypedDict("HidReportEventParams", {
-    # Raw report bytes.
+    # Raw report bytes, without the report ID.
     "data": list[int],
     "device_id": str,
+    # The plugin that opened the device; the event reaches it alone.
+    "owner_plugin": str,
     "product": str,
-    # HID report ID.
+    # HID report ID, 0 for a device that numbers none.
     # wire uint32 · min 0
     "report_id": int,
-    # IOHIDReportType (0 = input, 1 = output, 2 = feature).
+    # 0 = input (the only kind a device sends unasked).
     # wire uint32 · min 0
     "report_type": int,
     # wire uint64 (64-bit) · min 0
