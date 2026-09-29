@@ -99,6 +99,7 @@ from .contracts_gen import (
     METHOD_NATIVE_APP_PATH,
     METHOD_NATIVE_APP_PID,
     METHOD_NATIVE_APP_SUPPORT_DIRECTORY,
+    METHOD_NATIVE_APP_VERIFICATION,
     METHOD_NATIVE_APP_VERSION,
     METHOD_NATIVE_APP_VOLUMES,
     METHOD_NATIVE_APP_WINDOWS,
@@ -260,7 +261,6 @@ from .contracts_gen import (
     METHOD_NATIVE_FRONTMOST_APP,
     METHOD_NATIVE_FULL_DISK_ACCESS,
     METHOD_NATIVE_FUNCTION_KEYS_STANDARD,
-    METHOD_NATIVE_GATEKEEPER_STATUS,
     METHOD_NATIVE_GATEWAY_ADDRESS,
     METHOD_NATIVE_GENERATE_PDF,
     METHOD_NATIVE_GET_WINDOW_INFO,
@@ -403,7 +403,6 @@ from .contracts_gen import (
     METHOD_NATIVE_PROXY_SETTINGS,
     METHOD_NATIVE_PUBLIC_IP,
     METHOD_NATIVE_PURGEABLE_SPACE,
-    METHOD_NATIVE_PURGE_MEMORY,
     METHOD_NATIVE_QUICK_LOOK,
     METHOD_NATIVE_QUIT_APP,
     METHOD_NATIVE_RAISE_WINDOW,
@@ -462,7 +461,6 @@ from .contracts_gen import (
     METHOD_NATIVE_SET_BLUETOOTH_POWER,
     METHOD_NATIVE_SET_BOUNCE_KEYS,
     METHOD_NATIVE_SET_BRIGHTNESS,
-    METHOD_NATIVE_SET_COMPUTER_NAME,
     METHOD_NATIVE_SET_DARK_MODE,
     METHOD_NATIVE_SET_DND,
     METHOD_NATIVE_SET_DOCK_AUTO_HIDE,
@@ -515,7 +513,6 @@ from .contracts_gen import (
     METHOD_NATIVE_SHARING_NAME,
     METHOD_NATIVE_SHOW_SCROLL_BARS,
     METHOD_NATIVE_SIDEBAR_ICON_SIZE,
-    METHOD_NATIVE_SIP_STATUS,
     METHOD_NATIVE_SIRI_ENABLED,
     METHOD_NATIVE_SLEEP_NOW,
     METHOD_NATIVE_SLOW_KEYS,
@@ -540,7 +537,7 @@ from .contracts_gen import (
     METHOD_NATIVE_SYMLINK,
     METHOD_NATIVE_SYSTEM_APPEARANCE,
     METHOD_NATIVE_SYSTEM_INFO,
-    METHOD_NATIVE_SYSTEM_INTEGRITY_INFO,
+    METHOD_NATIVE_SYSTEM_INTEGRITY,
     METHOD_NATIVE_SYSTEM_LANGUAGE,
     METHOD_NATIVE_SYSTEM_REGION,
     METHOD_NATIVE_SYSTEM_SOUNDS,
@@ -837,7 +834,6 @@ if TYPE_CHECKING:
         NativeFrontmostAppResponse,
         NativeFullDiskAccessResponse,
         NativeFunctionKeysStandardResponse,
-        NativeGatekeeperStatusResponse,
         NativeGatewayAddressResponse,
         NativeGetWindowInfoResponse,
         NativeGpuInfoResponse,
@@ -947,7 +943,6 @@ if TYPE_CHECKING:
         NativeSharingNameResponse,
         NativeShowScrollBarsResponse,
         NativeSidebarIconSizeResponse,
-        NativeSipStatusResponse,
         NativeSiriEnabledResponse,
         NativeSlowKeysResponse,
         NativeSmartQuotesEnabledResponse,
@@ -965,7 +960,6 @@ if TYPE_CHECKING:
         NativeSwitchSpaceWhenSwitchingAppResponse,
         NativeSystemAppearanceResponse,
         NativeSystemInfoResponse,
-        NativeSystemIntegrityInfoResponse,
         NativeSystemLanguageResponse,
         NativeSystemRegionResponse,
         NativeSystemUptimeResponse,
@@ -1036,6 +1030,7 @@ if TYPE_CHECKING:
         SecretsListResponse,
         SecretsRequestSlotResponse,
         SecretsSetResponse,
+        SecurityFact,
         SelectionPickResponse,
         SessionEndCleanupResponse,
         SettingsRulesCreateResponse,
@@ -2232,6 +2227,11 @@ class MethodsMixin:
         result = await self.call(METHOD_NATIVE_APP_SUPPORT_DIRECTORY)
         return result
 
+    async def native_app_verification(self) -> list[SecurityFact]:
+        """The mechanisms that check apps before they run, and their states: Gatekeeper on macOS; SmartScreen and Smart App Control on Windows; none on Linux (an empty list). Facts, not a verdict"""
+        result = await self.call(METHOD_NATIVE_APP_VERIFICATION)
+        return (result or {}).get("mechanisms") or []
+
     async def native_app_version(self, *, bundle_id: str) -> str:
         """Get an app version by bundle ID"""
         params: dict[str, Any] = {
@@ -3389,11 +3389,6 @@ class MethodsMixin:
         result = await self.call(METHOD_NATIVE_FUNCTION_KEYS_STANDARD)
         return result
 
-    async def native_gatekeeper_status(self) -> NativeGatekeeperStatusResponse:
-        """Check if Gatekeeper is enabled"""
-        result = await self.call(METHOD_NATIVE_GATEKEEPER_STATUS)
-        return result
-
     async def native_gateway_address(self) -> NativeGatewayAddressResponse:
         """Get the default gateway IP address"""
         result = await self.call(METHOD_NATIVE_GATEWAY_ADDRESS)
@@ -4362,11 +4357,6 @@ class MethodsMixin:
         result = await self.call(METHOD_NATIVE_PUBLIC_IP)
         return result
 
-    async def native_purge_memory(self) -> bool:
-        """Purge inactive memory"""
-        result = await self.call(METHOD_NATIVE_PURGE_MEMORY)
-        return bool((result or {}).get("ok", False))
-
     async def native_purgeable_space(self) -> int:
         """Get purgeable disk space in bytes. Exists only on macOS; elsewhere it is refused with platform_no_analogue"""
         result = await self.call(METHOD_NATIVE_PURGEABLE_SPACE)
@@ -4787,14 +4777,6 @@ class MethodsMixin:
         if display_id is not None:
             params["display_id"] = display_id
         await self.call(METHOD_NATIVE_SET_BRIGHTNESS, params)
-
-    async def native_set_computer_name(self, *, name: str) -> bool:
-        """Set the computer name"""
-        params: dict[str, Any] = {
-            "name": name,
-        }
-        result = await self.call(METHOD_NATIVE_SET_COMPUTER_NAME, params)
-        return bool((result or {}).get("ok", False))
 
     async def native_set_dark_mode(self, *, dark: bool) -> None:
         """Set dark or light mode"""
@@ -5246,11 +5228,6 @@ class MethodsMixin:
         result = await self.call(METHOD_NATIVE_SIDEBAR_ICON_SIZE)
         return result
 
-    async def native_sip_status(self) -> NativeSipStatusResponse:
-        """Check if System Integrity Protection is enabled"""
-        result = await self.call(METHOD_NATIVE_SIP_STATUS)
-        return result
-
     async def native_siri_enabled(self) -> NativeSiriEnabledResponse:
         """Check if Siri is enabled. Exists only on macOS; elsewhere it is refused with platform_no_analogue"""
         result = await self.call(METHOD_NATIVE_SIRI_ENABLED)
@@ -5408,10 +5385,10 @@ class MethodsMixin:
         result = await self.call(METHOD_NATIVE_SYSTEM_INFO)
         return result
 
-    async def native_system_integrity_info(self) -> NativeSystemIntegrityInfoResponse:
-        """Get SIP and security policy details"""
-        result = await self.call(METHOD_NATIVE_SYSTEM_INTEGRITY_INFO)
-        return result
+    async def native_system_integrity(self) -> list[SecurityFact]:
+        """The mechanisms that protect the system itself, and their states: SIP on macOS; Secure Boot and memory integrity on Windows; Secure Boot and AppArmor or SELinux on Linux. Facts, not a verdict"""
+        result = await self.call(METHOD_NATIVE_SYSTEM_INTEGRITY)
+        return (result or {}).get("mechanisms") or []
 
     async def native_system_language(self) -> NativeSystemLanguageResponse:
         """Get the system language code (e.g. en)"""

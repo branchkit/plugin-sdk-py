@@ -1500,6 +1500,21 @@ ScreenshotRegion = TypedDict("ScreenshotRegion", {
     "y": int,
 })
 
+# One security mechanism and its state (`native.app_verification`,
+# `native.system_integrity`): a fact about the machine, never a verdict on
+# it. Mechanisms differ per OS and none is the equal of another's, so no
+# list of them adds up to "secure".
+SecurityFact = TypedDict("SecurityFact", {
+    # What the OS said, where it says more than the state.
+    "detail": NotRequired[str],
+    # `gatekeeper`, `sip`, `smartscreen`, `smart_app_control`,
+    # `secure_boot`, `memory_integrity`, `apparmor`, `selinux`.
+    "mechanism": str,
+    # `on`, `off`; `warn` / `block` (SmartScreen), `evaluation` (Smart
+    # App Control), `enforcing` / `permissive` (SELinux).
+    "state": str,
+})
+
 # List schema info sent to plugins in render_settings (enriched with entry count + source).
 SettingsListSchemaInfo = TypedDict("SettingsListSchemaInfo", {
     "description": str,
@@ -2925,6 +2940,10 @@ NativeAppSupportDirectoryResponse = TypedDict("NativeAppSupportDirectoryResponse
     "path": str,
 })
 
+NativeAppVerificationResponse = TypedDict("NativeAppVerificationResponse", {
+    "mechanisms": list["SecurityFact"],
+})
+
 NativeAppVersionRequest = TypedDict("NativeAppVersionRequest", {
     "bundle_id": str,
 })
@@ -3933,10 +3952,6 @@ NativeFunctionKeysStandardResponse = TypedDict("NativeFunctionKeysStandardRespon
     "standard": bool,
 })
 
-NativeGatekeeperStatusResponse = TypedDict("NativeGatekeeperStatusResponse", {
-    "enabled": bool,
-})
-
 NativeGatewayAddressResponse = TypedDict("NativeGatewayAddressResponse", {
     "address": str,
 })
@@ -4655,10 +4670,6 @@ NativePublicIPResponse = TypedDict("NativePublicIPResponse", {
     "ip": str,
 })
 
-NativePurgeMemoryResponse = TypedDict("NativePurgeMemoryResponse", {
-    "ok": bool,
-})
-
 NativeQuickLookRequest = TypedDict("NativeQuickLookRequest", {
     "path": str,
     # wire uint32 · default 512 · min 0
@@ -5002,14 +5013,6 @@ NativeSetBrightnessRequest = TypedDict("NativeSetBrightnessRequest", {
     "brightness": float,
     # wire uint32 · default null · min 0
     "display_id": NotRequired[int],
-})
-
-NativeSetComputerNameRequest = TypedDict("NativeSetComputerNameRequest", {
-    "name": str,
-})
-
-NativeSetComputerNameResponse = TypedDict("NativeSetComputerNameResponse", {
-    "ok": bool,
 })
 
 NativeSetDarkModeRequest = TypedDict("NativeSetDarkModeRequest", {
@@ -5408,10 +5411,6 @@ NativeSidebarIconSizeResponse = TypedDict("NativeSidebarIconSizeResponse", {
     "value": str,
 })
 
-NativeSipStatusResponse = TypedDict("NativeSipStatusResponse", {
-    "enabled": bool,
-})
-
 NativeSiriEnabledResponse = TypedDict("NativeSiriEnabledResponse", {
     "enabled": bool,
 })
@@ -5528,8 +5527,8 @@ NativeSystemInfoResponse = TypedDict("NativeSystemInfoResponse", {
     "serial_number": NotRequired[str],
 })
 
-NativeSystemIntegrityInfoResponse = TypedDict("NativeSystemIntegrityInfoResponse", {
-    "value": str,
+NativeSystemIntegrityResponse = TypedDict("NativeSystemIntegrityResponse", {
+    "mechanisms": list["SecurityFact"],
 })
 
 NativeSystemLanguageResponse = TypedDict("NativeSystemLanguageResponse", {
