@@ -5242,7 +5242,7 @@ class MethodsMixin:
         return bool((result or {}).get("ok", False))
 
     async def native_set_dwell_click(self, *, enabled: bool) -> bool:
-        """Turn the system's dwell click on or off (holding the pointer still clicks). Exists only on macOS and Linux; elsewhere it is refused with platform_no_analogue"""
+        """Turn the system's dwell click on or off (holding the pointer still clicks). Exists only on Linux; elsewhere it is refused with platform_no_analogue"""
         params: dict[str, Any] = {
             "enabled": enabled,
         }
@@ -5362,7 +5362,7 @@ class MethodsMixin:
         return bool((result or {}).get("ok", False))
 
     async def native_set_magnifier_enabled(self, *, enabled: bool) -> bool:
-        """Turn the screen magnifier on or off; false when it did not change"""
+        """Turn the screen magnifier on or off; false when it did not change. Exists only on Linux and Windows; elsewhere it is refused with platform_no_analogue"""
         params: dict[str, Any] = {
             "enabled": enabled,
         }
@@ -5386,7 +5386,7 @@ class MethodsMixin:
         return bool((result or {}).get("ok", False))
 
     async def native_set_mouse_keys(self, *, enabled: bool) -> bool:
-        """Turn Mouse Keys on or off (the numeric keypad moves the pointer)"""
+        """Turn Mouse Keys on or off (the numeric keypad moves the pointer). Exists only on Linux and Windows; elsewhere it is refused with platform_no_analogue"""
         params: dict[str, Any] = {
             "enabled": enabled,
         }
@@ -5412,7 +5412,7 @@ class MethodsMixin:
         await self.call(METHOD_NATIVE_SET_NIGHT_SHIFT, params)
 
     async def native_set_on_screen_keyboard_enabled(self, *, enabled: bool) -> bool:
-        """Show or hide the on-screen keyboard; false when it did not change"""
+        """Show or hide the on-screen keyboard; false when it did not change. Exists only on Linux and Windows; elsewhere it is refused with platform_no_analogue"""
         params: dict[str, Any] = {
             "enabled": enabled,
         }
@@ -5420,7 +5420,7 @@ class MethodsMixin:
         return bool((result or {}).get("ok", False))
 
     async def native_set_power_mode(self, *, mode: str) -> bool:
-        """Set the power mode (power-saver, balanced or performance); false when refused or not offered
+        """Set the power mode (power-saver, balanced or performance); false when refused or not offered. Exists only on Linux and Windows; elsewhere it is refused with platform_no_analogue
 
         mode: non-empty
         """
@@ -5431,7 +5431,7 @@ class MethodsMixin:
         return bool((result or {}).get("ok", False))
 
     async def native_set_screen_reader_enabled(self, *, enabled: bool) -> bool:
-        """Turn the screen reader on or off (VoiceOver, Orca, Narrator); false when it did not change"""
+        """Turn the screen reader on or off (VoiceOver, Orca, Narrator); false when it did not change. Exists only on Linux and Windows; elsewhere it is refused with platform_no_analogue"""
         params: dict[str, Any] = {
             "enabled": enabled,
         }
@@ -5488,7 +5488,7 @@ class MethodsMixin:
         return bool((result or {}).get("ok", False))
 
     async def native_set_slow_keys(self, *, enabled: bool) -> bool:
-        """Turn Slow Keys on or off (a key registers only after it is held)"""
+        """Turn Slow Keys on or off (a key registers only after it is held). Exists only on Linux and Windows; elsewhere it is refused with platform_no_analogue"""
         params: dict[str, Any] = {
             "enabled": enabled,
         }
@@ -5504,7 +5504,7 @@ class MethodsMixin:
         return bool((result or {}).get("ok", False))
 
     async def native_set_sticky_keys(self, *, enabled: bool) -> bool:
-        """Turn Sticky Keys on or off (modifiers latch, so shortcuts need one key at a time)"""
+        """Turn Sticky Keys on or off (modifiers latch, so shortcuts need one key at a time). Exists only on Linux and Windows; elsewhere it is refused with platform_no_analogue"""
         params: dict[str, Any] = {
             "enabled": enabled,
         }
@@ -5520,7 +5520,7 @@ class MethodsMixin:
         return bool((result or {}).get("ok", False))
 
     async def native_set_text_scale(self, *, scale: float) -> bool:
-        """Set the system text size as a factor of the default (1.0); false when refused
+        """Set the system text size as a factor of the default (1.0); false when refused. Exists only on Linux and Windows; elsewhere it is refused with platform_no_analogue
 
         scale: wire double
         """
@@ -5555,7 +5555,7 @@ class MethodsMixin:
         return bool((result or {}).get("ok", False))
 
     async def native_set_visual_alerts_enabled(self, *, enabled: bool) -> bool:
-        """Turn screen flashing on alert sounds on or off; false when it did not change"""
+        """Turn screen flashing on alert sounds on or off; false when it did not change. Exists only on Linux and Windows; elsewhere it is refused with platform_no_analogue"""
         params: dict[str, Any] = {
             "enabled": enabled,
         }
