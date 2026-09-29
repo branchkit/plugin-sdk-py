@@ -3992,10 +3992,6 @@ NativeFinderNewWindowTargetResponse = TypedDict("NativeFinderNewWindowTargetResp
     "value": str,
 })
 
-NativeFinderSelectionResponse = TypedDict("NativeFinderSelectionResponse", {
-    "paths": list[str],
-})
-
 NativeFinderShowExtensionsResponse = TypedDict("NativeFinderShowExtensionsResponse", {
     "enabled": bool,
 })
@@ -4589,15 +4585,6 @@ NativeNowPlayingResponse = TypedDict("NativeNowPlayingResponse", {
 
 NativeNumberFormatDecimalResponse = TypedDict("NativeNumberFormatDecimalResponse", {
     "value": str,
-})
-
-NativeObserveWindowsRequest = TypedDict("NativeObserveWindowsRequest", {
-    # wire int32
-    "pid": int,
-})
-
-NativeObserveWindowsResponse = TypedDict("NativeObserveWindowsResponse", {
-    "subscription_id": str,
 })
 
 NativeOcrClipboardResponse = TypedDict("NativeOcrClipboardResponse", {
@@ -5647,15 +5634,6 @@ NativeSpacesSpanDisplaysResponse = TypedDict("NativeSpacesSpanDisplaysResponse",
     "enabled": bool,
 })
 
-NativeSpeakRequest = TypedDict("NativeSpeakRequest", {
-    # wire double · default null
-    "rate": NotRequired[float],
-    # non-empty
-    "text": str,
-    # default null
-    "voice": NotRequired[str],
-})
-
 NativeSpeechLocalesResponse = TypedDict("NativeSpeechLocalesResponse", {
     "locales": list["SpeechLocale"],
 })
@@ -5900,15 +5878,6 @@ NativeUnhideAppRequest = TypedDict("NativeUnhideAppRequest", {
 NativeUnminimizeWindowRequest = TypedDict("NativeUnminimizeWindowRequest", {
     # non-empty
     "window_id": str,
-})
-
-NativeUnobserveWindowsRequest = TypedDict("NativeUnobserveWindowsRequest", {
-    # non-empty
-    "subscription_id": str,
-})
-
-NativeUnobserveWindowsResponse = TypedDict("NativeUnobserveWindowsResponse", {
-    "result": bool,
 })
 
 NativeUnzipRequest = TypedDict("NativeUnzipRequest", {

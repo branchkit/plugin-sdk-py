@@ -129,6 +129,7 @@ from .contracts_gen import (
     METHOD_NATIVE_BATTERY_CYCLE_COUNT,
     METHOD_NATIVE_BATTERY_HEALTH,
     METHOD_NATIVE_BATTERY_MAX_CAPACITY,
+    METHOD_NATIVE_BATTERY_TIME_REMAINING,
     METHOD_NATIVE_BLE_DISCOVER_SERVICES,
     METHOD_NATIVE_BLE_SUBSCRIBE,
     METHOD_NATIVE_BLE_SUBSCRIBE_ALL_THEN_WRITE,
@@ -242,7 +243,6 @@ from .contracts_gen import (
     METHOD_NATIVE_FILE_UTI,
     METHOD_NATIVE_FINDER_DEFAULT_VIEW,
     METHOD_NATIVE_FINDER_NEW_WINDOW_TARGET,
-    METHOD_NATIVE_FINDER_SELECTION,
     METHOD_NATIVE_FINDER_SHOW_EXTENSIONS,
     METHOD_NATIVE_FINDER_SHOW_HIDDEN,
     METHOD_NATIVE_FINDER_SHOW_PATH_BAR,
@@ -359,7 +359,6 @@ from .contracts_gen import (
     METHOD_NATIVE_NOTIFY,
     METHOD_NATIVE_NOW_PLAYING,
     METHOD_NATIVE_NUMBER_FORMAT_DECIMAL,
-    METHOD_NATIVE_OBSERVE_WINDOWS,
     METHOD_NATIVE_OCR_CLIPBOARD,
     METHOD_NATIVE_OCR_FILE,
     METHOD_NATIVE_OCR_SCREEN,
@@ -520,7 +519,6 @@ from .contracts_gen import (
     METHOD_NATIVE_SMART_ZOOM,
     METHOD_NATIVE_SOUND_EFFECTS_ENABLED,
     METHOD_NATIVE_SPACES_SPAN_DISPLAYS,
-    METHOD_NATIVE_SPEAK,
     METHOD_NATIVE_SPEECH_LOCALES,
     METHOD_NATIVE_SPEECH_RECOGNITION_AVAILABLE,
     METHOD_NATIVE_SPEECH_RECOGNIZE_FILE,
@@ -555,7 +553,6 @@ from .contracts_gen import (
     METHOD_NATIVE_TIME_FORMAT,
     METHOD_NATIVE_TIME_MACHINE_LAST_BACKUP,
     METHOD_NATIVE_TIME_MACHINE_STATUS,
-    METHOD_NATIVE_TIME_ON_BATTERY,
     METHOD_NATIVE_TOGGLE_BLUETOOTH,
     METHOD_NATIVE_TOGGLE_FULLSCREEN,
     METHOD_NATIVE_TOGGLE_WIFI,
@@ -568,7 +565,6 @@ from .contracts_gen import (
     METHOD_NATIVE_TWENTY_FOUR_HOUR_CLOCK,
     METHOD_NATIVE_UNHIDE_APP,
     METHOD_NATIVE_UNMINIMIZE_WINDOW,
-    METHOD_NATIVE_UNOBSERVE_WINDOWS,
     METHOD_NATIVE_UNZIP,
     METHOD_NATIVE_URL_SCHEME_HANDLER,
     METHOD_NATIVE_USB_DEVICES,
@@ -891,7 +887,6 @@ if TYPE_CHECKING:
         NativeNotifyResponse,
         NativeNowPlayingResponse,
         NativeNumberFormatDecimalResponse,
-        NativeObserveWindowsResponse,
         NativeOnScreenKeyboardEnabledResponse,
         NativeOptimizedChargingResponse,
         NativePinchToZoomResponse,
@@ -1884,7 +1879,7 @@ class MethodsMixin:
         await self.call(METHOD_INPUT_CLIPBOARD_ACTION, params)
 
     async def input_clipboard_history(self) -> list[str]:
-        """Get recent clipboard entries (if available)"""
+        """Get recent clipboard entries (if available). Exists only on Linux and Windows; elsewhere it is refused with platform_no_analogue"""
         result = await self.call(METHOD_INPUT_CLIPBOARD_HISTORY)
         return (result or {}).get("entries") or []
 
@@ -2610,6 +2605,11 @@ class MethodsMixin:
         result = await self.call(METHOD_NATIVE_BATTERY_MAX_CAPACITY)
         return result
 
+    async def native_battery_time_remaining(self) -> int:
+        """Minutes of battery left at the current rate; absent on AC power or when the OS has no estimate"""
+        result = await self.call(METHOD_NATIVE_BATTERY_TIME_REMAINING)
+        return result
+
     async def native_ble_discover_services(self, *, device_identifier: str) -> list[BleService]:
         """Discover GATT services and characteristics on a paired BLE device
 
@@ -2721,7 +2721,7 @@ class MethodsMixin:
         await self.call(METHOD_NATIVE_BORDERS, params)
 
     async def native_bounce_keys(self) -> NativeBounceKeysResponse:
-        """Check if Bounce Keys is on (repeated presses of one key are ignored)"""
+        """Check if Bounce Keys is on (repeated presses of one key are ignored). Exists only on Linux and Windows; elsewhere it is refused with platform_no_analogue"""
         result = await self.call(METHOD_NATIVE_BOUNCE_KEYS)
         return result
 
@@ -2841,7 +2841,7 @@ class MethodsMixin:
         return bool((result or {}).get("ok", False))
 
     async def native_clear_notifications(self, *, bundle_id: str) -> bool:
-        """Clear all delivered notifications for an app
+        """Clear all delivered notifications for an app. Exists only on Windows; elsewhere it is refused with platform_no_analogue
 
         bundle_id: non-empty
         """
@@ -2933,7 +2933,7 @@ class MethodsMixin:
         return result
 
     async def native_cpu_temperature(self) -> float:
-        """Get CPU temperature in Celsius. Requires the third-party `osx-cpu-temp`; a reading without an explicit scale marker is rejected rather than assumed"""
+        """Get CPU temperature in Celsius. Requires the third-party `osx-cpu-temp`; a reading without an explicit scale marker is rejected rather than assumed. Exists only on macOS and Linux; elsewhere it is refused with platform_no_analogue"""
         result = await self.call(METHOD_NATIVE_CPU_TEMPERATURE)
         return result
 
@@ -3110,7 +3110,7 @@ class MethodsMixin:
         return (result or {}).get("barcodes") or []
 
     async def native_dictation_enabled(self) -> NativeDictationEnabledResponse:
-        """Check if Dictation is enabled"""
+        """Check if Dictation is enabled. Exists only on macOS; elsewhere it is refused with platform_no_analogue"""
         result = await self.call(METHOD_NATIVE_DICTATION_ENABLED)
         return result
 
@@ -3157,7 +3157,7 @@ class MethodsMixin:
         return result
 
     async def native_dismiss_notification(self, *, id: str) -> None:
-        """Dismiss a delivered notification (partial — no-op)
+        """Dismiss a delivered notification (partial — no-op). Exists only on Windows; elsewhere it is refused with platform_no_analogue
 
         id: non-empty
         """
@@ -3527,7 +3527,7 @@ class MethodsMixin:
         return result
 
     async def native_finder_default_view(self) -> NativeFinderDefaultViewResponse:
-        """Get Finder default view style"""
+        """Get Finder default view style. Exists only on macOS and Linux; elsewhere it is refused with platform_no_analogue"""
         result = await self.call(METHOD_NATIVE_FINDER_DEFAULT_VIEW)
         return result
 
@@ -3535,11 +3535,6 @@ class MethodsMixin:
         """Get Finder new window default location. Exists only on macOS; elsewhere it is refused with platform_no_analogue"""
         result = await self.call(METHOD_NATIVE_FINDER_NEW_WINDOW_TARGET)
         return result
-
-    async def native_finder_selection(self) -> list[str]:
-        """Get the currently selected files in Finder. Exists only on macOS; elsewhere it is refused with platform_no_analogue"""
-        result = await self.call(METHOD_NATIVE_FINDER_SELECTION)
-        return (result or {}).get("paths") or []
 
     async def native_finder_show_extensions(self) -> NativeFinderShowExtensionsResponse:
         """Whether the file manager shows file extensions. Exists only on macOS and Windows; elsewhere it is refused with platform_no_analogue"""
@@ -3557,7 +3552,7 @@ class MethodsMixin:
         return result
 
     async def native_finder_show_status_bar(self) -> NativeFinderShowStatusBarResponse:
-        """Whether the file manager shows a status bar"""
+        """Whether the file manager shows a status bar. Exists only on macOS and Windows; elsewhere it is refused with platform_no_analogue"""
         result = await self.call(METHOD_NATIVE_FINDER_SHOW_STATUS_BAR)
         return result
 
@@ -3823,7 +3818,7 @@ class MethodsMixin:
         return (result or {}).get("addresses") or []
 
     async def native_hot_corners(self) -> NativeHotCornersResponse:
-        """Get hot corner actions as JSON string"""
+        """Get hot corner actions as JSON string. Exists only on macOS; elsewhere it is refused with platform_no_analogue"""
         result = await self.call(METHOD_NATIVE_HOT_CORNERS)
         return result
 
@@ -3916,7 +3911,7 @@ class MethodsMixin:
         return result
 
     async def native_keyboard_brightness(self) -> float:
-        """Get keyboard backlight brightness (0.0-1.0)"""
+        """Get keyboard backlight brightness (0.0-1.0). Exists only on macOS and Linux; elsewhere it is refused with platform_no_analogue"""
         result = await self.call(METHOD_NATIVE_KEYBOARD_BRIGHTNESS)
         return result
 
@@ -4001,7 +3996,7 @@ class MethodsMixin:
         return (result or {}).get("devices") or []
 
     async def native_list_notifications(self) -> list[DeliveredNotification]:
-        """List delivered notifications (partial — returns empty)"""
+        """List delivered notifications (partial — returns empty). Exists only on Windows; elsewhere it is refused with platform_no_analogue"""
         result = await self.call(METHOD_NATIVE_LIST_NOTIFICATIONS)
         return (result or {}).get("notifications") or []
 
@@ -4220,7 +4215,7 @@ class MethodsMixin:
         await self.call(METHOD_NATIVE_MOVE_WINDOW_TO_DISPLAY, params)
 
     async def native_move_window_to_space(self, *, space_id: int, window_id: str) -> bool:
-        """DEPRECATED, silent no-op on modern macOS: the private CGS move APIs this calls are dead (verified on Sequoia 2026-07-25) — the window does not move and the call still reports true. Kept for older systems. For a working move, drive the visible path the bundled windows plugin uses: mouse-hold the title bar + Ctrl+N. space_id here is an opaque CGS space id from native.list_spaces, NOT the 1-based ordinal that native.switch_space takes
+        """DEPRECATED, silent no-op on modern macOS: the private CGS move APIs this calls are dead (verified on Sequoia 2026-07-25) — the window does not move and the call still reports true. Kept for older systems. For a working move, drive the visible path the bundled windows plugin uses: mouse-hold the title bar + Ctrl+N. space_id here is an opaque CGS space id from native.list_spaces, NOT the 1-based ordinal that native.switch_space takes. Exists only on macOS and Linux; elsewhere it is refused with platform_no_analogue
 
         space_id: wire uint64 (64-bit) · min 0
         window_id: non-empty
@@ -4297,7 +4292,7 @@ class MethodsMixin:
         return bool((result or {}).get("ok", False))
 
     async def native_night_shift(self) -> NativeNightShiftResponse:
-        """Check if Night Shift is currently enabled"""
+        """Check if Night Shift is currently enabled. Exists only on macOS and Linux; elsewhere it is refused with platform_no_analogue"""
         result = await self.call(METHOD_NATIVE_NIGHT_SHIFT)
         return result
 
@@ -4334,17 +4329,6 @@ class MethodsMixin:
     async def native_number_format_decimal(self) -> NativeNumberFormatDecimalResponse:
         """Get decimal separator character"""
         result = await self.call(METHOD_NATIVE_NUMBER_FORMAT_DECIMAL)
-        return result
-
-    async def native_observe_windows(self, *, pid: int) -> NativeObserveWindowsResponse:
-        """Start observing window events for a PID (STUB -- not yet implemented)
-
-        pid: wire int32
-        """
-        params: dict[str, Any] = {
-            "pid": pid,
-        }
-        result = await self.call(METHOD_NATIVE_OBSERVE_WINDOWS, params)
         return result
 
     async def native_ocr_clipboard(self) -> list[OcrRegion]:
@@ -4402,7 +4386,7 @@ class MethodsMixin:
         return result
 
     async def native_open_app_settings(self, *, bundle_id: str) -> None:
-        """Open an app's preferences window
+        """Open an app's preferences window. Exists only on macOS; elsewhere it is refused with platform_no_analogue
 
         bundle_id: non-empty
         """
@@ -4465,7 +4449,7 @@ class MethodsMixin:
         await self.call(METHOD_NATIVE_OPEN_WITH_APP, params)
 
     async def native_optimized_charging(self) -> NativeOptimizedChargingResponse:
-        """Check if optimized battery charging is enabled"""
+        """Check if optimized battery charging is enabled. Exists only on macOS and Linux; elsewhere it is refused with platform_no_analogue"""
         result = await self.call(METHOD_NATIVE_OPTIMIZED_CHARGING)
         return result
 
@@ -5036,7 +5020,7 @@ class MethodsMixin:
         return result
 
     async def native_selected_finder_items(self) -> list[str]:
-        """Get Finder selection"""
+        """Get Finder selection. Exists only on macOS and Windows; elsewhere it is refused with platform_no_analogue"""
         result = await self.call(METHOD_NATIVE_SELECTED_FINDER_ITEMS)
         return (result or {}).get("paths") or []
 
@@ -5159,7 +5143,7 @@ class MethodsMixin:
         return bool((result or {}).get("ok", False))
 
     async def native_set_bounce_keys(self, *, enabled: bool) -> bool:
-        """Turn Bounce Keys on or off (repeated presses of one key are ignored)"""
+        """Turn Bounce Keys on or off (repeated presses of one key are ignored). Exists only on Linux and Windows; elsewhere it is refused with platform_no_analogue"""
         params: dict[str, Any] = {
             "enabled": enabled,
         }
@@ -5325,7 +5309,7 @@ class MethodsMixin:
         return bool((result or {}).get("ok", False))
 
     async def native_set_hot_corner(self, *, action: int, corner: str) -> bool:
-        """Set a hot corner action
+        """Set a hot corner action. Exists only on macOS; elsewhere it is refused with platform_no_analogue
 
         action: wire uint32 · min 0
         corner: non-empty
@@ -5414,7 +5398,7 @@ class MethodsMixin:
         return bool((result or {}).get("ok", False))
 
     async def native_set_night_shift(self, *, enabled: bool) -> None:
-        """Enable or disable Night Shift"""
+        """Enable or disable Night Shift. Exists only on macOS and Linux; elsewhere it is refused with platform_no_analogue"""
         params: dict[str, Any] = {
             "enabled": enabled,
         }
@@ -5657,7 +5641,7 @@ class MethodsMixin:
         await self.call(METHOD_NATIVE_SET_WINDOW_SIZE, params)
 
     async def native_set_window_sticky(self, *, sticky: bool, window_id: str) -> None:
-        """Set a window to appear on all spaces (sticky)
+        """Set a window to appear on all spaces (sticky). Exists only on macOS and Linux; elsewhere it is refused with platform_no_analogue
 
         window_id: non-empty
         """
@@ -5716,34 +5700,18 @@ class MethodsMixin:
         result = await self.call(METHOD_NATIVE_SPACES_SPAN_DISPLAYS)
         return result
 
-    async def native_speak(self, *, text: str, rate: float | None = None, voice: str | None = None) -> None:
-        """Speak text using the system text-to-speech engine
-
-        rate: wire double · default null
-        text: non-empty
-        voice: default null
-        """
-        params: dict[str, Any] = {
-            "text": text,
-        }
-        if rate is not None:
-            params["rate"] = rate
-        if voice is not None:
-            params["voice"] = voice
-        await self.call(METHOD_NATIVE_SPEAK, params)
-
     async def native_speech_locales(self) -> list[SpeechLocale]:
-        """List available speech recognition locales"""
+        """List available speech recognition locales. Exists only on macOS; elsewhere it is refused with platform_no_analogue"""
         result = await self.call(METHOD_NATIVE_SPEECH_LOCALES)
         return (result or {}).get("locales") or []
 
     async def native_speech_recognition_available(self) -> NativeSpeechRecognitionAvailableResponse:
-        """Check if on-device speech recognition is available"""
+        """Check if on-device speech recognition is available. Exists only on macOS; elsewhere it is refused with platform_no_analogue"""
         result = await self.call(METHOD_NATIVE_SPEECH_RECOGNITION_AVAILABLE)
         return result
 
     async def native_speech_recognize_file(self, *, path: str, locale: str | None = None) -> str:
-        """Recognize speech from an audio file (returns transcript)
+        """Recognize speech from an audio file (returns transcript). Exists only on macOS; elsewhere it is refused with platform_no_analogue
 
         locale: default ""
         path: non-empty
@@ -5922,18 +5890,13 @@ class MethodsMixin:
         return result
 
     async def native_time_machine_last_backup(self) -> NativeTimeMachineLastBackupResponse:
-        """Get the last Time Machine backup date"""
+        """Get the last Time Machine backup date. Exists only on macOS; elsewhere it is refused with platform_no_analogue"""
         result = await self.call(METHOD_NATIVE_TIME_MACHINE_LAST_BACKUP)
         return result
 
     async def native_time_machine_status(self) -> NativeTimeMachineStatusResponse:
-        """Check if Time Machine is enabled and get destination"""
+        """Check if Time Machine is enabled and get destination. Exists only on macOS; elsewhere it is refused with platform_no_analogue"""
         result = await self.call(METHOD_NATIVE_TIME_MACHINE_STATUS)
-        return result
-
-    async def native_time_on_battery(self) -> int:
-        """Get time on battery in minutes since last unplug"""
-        result = await self.call(METHOD_NATIVE_TIME_ON_BATTERY)
         return result
 
     async def native_timezone(self) -> NativeTimezoneResponse:
@@ -6033,17 +5996,6 @@ class MethodsMixin:
             "window_id": window_id,
         }
         await self.call(METHOD_NATIVE_UNMINIMIZE_WINDOW, params)
-
-    async def native_unobserve_windows(self, *, subscription_id: str) -> bool:
-        """Stop observing window events (STUB)
-
-        subscription_id: non-empty
-        """
-        params: dict[str, Any] = {
-            "subscription_id": subscription_id,
-        }
-        result = await self.call(METHOD_NATIVE_UNOBSERVE_WINDOWS, params)
-        return bool((result or {}).get("result", False))
 
     async def native_unzip(self, *, destination: str, source: str) -> bool:
         """Extract a zip archive to a directory
@@ -6182,7 +6134,7 @@ class MethodsMixin:
         return result
 
     async def native_window_layer(self, *, window_id: str) -> int:
-        """Get window layer level
+        """Get window layer level. Exists only on macOS; elsewhere it is refused with platform_no_analogue
 
         window_id: non-empty
         """
@@ -6204,7 +6156,7 @@ class MethodsMixin:
         return result
 
     async def native_window_subrole(self, *, window_id: str) -> str:
-        """Get window subrole
+        """Get window subrole. Exists only on macOS; elsewhere it is refused with platform_no_analogue
 
         window_id: non-empty
         """
