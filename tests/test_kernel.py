@@ -151,13 +151,51 @@ class TestProxyParsing(unittest.TestCase):
                 proxy.parse_proxy_url(bad)
 
 
-def _mini_proxy(path: str, allowed_host: str):
+class _Sockets:
+    """Every socket a test-side server opens, so its cleanup can close them
+    all. Without it the per-connection sockets (accepted clients, upstream
+    dials) outlive the test and surface as `ResourceWarning: unclosed
+    socket` — noise that hides a real leak in the SDK. A socket registered
+    after close() is closed at once (an accept racing the cleanup)."""
+
+    def __init__(self):
+        import threading
+
+        self._lock = threading.Lock()
+        self._socks: list = []
+        self._closed = False
+
+    def track(self, sock):
+        with self._lock:
+            if not self._closed:
+                self._socks.append(sock)
+                return sock
+        sock.close()
+        return sock
+
+    def close(self):
+        with self._lock:
+            self._closed = True
+            socks, self._socks = self._socks, []
+        for sock in socks:
+            # shutdown first: it wakes a pump thread blocked in recv on this
+            # socket, which a bare close() does not reliably do.
+            try:
+                sock.shutdown(socket.SHUT_RDWR)
+            except OSError:
+                pass
+            sock.close()
+
+
+def _mini_proxy(path: str, allowed_host: str) -> _Sockets:
     """Test-side CONNECT proxy over AF_UNIX mirroring the actuator's
     host_proxy: allow -> tunnel, deny -> 403. Serves one connection per
-    accept on a daemon thread; returns the listening socket."""
+    accept on a daemon thread; returns the tracker whose close() shuts the
+    listener and every connection it served."""
     import threading
 
-    srv = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+    socks = _Sockets()
+    srv = socks.track(socket.socket(socket.AF_UNIX, socket.SOCK_STREAM))
     srv.bind(path)
     srv.listen(4)
 
@@ -179,7 +217,10 @@ def _mini_proxy(path: str, allowed_host: str):
     def serve(client):
         head = b""
         while b"\r\n\r\n" not in head:
-            chunk = client.recv(4096)
+            try:
+                chunk = client.recv(4096)
+            except OSError:
+                return
             if not chunk:
                 client.close()
                 return
@@ -190,7 +231,7 @@ def _mini_proxy(path: str, allowed_host: str):
             client.sendall(b"HTTP/1.1 403 Forbidden\r\nContent-Length: 0\r\n\r\n")
             client.close()
             return
-        up = socket.create_connection((host, int(port_s)))
+        up = socks.track(socket.create_connection((host, int(port_s))))
         client.sendall(b"HTTP/1.1 200 Connection Established\r\n\r\n")
         threading.Thread(target=pump, args=(client, up), daemon=True).start()
         threading.Thread(target=pump, args=(up, client), daemon=True).start()
@@ -201,10 +242,10 @@ def _mini_proxy(path: str, allowed_host: str):
                 client, _ = srv.accept()
             except OSError:
                 return
-            threading.Thread(target=serve, args=(client,), daemon=True).start()
+            threading.Thread(target=serve, args=(socks.track(client),), daemon=True).start()
 
     threading.Thread(target=accept_loop, daemon=True).start()
-    return srv
+    return socks
 
 
 def _echo_server():
@@ -631,6 +672,100 @@ class TestListenerHelpers(unittest.TestCase):
             self.assertEqual(inherited_listener_count(), 0)
         finally:
             del os.environ["LISTEN_FDS"]
+
+
+class TestHandleAction(unittest.IsolatedAsyncioTestCase):
+    """handle_action's demux, driven through the real request path
+    (_handle_request → on_action → per-action handler) with the response
+    frame captured — the same cases as the Go and TS action suites."""
+
+    def _core(self):
+        core = PluginCore()
+        written = []
+        core._write = written.append
+        core._ready.set()
+        return core, written
+
+    async def _send(self, core, written, params):
+        written.clear()
+        await core._handle_request(1, "on_action", params, None)
+        self.assertEqual(len(written), 1, written)
+        return written[0]
+
+    async def test_dispatches_by_action(self):
+        core, written = self._core()
+        calls = {"snap": 0, "focus": 0}
+
+        @core.handle_action("foo.snap")
+        async def snap(req):
+            calls["snap"] += 1
+            return {"status": "ok", "control_message": "snapped " + req["params"]["position"]}
+
+        @core.handle_action("foo.focus")
+        async def focus(req):
+            calls["focus"] += 1
+
+        resp = await self._send(core, written, {"action": "foo.snap", "params": {"position": "left"}})
+        self.assertEqual(resp, {"jsonrpc": "2.0", "id": 1, "result": {"status": "ok", "control_message": "snapped left"}})
+        self.assertEqual(calls, {"snap": 1, "focus": 0})
+
+        # A handler returning None answers {"status": "ok"}.
+        resp = await self._send(core, written, {"action": "foo.focus"})
+        self.assertEqual(resp["result"], {"status": "ok"})
+        self.assertEqual(calls, {"snap": 1, "focus": 1})
+
+    async def test_unknown_action_is_not_handled(self):
+        core, written = self._core()
+        core.handle_action("foo.snap", lambda req: None)
+        resp = await self._send(core, written, {"action": "foo.unknown"})
+        self.assertEqual(resp["result"], {"status": "not_handled"})
+
+    async def test_handler_error_is_a_wire_error(self):
+        core, written = self._core()
+
+        async def boom(req):
+            raise ValueError("no window")
+
+        core.handle_action("foo.snap", boom)
+        resp = await self._send(core, written, {"action": "foo.snap"})
+        self.assertNotIn("result", resp)
+        self.assertIn("no window", resp["error"]["message"])
+
+    async def test_sync_handler_is_dispatched_too(self):
+        core, written = self._core()
+        core.handle_action("foo.snap", lambda req: {"status": "ok", "control_message": "sync"})
+        resp = await self._send(core, written, {"action": "foo.snap"})
+        self.assertEqual(resp["result"], {"status": "ok", "control_message": "sync"})
+
+    async def test_active_app_reaches_the_handler(self):
+        core, written = self._core()
+        seen = {}
+
+        @core.handle_action("foo.snap")
+        async def snap(req):
+            seen["app"] = req.get("active_app")
+
+        await self._send(core, written, {"action": "foo.snap", "active_app": "com.apple.Safari"})
+        self.assertEqual(seen["app"], "com.apple.Safari")
+
+    def test_raises_when_registered_after_handle_on_action(self):
+        core = PluginCore()
+        core.handle("on_action", lambda params: {"status": "ok"})
+        with self.assertRaises(RuntimeError):
+            core.handle_action("foo.snap", lambda req: None)
+
+    async def test_registered_action_types(self):
+        core, written = self._core()
+        self.assertIsNone(core.registered_action_types())
+        core.handle_action("foo.snap", lambda req: None)
+        core.handle_action("foo.focus", lambda req: None)
+        self.assertEqual(sorted(core.registered_action_types()), ["foo.focus", "foo.snap"])
+
+        # The built-in list_action_types the actuator validates against
+        # reports the same set.
+        written.clear()
+        await core._handle_request(2, "list_action_types", {}, None)
+        self.assertEqual(sorted(written[0]["result"]["action_types"]), ["foo.focus", "foo.snap"])
 
 
 if __name__ == "__main__":

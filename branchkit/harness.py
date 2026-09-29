@@ -14,7 +14,8 @@ plain `unittest` test bodies, which are not async.
 Harness-backed integration tests should skip when
 `harness_binary_available()` is false — they run where the binary is
 built (the app-repo conformance context) and skip cleanly on a fresh
-checkout."""
+checkout. Set BRANCHKIT_REQUIRE_HARNESS=1 where the binary is expected
+(CI) and a missing one fails instead of skipping."""
 
 from __future__ import annotations
 
@@ -282,40 +283,63 @@ class Harness:
             pass
 
 
+# The one message every SDK gives when the binary is absent: where it ships
+# and how to build it.
+_HARNESS_MISSING = (
+    "harness: cannot find branchkit-test-harness binary. It ships inside "
+    "BranchKit.app (Contents/Resources); install the app, or set "
+    "BRANCHKIT_TEST_HARNESS to a harness binary. In an app-repo checkout, "
+    "build it with `cargo build -p branchkit-test-harness` (it lands in "
+    "target/debug/branchkit-test-harness)."
+)
+
+
+def harness_required() -> bool:
+    """True when BRANCHKIT_REQUIRE_HARNESS asks for a missing harness binary
+    to fail instead of skip. Set it in any CI lane that builds the binary:
+    without it, a lookup that silently stops finding the binary turns every
+    harness test into a skip and the suite still reports green."""
+    return os.environ.get("BRANCHKIT_REQUIRE_HARNESS", "") not in ("", "0", "false")
+
+
 def harness_binary_available() -> bool:
-    """True when the `branchkit-test-harness` binary can be located."""
-    try:
-        find_harness_binary()
+    """True when the `branchkit-test-harness` binary can be located.
+
+    Under BRANCHKIT_REQUIRE_HARNESS this is always true, so a test guarded by
+    ``skipUnless(harness_binary_available(), ...)`` never skips and
+    ``Harness.start`` fails with the build instructions instead."""
+    if harness_required():
         return True
-    except OSError:
-        return False
+    return _lookup_harness_binary() is not None
 
 
-def find_harness_binary() -> str:
+def _lookup_harness_binary() -> str | None:
+    """BRANCHKIT_TEST_HARNESS wins; then a Cargo target directory walking up
+    from the working directory (app-repo checkouts), then the installed app,
+    then PATH. A freshly built binary is searched before the installed app's
+    so a stale installed harness never shadows the one just built."""
     env = os.environ.get("BRANCHKIT_TEST_HARNESS")
     if env:
         return env
-    # The installed app ships the harness in its Resources; the cargo
-    # target paths serve app-repo checkouts.
     candidates = [
-        "/Applications/BranchKit.app/Contents/Resources/branchkit-test-harness",
-        os.path.expanduser("~/Applications/BranchKit.app/Contents/Resources/branchkit-test-harness"),
         "target/debug/branchkit-test-harness",
         "target/release/branchkit-test-harness",
         "../target/debug/branchkit-test-harness",
         "../target/release/branchkit-test-harness",
         "../../target/debug/branchkit-test-harness",
         "../../target/release/branchkit-test-harness",
+        "/Applications/BranchKit.app/Contents/Resources/branchkit-test-harness",
+        os.path.expanduser("~/Applications/BranchKit.app/Contents/Resources/branchkit-test-harness"),
     ]
     for c in candidates:
         abs_path = os.path.abspath(c)
         if os.path.exists(abs_path):
             return abs_path
-    found = shutil.which("branchkit-test-harness")
+    return shutil.which("branchkit-test-harness")
+
+
+def find_harness_binary() -> str:
+    found = _lookup_harness_binary()
     if found:
         return found
-    raise OSError(
-        "harness: cannot find branchkit-test-harness binary. It ships inside "
-        "BranchKit.app (Contents/Resources); install the app, or set "
-        "BRANCHKIT_TEST_HARNESS to a harness binary."
-    )
+    raise OSError(_HARNESS_MISSING)

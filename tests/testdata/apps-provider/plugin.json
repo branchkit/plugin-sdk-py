@@ -1,0 +1,25 @@
+{
+  "id": "apps-provider-stub",
+  "name": "Apps Provider Stub",
+  "version": "1.0.0",
+  "min_api_version": "0.1.0",
+  "run": "./nonexistent",
+  "description": "Test fixture: provides the `apps` vocabulary with the system plugin's schema, so capture tests resolve value_field like production.",
+  "provides": {
+    "collections": {
+      "apps": {
+        "preset": "named_entities",
+        "fields": [
+          { "key": "spoken", "field_type": "string", "label": "Spoken name" },
+          { "key": "bundle_id", "field_type": "string", "label": "Bundle ID" }
+        ],
+        "feeds_matching": {
+          "type": "as_named_entities",
+          "key_field": "spoken",
+          "value_field": "bundle_id"
+        },
+        "description": "Installed applications with speakable names."
+      }
+    }
+  }
+}

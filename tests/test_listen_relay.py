@@ -15,13 +15,26 @@ TOKEN = "0123456789abcdef0123456789abcdef"
 
 class FakeRelay:
     def __init__(self):
-        self.rv = socket.socket(); self.rv.bind(("127.0.0.1", 0)); self.rv.listen(16)
-        self.pub = socket.socket(); self.pub.bind(("127.0.0.1", 0)); self.pub.listen(16)
+        # Every socket the relay opens, accepted or listening, so stop() can
+        # close them all: left to the GC they surface as `ResourceWarning:
+        # unclosed socket`, which hides a real leak in the SDK.
+        self._socks: list[socket.socket] = []
+        self._socks_lock = threading.Lock()
+        self.alive = True
+        self.rv = self._track(socket.socket()); self.rv.bind(("127.0.0.1", 0)); self.rv.listen(16)
+        self.pub = self._track(socket.socket()); self.pub.bind(("127.0.0.1", 0)); self.pub.listen(16)
         self.parked: list[socket.socket] = []
         self.cv = threading.Condition()
-        self.alive = True
         threading.Thread(target=self._rendezvous, daemon=True).start()
         threading.Thread(target=self._public, daemon=True).start()
+
+    def _track(self, sock):
+        with self._socks_lock:
+            if self.alive:
+                self._socks.append(sock)
+                return sock
+        sock.close()  # accepted after stop(): close at once
+        return sock
 
     def _rendezvous(self):
         while self.alive:
@@ -29,6 +42,7 @@ class FakeRelay:
                 s, _ = self.rv.accept()
             except OSError:
                 return
+            self._track(s)
             line = b""
             while not line.endswith(b"\n"):
                 b = s.recv(1)
@@ -47,6 +61,7 @@ class FakeRelay:
                 c, _ = self.pub.accept()
             except OSError:
                 return
+            self._track(c)
             with self.cv:
                 self.cv.wait_for(lambda: self.parked, timeout=5)
                 p = self.parked.pop(0) if self.parked else None
@@ -71,7 +86,15 @@ class FakeRelay:
             except OSError: pass
 
     def stop(self):
-        self.alive = False; self.rv.close(); self.pub.close()
+        with self._socks_lock:
+            self.alive = False
+            socks, self._socks = self._socks, []
+        for s in socks:
+            # shutdown first: it wakes a pump thread blocked in recv on this
+            # socket, which a bare close() does not reliably do.
+            try: s.shutdown(socket.SHUT_RDWR)
+            except OSError: pass
+            s.close()
 
 
 class ListenRelayTest(unittest.TestCase):
