@@ -3,6 +3,13 @@
 Versions before this file predate it; their contents are in the repo's
 git history.
 
+## Unreleased
+
+### Pipeline
+
+- `DisplayInfo` gains `is_asleep` (`NotRequired[bool]`): the display is
+  connected but in display sleep. Absent means awake.
+
 ## 0.5.0 — 2026-09-28
 
 0.4.0 was tagged but never published to PyPI; 0.5.0 carries its changes too

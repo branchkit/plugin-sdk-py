@@ -69,6 +69,13 @@ class TestFraming(unittest.TestCase):
             Reader(io.BytesIO(
                 b'{"type":"a","payload_length":8}\nshort')).read_event()
 
+    def test_missing_payload_is_refused(self):
+        # A header that promised a payload and got zero bytes is truncation,
+        # not a clean end.
+        with self.assertRaises(WireError):
+            Reader(io.BytesIO(
+                b'{"type":"a","payload_length":8}\n')).read_event()
+
     def test_payload_cap(self):
         with self.assertRaises(WireError):
             Reader(io.BytesIO(
