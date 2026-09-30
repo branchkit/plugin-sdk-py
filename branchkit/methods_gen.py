@@ -36,6 +36,7 @@ from .contracts_gen import (
     METHOD_COMMANDS_RESET,
     METHOD_COMMANDS_RESET_OVERRIDE,
     METHOD_COMMANDS_RESOLVE,
+    METHOD_COMMANDS_RESOLVE_PHRASE,
     METHOD_COMMANDS_SET_OVERRIDE,
     METHOD_CONTROL_SIGNAL,
     METHOD_DISCOVERY_CLOSED,
@@ -691,6 +692,7 @@ if TYPE_CHECKING:
         CommandsPushResponse,
         CommandsRemoveAliasResponse,
         CommandsResetOverrideResponse,
+        CommandsResolvePhraseResponse,
         CommandsResolveResponse,
         ConfusabilityFinding,
         ContactInfo,
@@ -1563,6 +1565,35 @@ class MethodsMixin:
         if words is not None:
             params["words"] = words
         result = await self.call(METHOD_COMMANDS_RESOLVE, params)
+        return result
+
+    async def commands_resolve_phrase(self, *, preview: bool | None = None, session_id: str | None = None, source: str | None = None, words: list[str] | None = None) -> CommandsResolvePhraseResponse:
+        """Resolve a whole phrase into the commands it names, in order ("snap left": the mode entry, then the command it gates) — preview changes nothing, commit applies each step's tag writes
+
+        preview: Change nothing. Each step resolves against a scratch copy of the full
+            active tag set, which the step's tag writes then update, so later
+            steps see the modes earlier ones enter; the live tags are never
+            written, no codeword in progress is consulted or advanced, and no
+            match telemetry is emitted. Default false: each step's tag writes are
+            applied as it matches, exactly as `commands.resolve` applies them.
+            default false
+        session_id: Audio session ID, as for `commands.resolve`. Informational.
+        source: Input source, as for `commands.resolve`: "command_hold", "continuous",
+            "selection", "api".
+        words: The phrase's words, in order.
+            default []
+        """
+        params: dict[str, Any] = {
+        }
+        if preview is not None:
+            params["preview"] = preview
+        if session_id is not None:
+            params["session_id"] = session_id
+        if source is not None:
+            params["source"] = source
+        if words is not None:
+            params["words"] = words
+        result = await self.call(METHOD_COMMANDS_RESOLVE_PHRASE, params)
         return result
 
     async def commands_set_override(self, *, action: str, default_pattern: str, new_pattern: str) -> None:
