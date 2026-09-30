@@ -2101,7 +2101,7 @@ class MethodsMixin:
         await self.call(METHOD_INPUT_SELECT_ALL)
 
     async def input_switch_input_source(self, *, source_id: str) -> bool:
-        """Switch keyboard input source
+        """Switch keyboard input source. On Linux, not available on GNOME (GNOME Shell switches input sources only from its own switcher; it exposes no way to ask)
 
         source_id: non-empty
         """
@@ -2215,7 +2215,7 @@ class MethodsMixin:
         return result
 
     async def native_all_window_ids(self) -> list[str]:
-        """List all on-screen window IDs"""
+        """List all on-screen window IDs. On Linux, not available on GNOME (GNOME exposes no window list; only the focused window is visible)"""
         result = await self.call(METHOD_NATIVE_ALL_WINDOW_IDS)
         return (result or {}).get("window_ids") or []
 
@@ -2375,7 +2375,7 @@ class MethodsMixin:
         return (result or {}).get("windows") or []
 
     async def native_app_windows_count(self, *, bundle_id: str) -> int:
-        """Count windows for an app by bundle ID
+        """Count windows for an app by bundle ID. On Linux, not available on GNOME (GNOME exposes no window list; only the focused window is visible)
 
         bundle_id: non-empty
         """
@@ -2835,7 +2835,7 @@ class MethodsMixin:
         return result
 
     async def native_cascade_windows(self, *, bundle_id: str) -> bool:
-        """Cascade all windows for an app
+        """Cascade all windows for an app. On Linux, not available on sway (sway tiles windows; there is no cascade); nor on GNOME (GNOME exposes no window list; only the focused window is visible)
 
         bundle_id: non-empty
         """
@@ -3021,12 +3021,12 @@ class MethodsMixin:
         return result
 
     async def native_cursor(self) -> NativeCursorResponse:
-        """Get the current cursor position"""
+        """Get the current cursor position. On Linux, not available on sway, GNOME or other Wayland compositors (Wayland gives a client no global pointer position, and XWayland knows it only over its own windows; only X11 sessions can read it)"""
         result = await self.call(METHOD_NATIVE_CURSOR)
         return result
 
     async def native_cursor_info(self) -> NativeCursorInfoResponse:
-        """Get current cursor type and position"""
+        """Get current cursor type and position. On Linux, not available on sway, GNOME or other Wayland compositors (Wayland gives a client no global pointer position, and XWayland knows it only over its own windows; only X11 sessions can read it)"""
         result = await self.call(METHOD_NATIVE_CURSOR_INFO)
         return result
 
@@ -3839,7 +3839,7 @@ class MethodsMixin:
         return result
 
     async def native_hide_app(self, *, bundle_id: str) -> None:
-        """Hide an app by bundle ID
+        """Hide an app by bundle ID. On Linux, not available on sway (this compositor has no minimize; sway uses the scratchpad); nor on GNOME (GNOME exposes no window IPC to minimize through)
 
         bundle_id: non-empty
         """
@@ -3925,7 +3925,7 @@ class MethodsMixin:
         return result
 
     async def native_is_app_hidden(self, *, bundle_id: str) -> bool:
-        """Check if an application is hidden
+        """Check if an application is hidden. On Linux, not available on sway (this compositor has no minimize; sway uses the scratchpad); nor on GNOME (GNOME exposes no window IPC to minimize through)
 
         bundle_id: non-empty
         """
@@ -4132,7 +4132,7 @@ class MethodsMixin:
         return result
 
     async def native_maximize_window(self, *, window_id: str) -> bool:
-        """Maximize window to fill screen
+        """Maximize window to fill screen. On Linux, not available on sway (sway tiles rather than maximizing; there is no such window state); nor on GNOME (GNOME exposes no window IPC; use its own tiling keybinds)
 
         window_id: non-empty
         """
@@ -4201,7 +4201,7 @@ class MethodsMixin:
         return result
 
     async def native_minimize_window(self, *, window_id: str) -> None:
-        """Minimize a window by ID
+        """Minimize a window by ID. On Linux, not available on sway (this compositor has no minimize; sway uses the scratchpad); nor on GNOME (GNOME exposes no window IPC to minimize through)
 
         window_id: non-empty
         """
@@ -4265,7 +4265,7 @@ class MethodsMixin:
         return bool((result or {}).get("ok", False))
 
     async def native_move_window_to_display(self, *, display_id: int, window_id: str) -> None:
-        """Move a window to a different display
+        """Move a window to a different display. On Linux, not available on GNOME (GNOME exposes no window IPC to set window properties through)
 
         display_id: wire uint32 · min 0
         window_id: non-empty
@@ -4277,7 +4277,7 @@ class MethodsMixin:
         await self.call(METHOD_NATIVE_MOVE_WINDOW_TO_DISPLAY, params)
 
     async def native_move_window_to_space(self, *, space_id: int, window_id: str) -> bool:
-        """DEPRECATED, silent no-op on modern macOS: the private CGS move APIs this calls are dead (verified on Sequoia 2026-07-25) — the window does not move and the call still reports true. Kept for older systems. For a working move, drive the visible path the bundled windows plugin uses: mouse-hold the title bar + Ctrl+N. space_id here is an opaque CGS space id from native.list_spaces, NOT the 1-based ordinal that native.switch_space takes. Exists only on macOS and Linux; elsewhere it is refused with platform_no_analogue
+        """DEPRECATED, silent no-op on modern macOS: the private CGS move APIs this calls are dead (verified on Sequoia 2026-07-25) — the window does not move and the call still reports true. Kept for older systems. For a working move, drive the visible path the bundled windows plugin uses: mouse-hold the title bar + Ctrl+N. space_id here is an opaque CGS space id from native.list_spaces, NOT the 1-based ordinal that native.switch_space takes. Exists only on macOS and Linux; elsewhere it is refused with platform_no_analogue. On Linux, not available on GNOME (GNOME moves windows between workspaces only from its own shortcuts; its XWayland windows ignore the EWMH request)
 
         space_id: wire uint64 (64-bit) · min 0
         window_id: non-empty
@@ -4541,7 +4541,7 @@ class MethodsMixin:
         return result
 
     async def native_pin_window_above(self, *, pinned: bool, window_id: str) -> None:
-        """Pin or unpin a window above all others
+        """Pin or unpin a window above all others. On Linux, not available on GNOME (GNOME exposes no window IPC to set window properties through); nor on sway (sway has no stacking levels; floating windows are always above tiled ones)
 
         window_id: non-empty
         """
@@ -5111,7 +5111,7 @@ class MethodsMixin:
         return bool((result or {}).get("ok", False))
 
     async def native_set_app_hidden(self, *, bundle_id: str, hidden: bool) -> bool:
-        """Hide or unhide an app
+        """Hide or unhide an app. On Linux, not available on sway (this compositor has no minimize; sway uses the scratchpad); nor on GNOME (GNOME exposes no window IPC to minimize through)
 
         bundle_id: non-empty
         """
@@ -5390,7 +5390,7 @@ class MethodsMixin:
         return bool((result or {}).get("ok", False))
 
     async def native_set_input_source(self, *, source_id: str) -> bool:
-        """Switch to a keyboard input source by ID
+        """Switch to a keyboard input source by ID. On Linux, not available on GNOME (GNOME Shell switches input sources only from its own switcher; it exposes no way to ask)
 
         source_id: non-empty
         """
@@ -5645,7 +5645,7 @@ class MethodsMixin:
         return bool((result or {}).get("ok", False))
 
     async def native_set_window_alpha(self, *, alpha: float, window_id: str) -> None:
-        """Set window transparency
+        """Set window transparency. On Linux, not available on GNOME (GNOME exposes no window IPC to set window properties through)
 
         alpha: wire double
         window_id: non-empty
@@ -5657,7 +5657,7 @@ class MethodsMixin:
         await self.call(METHOD_NATIVE_SET_WINDOW_ALPHA, params)
 
     async def native_set_window_level(self, *, level: str, window_id: str) -> bool:
-        """Set a window's level (floating, normal, below)
+        """Set a window's level (floating, normal, below). On Linux, not available on GNOME (GNOME exposes no window IPC to set window properties through); nor on sway (sway has no stacking levels; floating windows are always above tiled ones)
 
         level: non-empty
         window_id: non-empty
@@ -5709,7 +5709,7 @@ class MethodsMixin:
         await self.call(METHOD_NATIVE_SET_WINDOW_SIZE, params)
 
     async def native_set_window_sticky(self, *, sticky: bool, window_id: str) -> None:
-        """Set a window to appear on all spaces (sticky). Exists only on macOS and Linux; elsewhere it is refused with platform_no_analogue
+        """Set a window to appear on all spaces (sticky). Exists only on macOS and Linux; elsewhere it is refused with platform_no_analogue. On Linux, not available on GNOME (GNOME exposes no window IPC to set window properties through)
 
         window_id: non-empty
         """
@@ -5981,7 +5981,7 @@ class MethodsMixin:
         return bool((result or {}).get("ok", False))
 
     async def native_toggle_fullscreen(self, *, window_id: str) -> None:
-        """Toggle native fullscreen for a window
+        """Toggle native fullscreen for a window. On Linux, not available on sway (sway tiles rather than maximizing; there is no such window state); nor on GNOME (GNOME exposes no window IPC; use its own tiling keybinds)
 
         window_id: non-empty
         """
@@ -6046,7 +6046,7 @@ class MethodsMixin:
         return result
 
     async def native_unhide_app(self, *, bundle_id: str) -> None:
-        """Unhide a hidden application
+        """Unhide a hidden application. On Linux, not available on sway (this compositor has no minimize; sway uses the scratchpad); nor on GNOME (GNOME exposes no window IPC to minimize through)
 
         bundle_id: non-empty
         """
@@ -6056,7 +6056,7 @@ class MethodsMixin:
         await self.call(METHOD_NATIVE_UNHIDE_APP, params)
 
     async def native_unminimize_window(self, *, window_id: str) -> None:
-        """Restore a minimized window by ID
+        """Restore a minimized window by ID. On Linux, not available on sway (this compositor has no minimize; sway uses the scratchpad); nor on GNOME (GNOME exposes no window IPC to minimize through)
 
         window_id: non-empty
         """
