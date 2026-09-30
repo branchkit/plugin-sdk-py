@@ -1069,7 +1069,7 @@ class MethodsMixin:
         return result
 
     async def artifact_delete(self, *, ref: str) -> None:
-        """Delete an installed model from the caller's own model namespace (ref: <plugin>/<model>)
+        """Delete an installed artifact from the caller's own artifact namespace (ref: <plugin>/<artifact>)
 
         ref: non-empty
         """

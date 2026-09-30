@@ -2493,9 +2493,8 @@ EffectsAssertResponse = TypedDict("EffectsAssertResponse", {
     # effect — assert is idempotent. Implies `granted=true`.
     "already_held": bool,
     # When the assertion displaced an existing top-of-stack owner, this
-    # names that plugin. The displaced plugin should receive an
-    # `effect_displaced` notification (section 10.2). Notification path is
-    # stubbed in v1 — see registered handler.
+    # names that plugin. The platform broadcasts
+    # `_platform.effect.displaced` naming it as `displaced_owner`.
     "displaced": NotRequired[str],
     # True when the platform actually delivers this effect's semantics
     # while you hold ownership. Signal-shape effects (whose entire
@@ -2509,7 +2508,7 @@ EffectsAssertResponse = TypedDict("EffectsAssertResponse", {
     "enforced": bool,
     # True when the assertion is now top-of-stack and effective.
     # False when the user has revoked consent for this effect on this
-    # plugin (fail-next-assertion semantics per section 10.3) or when the
+    # plugin (a revocation fails the next assertion) or when the
     # effect name is unknown.
     "granted": bool,
 })
@@ -7126,7 +7125,10 @@ ActionExecutedEventParams = TypedDict("ActionExecutedEventParams", {
 
 # Payload of the `_platform.app.focused` event.
 AppFocusedEventParams = TypedDict("AppFocusedEventParams", {
-    # macOS bundle identifier (e.g., `com.google.Chrome`).
+    # The focused app's identity: the bundle identifier on macOS
+    # (`com.google.Chrome`), the WM_CLASS class on Linux
+    # (`Google-chrome`), the lowercased executable name on Windows
+    # (`chrome`).
     "bundle_id": str,
 })
 
@@ -7259,6 +7261,11 @@ ClipboardChangedEventParams = TypedDict("ClipboardChangedEventParams", {
 CollectionUpdatedEventParams = TypedDict("CollectionUpdatedEventParams", {
     # Name of the collection that was updated.
     "collection": str,
+    # Set when the platform recomposed the collection from manifests
+    # rather than a plugin writing it: `reload` (plugins were reloaded) or
+    # `rebuild` (one plugin was rebuilt in development). Absent on an
+    # ordinary write.
+    "reason": NotRequired[str],
     # Plugin ID or `_platform` that wrote the update.
     "writer": str,
 })
