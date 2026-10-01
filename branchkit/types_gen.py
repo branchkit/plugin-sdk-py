@@ -1251,7 +1251,7 @@ OnPointer = Literal["none", "fade"]
 # indistinguishable from speaking it. `dispatch` names an action type
 # directly, for items that are not commands.
 OutputAction = TypedDict("OutputAction", {
-    # An action type to dispatch — `windows.desk`.
+    # An action type to dispatch — `placement.desk`.
     "dispatch": NotRequired[str],
     # Parameters for `dispatch`. Meaningless with `say`.
     "params": NotRequired[Any],
@@ -1927,7 +1927,7 @@ WindowInfo = TypedDict("WindowInfo", {
     "app_name": str,
     # Desk ordinal of the window's space: user spaces counted 1..N in
     # managed-display order (on macOS, the Mission Control / Ctrl+N index —
-    # the same convention as `windows.desk_switch`). Absent when the window
+    # the same convention as `placement.desk_switch`). Absent when the window
     # is not on exactly one user space: minimized (no space), fullscreen
     # (its space is not a user desk), or pinned to multiple spaces.
     # wire uint32 · default null · min 0
@@ -7163,7 +7163,7 @@ WiringDescribeResponse = TypedDict("WiringDescribeResponse", {
 # ===== Actuator → Plugin request/response types =====
 
 OnActionRequest = TypedDict("OnActionRequest", {
-    # Fully qualified action type (e.g., 'voice.dictation', 'windows.snap').
+    # Fully qualified action type (e.g., 'voice.dictation', 'placement.snap').
     "action": str,
     # Active application bundle ID.
     # default ""

@@ -4344,7 +4344,7 @@ class MethodsMixin:
         await self.call(METHOD_NATIVE_MOVE_WINDOW_TO_DISPLAY, params)
 
     async def native_move_window_to_space(self, *, space_id: int, window_id: str) -> bool:
-        """DEPRECATED, silent no-op on modern macOS: the private CGS move APIs this calls are dead (verified on Sequoia 2026-07-25) — the window does not move and the call still reports true. Kept for older systems. For a working move, drive the visible path the bundled windows plugin uses: mouse-hold the title bar + Ctrl+N. space_id here is an opaque CGS space id from native.list_spaces, NOT the 1-based ordinal that native.switch_space takes. Exists only on macOS and Linux; elsewhere it is refused with platform_no_analogue. On Linux, not available on GNOME (GNOME moves windows between workspaces only from its own shortcuts; its XWayland windows ignore the EWMH request)
+        """DEPRECATED, silent no-op on modern macOS: the private CGS move APIs this calls are dead (verified on Sequoia 2026-07-25) — the window does not move, and the call re-reads the window's spaces and reports false. Kept for older systems. For a working move, drive the visible path the bundled placement plugin uses: mouse-hold the title bar + Ctrl+N. space_id here is an opaque CGS space id from native.list_spaces, NOT the 1-based ordinal that native.switch_space takes. Exists only on macOS and Linux; elsewhere it is refused with platform_no_analogue. On Linux, not available on GNOME (GNOME moves windows between workspaces only from its own shortcuts; its XWayland windows ignore the EWMH request)
 
         space_id: wire uint64 (64-bit) · min 0
         window_id: non-empty
