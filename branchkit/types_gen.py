@@ -1832,6 +1832,25 @@ TileableEntry = TypedDict("TileableEntry", {
     "window_id": str,
 })
 
+# One trigger a device source offers.
+TriggerDecl = TypedDict("TriggerDecl", {
+    # The heading it is listed under, e.g. the layer: `"Group 2"`. Absent
+    # lists it under the device alone.
+    "group": NotRequired[str],
+    # default "button"
+    "kind": NotRequired["TriggerKind"],
+    # What a person calls it: `"Button 3"`.
+    # non-empty
+    "label": str,
+    # The name the source reports it by (`bindings.report`), without an
+    # event word: `"0x28bd:0x0202/g2/button3"`.
+    # non-empty
+    "name": str,
+})
+
+# How a device trigger behaves, which decides how it can be bound.
+TriggerKind = Literal["button", "momentary"]
+
 TtsVoice = TypedDict("TtsVoice", {
     "identifier": str,
     "language": str,
@@ -2064,6 +2083,18 @@ BindingsSetResponse = TypedDict("BindingsSetResponse", {
     # Edits dropped (a trigger with no edit counts as nothing).
     # wire uint · min 0
     "removed": int,
+})
+
+BindingsSetTriggersRequest = TypedDict("BindingsSetTriggersRequest", {
+    # Every trigger this plugin offers now, replacing what it published
+    # before. Publish again when a device connects or goes away.
+    "triggers": list["TriggerDecl"],
+})
+
+BindingsSetTriggersResponse = TypedDict("BindingsSetTriggersResponse", {
+    # Triggers published.
+    # wire uint · min 0
+    "count": int,
 })
 
 BlobPublishRequest = TypedDict("BlobPublishRequest", {

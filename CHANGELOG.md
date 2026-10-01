@@ -7,6 +7,12 @@ git history.
 
 ### Device triggers
 
+- Added `bindings_set_triggers` (`TriggerDecl`, `TriggerKind`): a device plugin publishes
+  the triggers it offers, each with a label, an optional heading (a layer)
+  and whether it is a button or momentary. Settings lists them, bound or not,
+  and binds any of them from a command picker as the user's own binding.
+  Publish again when a device connects or goes away; the list is dropped when
+  the plugin stops.
 - Added `bindings_report` and `bindings_set` (`BindingsReportRequest`, `BindingsSetRequest`, `BindingEdit`, `BindingEdge`):
   a plugin that owns an input device makes its controls binding triggers,
   bound in the platform's table like hotkeys. It reports each press of one of

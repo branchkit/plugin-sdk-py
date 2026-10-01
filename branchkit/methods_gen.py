@@ -10,6 +10,7 @@ from .contracts_gen import (
     METHOD_ARTIFACT_DELETE,
     METHOD_BINDINGS_REPORT,
     METHOD_BINDINGS_SET,
+    METHOD_BINDINGS_SET_TRIGGERS,
     METHOD_BLOB_PUBLISH,
     METHOD_BLOB_STATE,
     METHOD_COLLECTIONS_CREATE_USER,
@@ -670,6 +671,7 @@ if TYPE_CHECKING:
         BindingEdit,
         BindingsReportResponse,
         BindingsSetResponse,
+        BindingsSetTriggersResponse,
         BleDeviceEntry,
         BleService,
         BleWriteEntry,
@@ -1052,6 +1054,7 @@ if TYPE_CHECKING:
         TrialBeginResponse,
         TrialEndResponse,
         TrialEnterContextResponse,
+        TriggerDecl,
         TtsVoice,
         UsbDevice,
         WindowDetail,
@@ -1115,6 +1118,18 @@ class MethodsMixin:
         if remove is not None:
             params["remove"] = remove
         result = await self.call(METHOD_BINDINGS_SET, params)
+        return result
+
+    async def bindings_set_triggers(self, *, triggers: list["TriggerDecl"]) -> BindingsSetTriggersResponse:
+        """Publish the triggers the caller's device offers, so Settings can list and bind them
+
+        triggers: Every trigger this plugin offers now, replacing what it published
+            before. Publish again when a device connects or goes away.
+        """
+        params: dict[str, Any] = {
+            "triggers": triggers,
+        }
+        result = await self.call(METHOD_BINDINGS_SET_TRIGGERS, params)
         return result
 
     async def blob_publish(self, *, length: int, name: str, hash: str | None = None, new_generation: bool | None = None) -> BlobPublishResponse:
