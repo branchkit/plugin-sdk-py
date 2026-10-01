@@ -210,7 +210,7 @@ branchkit-cli dev plog my-plugin --since 30s       # read its log
   (the scaffold), and real plugins built on the Go SDK with the same surface:
   [keyboard](https://github.com/branchkit/branchkit-plugin-keyboard),
   [system](https://github.com/branchkit/branchkit-plugin-system),
-  [windows](https://github.com/branchkit/branchkit-plugin-windows).
+  [placement](https://github.com/branchkit/branchkit-plugin-placement).
 
 ## Versioning
 
