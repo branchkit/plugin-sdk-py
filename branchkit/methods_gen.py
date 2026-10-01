@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING, Any
 from .contracts_gen import (
     METHOD_ACTIONS_LIST,
     METHOD_ARTIFACT_DELETE,
+    METHOD_BINDINGS_PROPOSE,
     METHOD_BINDINGS_REPORT,
     METHOD_BINDINGS_SET,
     METHOD_BINDINGS_SET_TRIGGERS,
@@ -669,6 +670,7 @@ if TYPE_CHECKING:
         BarcodeResult,
         BindingEdge,
         BindingEdit,
+        BindingsProposeResponse,
         BindingsReportResponse,
         BindingsSetResponse,
         BindingsSetTriggersResponse,
@@ -1086,6 +1088,24 @@ class MethodsMixin:
         }
         await self.call(METHOD_ARTIFACT_DELETE, params)
 
+    async def bindings_propose(self, *, put: list["BindingEdit"] | None = None, remove: list[str] | None = None) -> BindingsProposeResponse:
+        """Propose settings for the caller's own device triggers; the user answers in BranchKit's own window, and the settings become theirs
+
+        put: Settings to propose for the caller's own triggers. Nothing is written
+            until the user answers; then each becomes the user's edit. An empty
+            `action` proposes turning the trigger off.
+        remove: Triggers (with event words) proposed to go back to their default.
+            default []
+        """
+        params: dict[str, Any] = {
+        }
+        if put is not None:
+            params["put"] = put
+        if remove is not None:
+            params["remove"] = remove
+        result = await self.call(METHOD_BINDINGS_PROPOSE, params)
+        return result
+
     async def bindings_report(self, *, event: "BindingEdge", trigger: str) -> BindingsReportResponse:
         """Report a press of one of the caller's own device triggers; the platform runs what it is bound to
 
@@ -1105,8 +1125,9 @@ class MethodsMixin:
     async def bindings_set(self, *, put: list["BindingEdit"] | None = None, remove: list[str] | None = None) -> BindingsSetResponse:
         """Set what the caller's own device triggers are bound to; the edits fire on the caller's authority
 
-        put: Edits to write. Each takes its trigger's edit slot, replacing an
-            earlier edit there — the user's from Settings included.
+        put: Edits to write. Each takes its trigger's edit slot, replacing the
+            caller's earlier edit there. A slot the user set is refused: ask with
+            `bindings.propose` instead.
         remove: Triggers (with event words) whose edit to drop, so any contributed
             binding shows through again.
             default []

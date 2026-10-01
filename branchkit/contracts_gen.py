@@ -7,6 +7,7 @@ API_VERSION = "0.2.0"
 # RPC method names: plugin → actuator (use with plugin.call()).
 METHOD_ACTIONS_LIST = "actions.list"  # since 0.1.0
 METHOD_ARTIFACT_DELETE = "artifact.delete"  # since 0.1.0
+METHOD_BINDINGS_PROPOSE = "bindings.propose"  # since 0.1.0
 METHOD_BINDINGS_REPORT = "bindings.report"  # since 0.1.0
 METHOD_BINDINGS_SET = "bindings.set"  # since 0.1.0
 METHOD_BINDINGS_SET_TRIGGERS = "bindings.set_triggers"  # since 0.1.0
