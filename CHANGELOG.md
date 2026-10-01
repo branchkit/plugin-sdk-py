@@ -5,6 +5,17 @@ git history.
 
 ## Unreleased
 
+### Device triggers
+
+- Added `bindings_report` and `bindings_set` (`BindingsReportRequest`, `BindingsSetRequest`, `BindingEdit`, `BindingEdge`):
+  a plugin that owns an input device makes its controls binding triggers,
+  bound in the platform's table like hotkeys. It reports each press of one of
+  its own triggers and the platform runs what it is bound to; it may set what
+  its own triggers are bound to, and those edits run on its authority. The
+  caller is always the source: neither call can name another plugin's
+  triggers. Trigger names are the plugin's own (`"g2/button3"`), with the
+  hotkey event words after them, plus the new `repeat`.
+
 ### Key bindings (breaking)
 
 - Removed `keybinds_register` and its `KeybindsRegisterRequest` / `KeybindsRegisterResult` /

@@ -253,6 +253,28 @@ BarcodeResult = TypedDict("BarcodeResult", {
     "y": float,
 })
 
+# The edge a source reports.
+BindingEdge = Literal["down", "up", "press"]
+
+# One edit to one of the caller's own triggers.
+BindingEdit = TypedDict("BindingEdit", {
+    # The exact dotted action type to run. Empty unbinds the trigger, even
+    # over a plugin's contributed binding.
+    "action": str,
+    # Params for the action; absent means `{}`.
+    #
+    # Open by design: the receiving plugin's shape, typed per-plugin by
+    # `branchkit-gen` from that plugin's `action_types`, exactly like a
+    # dispatched action's params.
+    # default null
+    "params": NotRequired[Any],
+    # The trigger with its event word, if any: `"g2/button3"` fires on a
+    # press, `"g2/button3 down"` / `"g2/button3 up"` are a hold's two
+    # halves, `"g2/button3 toggle"` alternates start/stop, and
+    # `"g2/button3 repeat"` fires phase `repeat` on down and `stop` on up.
+    "trigger": str,
+})
+
 # A GATT characteristic.
 BleCharacteristic = TypedDict("BleCharacteristic", {
     "properties": list[str],
@@ -2001,6 +2023,47 @@ ActionsListResponse = TypedDict("ActionsListResponse", {
 ArtifactDeleteRequest = TypedDict("ArtifactDeleteRequest", {
     # non-empty
     "ref": str,
+})
+
+BindingsReportRequest = TypedDict("BindingsReportRequest", {
+    # Which edge happened.
+    "event": "BindingEdge",
+    # The trigger's name as this plugin spells it, without an event word:
+    # `"g2/button3"`, `"m1/dial1 cw"`. Report a hold's up with the same name
+    # as its down, even if a layer changed in between.
+    # non-empty
+    "trigger": str,
+})
+
+BindingsReportResponse = TypedDict("BindingsReportResponse", {
+    # The bound trigger that matched, with its event word
+    # (`"g2/button3 down"`). Absent when nothing fired.
+    "binding": NotRequired[str],
+    # Whether a binding matched and its action ran. `false` for a trigger
+    # nothing is bound to; the press is dropped and recorded nowhere.
+    "fired": bool,
+    # The executor's status for the action: `"ok"`, `"denied"`, `"not_handled"` or `"error"`. Absent
+    # when nothing fired.
+    "status": NotRequired[str],
+})
+
+BindingsSetRequest = TypedDict("BindingsSetRequest", {
+    # Edits to write. Each takes its trigger's edit slot, replacing an
+    # earlier edit there — the user's from Settings included.
+    "put": NotRequired[list["BindingEdit"]],
+    # Triggers (with event words) whose edit to drop, so any contributed
+    # binding shows through again.
+    # default []
+    "remove": NotRequired[list[str]],
+})
+
+BindingsSetResponse = TypedDict("BindingsSetResponse", {
+    # Edits written.
+    # wire uint · min 0
+    "put": int,
+    # Edits dropped (a trigger with no edit counts as nothing).
+    # wire uint · min 0
+    "removed": int,
 })
 
 BlobPublishRequest = TypedDict("BlobPublishRequest", {

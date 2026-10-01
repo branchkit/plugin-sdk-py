@@ -8,6 +8,8 @@ from typing import TYPE_CHECKING, Any
 from .contracts_gen import (
     METHOD_ACTIONS_LIST,
     METHOD_ARTIFACT_DELETE,
+    METHOD_BINDINGS_REPORT,
+    METHOD_BINDINGS_SET,
     METHOD_BLOB_PUBLISH,
     METHOD_BLOB_STATE,
     METHOD_COLLECTIONS_CREATE_USER,
@@ -664,6 +666,10 @@ if TYPE_CHECKING:
         AudioDevice,
         BackgroundItem,
         BarcodeResult,
+        BindingEdge,
+        BindingEdit,
+        BindingsReportResponse,
+        BindingsSetResponse,
         BleDeviceEntry,
         BleService,
         BleWriteEntry,
@@ -1076,6 +1082,40 @@ class MethodsMixin:
             "ref": ref,
         }
         await self.call(METHOD_ARTIFACT_DELETE, params)
+
+    async def bindings_report(self, *, event: "BindingEdge", trigger: str) -> BindingsReportResponse:
+        """Report a press of one of the caller's own device triggers; the platform runs what it is bound to
+
+        event: Which edge happened.
+        trigger: The trigger's name as this plugin spells it, without an event word:
+            `"g2/button3"`, `"m1/dial1 cw"`. Report a hold's up with the same name
+            as its down, even if a layer changed in between.
+            non-empty
+        """
+        params: dict[str, Any] = {
+            "event": event,
+            "trigger": trigger,
+        }
+        result = await self.call(METHOD_BINDINGS_REPORT, params)
+        return result
+
+    async def bindings_set(self, *, put: list["BindingEdit"] | None = None, remove: list[str] | None = None) -> BindingsSetResponse:
+        """Set what the caller's own device triggers are bound to; the edits fire on the caller's authority
+
+        put: Edits to write. Each takes its trigger's edit slot, replacing an
+            earlier edit there — the user's from Settings included.
+        remove: Triggers (with event words) whose edit to drop, so any contributed
+            binding shows through again.
+            default []
+        """
+        params: dict[str, Any] = {
+        }
+        if put is not None:
+            params["put"] = put
+        if remove is not None:
+            params["remove"] = remove
+        result = await self.call(METHOD_BINDINGS_SET, params)
+        return result
 
     async def blob_publish(self, *, length: int, name: str, hash: str | None = None, new_generation: bool | None = None) -> BlobPublishResponse:
         """Announce that bytes up to `length` are complete on one of this plugin's declared blobs. Carries a length, never bytes
