@@ -795,11 +795,11 @@ EnumeratedCommand = TypedDict("EnumeratedCommand", {
     # The ready-to-store keybind value when the command's action is
     # statically bindable — a concrete plugin action with no capture
     # template, no sequence, and no intrinsic phase. Absent otherwise.
-    # This is what the Keybinds tab's bind-a-command flow copies.
+    # This is what the Keybinds page's bind-a-command flow copies.
     #
     # Declared 2026-09-19 (census). It was built here as a two-key
     # `serde_json::Map` and described in this comment; `KeybindBinding`
-    # is that shape, and `RegistryEntry` is it plus combo and source.
+    # is that shape.
     "binding": NotRequired["KeybindBinding"],
     # Optional grouping label from the command definition (e.g. "Navigation").
     "category": NotRequired[str],
@@ -995,12 +995,11 @@ InstalledApp = TypedDict("InstalledApp", {
     "name": str,
 })
 
-# The stored value of one keybind: which action it fires and with what.
+# The stored value of one binding: which action it fires and with what.
 #
-# This is what a `keybinds` collection record holds, and what the Keybinds
-# tab's bind-a-command flow copies out of `commands.enumerate`
-# (`EnumeratedCommand.binding`). A `RegistryEntry` is this plus the combo
-# and where it came from.
+# This is what a `_platform.bindings` record holds, and what the Keybinds
+# page's bind-a-command flow copies out of `commands.enumerate`
+# (`EnumeratedCommand.binding`).
 KeybindBinding = TypedDict("KeybindBinding", {
     # Exact dotted action type, e.g. `"voice.dictation"`.
     "action": str,
