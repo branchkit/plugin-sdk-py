@@ -142,6 +142,15 @@ ActionFieldSchema = TypedDict("ActionFieldSchema", {
 # Schema declaration for a plugin-defined action type.
 # Enables generic UI rendering (structured editor fields) for any plugin's actions.
 ActionTypeSchema = TypedDict("ActionTypeSchema", {
+    # Whether running this action can be undone. Omitted means
+    # unclassified, which BranchKit treats as risky. Only `reversible`
+    # changes anything: the person may then always-allow a connected AI app
+    # to run it, and while it runs for such an app BranchKit refuses this
+    # plugin every platform call that cannot be undone. Ignored for a
+    # plugin that can act without platform calls (network access, running
+    # other programs, its own pipeline stages), since nothing could hold it
+    # to the claim.
+    "consequence": NotRequired["Consequence"],
     # Ordered list of fields for this action type.
     "fields": list["ActionFieldSchema"],
     # Human-readable label (e.g. "Click Element", "Snap Window").
@@ -609,6 +618,9 @@ ConfusabilityFinding = TypedDict("ConfusabilityFinding", {
     "owner": str,
     "target": str,
 })
+
+# Whether an action type's effect can be undone (`consequence`).
+Consequence = Literal["reversible", "irreversible", "external"]
 
 ContactInfo = TypedDict("ContactInfo", {
     "email": NotRequired[str],
