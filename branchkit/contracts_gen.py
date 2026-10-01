@@ -73,7 +73,6 @@ METHOD_INPUT_SELECT_ALL = "input.select_all"  # since 0.1.0
 METHOD_INPUT_SWITCH_INPUT_SOURCE = "input.switch_input_source"  # since 0.1.0
 METHOD_INPUT_TRIPLE_CLICK = "input.triple_click"  # since 0.1.0
 METHOD_INPUT_TYPE_TEXT = "input.type_text"  # since 0.1.0
-METHOD_KEYBINDS_REGISTER = "keybinds.register"  # since 0.1.0
 METHOD_NATIVE_ACCENT_COLOR = "native.accent_color"  # since 0.1.0
 METHOD_NATIVE_ACCESSIBILITY_DISPLAY_INVERT = "native.accessibility_display_invert"  # since 0.1.0
 METHOD_NATIVE_ACCESSIBILITY_ENABLED = "native.accessibility_enabled"  # since 0.1.0

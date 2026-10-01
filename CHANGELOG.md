@@ -5,6 +5,17 @@ git history.
 
 ## Unreleased
 
+### Key bindings (breaking)
+
+- Removed `keybinds_register` and its `KeybindsRegisterRequest` / `KeybindsRegisterResult` /
+  `RegistrySnapshot` / `RegistryEntry` types. The `keybinds.register` operation is gone: it let any plugin
+  replace every hotkey on the machine. The platform now builds the hotkey
+  table itself from the `_platform.bindings` collection and the user's edits
+  in `_platform.binding_overrides`, and publishes the result as
+  `_platform.bindings.active`. A plugin contributes a hotkey under
+  `collection_data["_platform.bindings"]` (previously
+  `collection_data.keybinds`, same shape).
+
 ### Pipeline
 
 - `DisplayInfo` gains `is_asleep` (`NotRequired[bool]`): the display is

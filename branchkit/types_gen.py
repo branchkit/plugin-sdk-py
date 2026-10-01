@@ -1504,25 +1504,6 @@ RedecodeNoise = TypedDict("RedecodeNoise", {
     "snr_db": float,
 })
 
-RegistryEntry = TypedDict("RegistryEntry", {
-    "action": str,
-    "combo": str,
-    # Params for the dispatch; absent means `{}`. Every fired bind
-    # executes `Action::Plugin { action_type, params, phase }` through the
-    # shared executor — the string-routing dialect is gone (2026-08-28).
-    #
-    # Open by design, and the only open field in this shape: it is the
-    # receiving plugin's params, typed per-plugin by `branchkit-gen` from
-    # that plugin's `action_types`, exactly like `Action::Plugin.params`.
-    "params": NotRequired[Any],
-    "source": str,
-})
-
-RegistrySnapshot = TypedDict("RegistrySnapshot", {
-    "entries": list["RegistryEntry"],
-    "listen_up": list[str],
-})
-
 ReminderItem = TypedDict("ReminderItem", {
     "due_date": NotRequired[str],
     "is_completed": bool,
@@ -3053,23 +3034,6 @@ InputTripleClickRequest = TypedDict("InputTripleClickRequest", {
 InputTypeTextRequest = TypedDict("InputTypeTextRequest", {
     # Text to type into the active application.
     "text": str,
-})
-
-KeybindsRegisterRequest = TypedDict("KeybindsRegisterRequest", {
-    # The full keybind registry to install, replacing what is there.
-    #
-    # Declared 2026-09-19 (census). The handler already deserialized
-    # exactly `RegistrySnapshot` and refused anything else; the doc
-    # comment was transcribing the shape by hand, and had gone stale —
-    # an entry is `{ combo, action, source, params? }`.
-    "snapshot": "RegistrySnapshot",
-})
-
-KeybindsRegisterResponse = TypedDict("KeybindsRegisterResponse", {
-    # Number of entries cached after the registration.
-    # wire uint · min 0
-    "count": int,
-    "ok": bool,
 })
 
 NativeAccentColorResponse = TypedDict("NativeAccentColorResponse", {

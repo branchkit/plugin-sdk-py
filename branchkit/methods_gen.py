@@ -74,7 +74,6 @@ from .contracts_gen import (
     METHOD_INPUT_SWITCH_INPUT_SOURCE,
     METHOD_INPUT_TRIPLE_CLICK,
     METHOD_INPUT_TYPE_TEXT,
-    METHOD_KEYBINDS_REGISTER,
     METHOD_NATIVE_ACCENT_COLOR,
     METHOD_NATIVE_ACCESSIBILITY_DISPLAY_INVERT,
     METHOD_NATIVE_ACCESSIBILITY_ENABLED,
@@ -722,7 +721,6 @@ if TYPE_CHECKING:
         InputParseKeyEventResponse,
         InputSource,
         InstalledApp,
-        KeybindsRegisterResponse,
         ListOpts,
         ListeningPort,
         LogEntry,
@@ -1024,7 +1022,6 @@ if TYPE_CHECKING:
         RecognitionBiasSetResponse,
         RecognitionRedecodeResponse,
         RedecodeItem,
-        RegistrySnapshot,
         ReminderItem,
         ReplaceScope,
         RunningApp,
@@ -2165,22 +2162,6 @@ class MethodsMixin:
             "text": text,
         }
         await self.call(METHOD_INPUT_TYPE_TEXT, params)
-
-    async def keybinds_register(self, *, snapshot: "RegistrySnapshot") -> KeybindsRegisterResponse:
-        """Register keybind snapshot with the platform (caches and sends to Swift shell)
-
-        snapshot: The full keybind registry to install, replacing what is there.
-
-            Declared 2026-09-19 (census). The handler already deserialized
-            exactly `RegistrySnapshot` and refused anything else; the doc
-            comment was transcribing the shape by hand, and had gone stale —
-            an entry is `{ combo, action, source, params? }`.
-        """
-        params: dict[str, Any] = {
-            "snapshot": snapshot,
-        }
-        result = await self.call(METHOD_KEYBINDS_REGISTER, params)
-        return result
 
     async def native_accent_color(self) -> NativeAccentColorResponse:
         """Get the system accent color name"""
