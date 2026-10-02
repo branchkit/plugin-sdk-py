@@ -2077,9 +2077,14 @@ BindingsReportResponse = TypedDict("BindingsReportResponse", {
     "binding": NotRequired[str],
     # Whether a binding matched and its action ran. `false` for a trigger
     # nothing is bound to; the press is dropped and recorded nowhere.
+    # `false` too, with `status` `"no_device_input"`, when the caller holds
+    # a device session and its device sent no input in the last second:
+    # a press is accepted only from a device in use. A release (`up`) is
+    # never refused this way.
     "fired": bool,
-    # The executor's status for the action: `"ok"`, `"denied"`, `"not_handled"` or `"error"`. Absent
-    # when nothing fired.
+    # The executor's status for the action: `"ok"`, `"denied"`, `"not_handled"` or `"error"`;
+    # `"no_device_input"` when the press was refused for want of recent
+    # input from the caller's device. Absent when nothing was bound.
     "status": NotRequired[str],
 })
 
