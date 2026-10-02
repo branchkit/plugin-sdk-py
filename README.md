@@ -153,6 +153,7 @@ too new to have a generated wrapper. Prefer the wrapper whenever one exists.
 | Append-only logs | `append`, `append_keyed`, `list_log`, `get_log_entry`, `delete_log_entry` |
 | Keep a live copy | `plugin.mirror_collection(name)`, `plugin.settings(name)` |
 | Contribute commands | `branchkit.command(word("open"), capture("app", "apps")).action(…).build()`, `push_command_specs`, `push_command_group` |
+| Bind keys and device buttons | manifest `collection_data["_platform.bindings"]`; a device plugin lists its triggers with `bindings_set_triggers`, reports presses with `bindings_report` and proposes settings from its own screen with `bindings_propose` (guides: *Triggers and authority*, *Make a device a binding source*) |
 | A settings tab | `@plugin.settings_tab(key)` + `implements.settings_tabs` in the manifest; `post_button` / `signal_button` / `confirm_button` |
 | Show something | `output_state(state=…)` with `say_action` / `dispatch_action`, `hud_push` |
 | Hold a system effect | `assert_effect`, `retract_effect`, `is_effect_active`, `on_effect_displaced` |
