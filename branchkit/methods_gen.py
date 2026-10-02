@@ -2138,7 +2138,9 @@ class MethodsMixin:
 
         code: Raw keycode (takes priority over `name` if both are present).
             wire uint16 · default null · min 0 · max 65535
-        modifiers: Modifier keys to hold during the tap (e.g. "command", "shift").
+        modifiers: Modifier keys to hold during the tap (e.g. "primary", "shift").
+            "primary" is Command on macOS and Control on Linux and Windows;
+            "cmd"/"command" is always Command (the Windows or Super key off macOS).
             default []
         name: Named key (e.g. "return", "tab"). Resolved via `resolve_key_name`.
             Required if `code` is absent.
