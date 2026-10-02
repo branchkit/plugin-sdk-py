@@ -1857,7 +1857,9 @@ class MethodsMixin:
         stack_order: Stack position among windows sharing this anchor: offsets ascend from the
             anchor edge, so the lowest pins at the corner (a persistent status window)
             and higher values stack away (transient toasts). Ties broken by channel
-            name. Defaults to 0.
+            name. Defaults to 0. A value below 0 is raised to 0: positions below
+            are BranchKit's own, so no plugin window stacks between the corner and
+            the permission prompt.
             wire int32 · default 0
         transparent: Fully transparent window — the shell skips its frosted vibrancy panel
             and window shadow, so only the plugin's own markup paints. Defaults
