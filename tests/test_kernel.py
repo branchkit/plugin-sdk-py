@@ -9,6 +9,7 @@ import json
 import os
 import socket
 import tempfile
+import threading
 import unittest
 
 import branchkit
@@ -144,9 +145,10 @@ class TestProxyParsing(unittest.TestCase):
     def test_unix_and_tcp_forms(self):
         self.assertEqual(proxy.parse_proxy_url("unix:///a/b.sock"), ("unix", "/a/b.sock"))
         self.assertEqual(proxy.parse_proxy_url("http://127.0.0.1:8080"), ("tcp", "127.0.0.1", 8080))
+        self.assertEqual(proxy.parse_proxy_url("fd://7"), ("fd", 7))
 
     def test_rejects_bad_forms(self):
-        for bad in ("unix://", "http://127.0.0.1", "socks5://x:1", ""):
+        for bad in ("unix://", "http://127.0.0.1", "socks5://x:1", "", "fd://", "fd://x"):
             with self.assertRaises(ValueError):
                 proxy.parse_proxy_url(bad)
 
@@ -324,6 +326,35 @@ class TestDial(unittest.TestCase):
         self.assertEqual((cm.exception.host, cm.exception.port), ("127.0.0.1", self._port))
         self.assertIn("refused CONNECT", str(cm.exception))
         self.assertIsInstance(cm.exception, OSError)
+
+    @unittest.skipUnless(hasattr(socket, "recv_fds"), "needs fd passing")
+    def test_echoes_through_a_handoff_channel(self):
+        # BRANCHKIT_PROXY=fd://N: the SDK asks over the inherited channel and
+        # receives each connection as a passed socket. The fake broker dials
+        # the test proxy itself and hands that connection over.
+        proxy_srv = _mini_proxy(self._sock_path, "127.0.0.1")
+        self.addCleanup(proxy_srv.close)
+        broker, plugin_end = socket.socketpair()
+        self.addCleanup(broker.close)
+        self.addCleanup(plugin_end.close)
+
+        def serve():
+            while True:
+                try:
+                    if not broker.recv(1):
+                        return
+                except OSError:
+                    return
+                up = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+                up.connect(self._sock_path)
+                socket.send_fds(broker, [b"c"], [up.fileno()])
+                up.close()
+
+        threading.Thread(target=serve, daemon=True).start()
+        os.environ["BRANCHKIT_PROXY"] = f"fd://{plugin_end.fileno()}"
+        conn = branchkit.dial("127.0.0.1", self._port, timeout=5)
+        with conn:
+            self.assertEqual(_echo_once(conn, b"through the handoff"), b"through the handoff")
 
     def test_direct_when_unset(self):
         os.environ.pop("BRANCHKIT_PROXY", None)

@@ -14,6 +14,10 @@ BRANCHKIT_PROXY:
                                      primitive either)
     http://127.0.0.1:<port>        — localhost TCP (legacy Windows path)
     npipe://<pipe name>            — a named pipe ACLd to the container (Windows)
+    fd://<n>                       — an inherited channel each connection is
+                                     handed over (Linux): the plugin opens no
+                                     socket of its own, so the sandbox can
+                                     forbid creating them
 
 The SDK installs a `urllib.request` opener at import time, so a plugin
 author writes ordinary `urllib.request.urlopen()` calls (and everything
@@ -31,6 +35,7 @@ import os
 import socket
 import ssl
 import sys
+import threading
 import urllib.request
 
 
@@ -48,13 +53,44 @@ def parse_proxy_url(v: str) -> tuple:
         if not sep or not port_s.isdigit() or int(port_s) <= 0:
             raise ValueError(f"proxy url {v!r} needs an explicit port")
         return ("tcp", host, int(port_s))
+    if v.startswith("fd://"):
+        n = v[len("fd://"):]
+        if not n.isdigit():
+            raise ValueError(f"bad proxy channel in {v!r}")
+        return ("fd", int(n))
     if v.startswith("npipe://"):
         # Windows: a named pipe ACL'd to this container (no loopback exemption).
         path = v[len("npipe://"):]
         if not path:
             raise ValueError(f"empty proxy pipe name in {v!r}")
         return ("npipe", path)
-    raise ValueError(f"unsupported BRANCHKIT_PROXY {v!r} (want unix://, http:// or npipe://)")
+    raise ValueError(f"unsupported BRANCHKIT_PROXY {v!r} (want fd://, unix://, http:// or npipe://)")
+
+
+_handoff_lock = threading.Lock()
+_handoff_channels: dict = {}
+
+
+def _handoff(channel_fd: int, timeout) -> socket.socket:
+    """Ask the inherited proxy channel for a connection: one byte out, one
+    byte back carrying a connected socket (SCM_RIGHTS), already served with
+    this plugin's proxy rules. Every reply is an equivalent fresh connection,
+    so asks only need serialising."""
+    if not hasattr(socket, "recv_fds"):
+        raise OSError("a proxy channel (fd://) needs Unix socket fd passing")
+    with _handoff_lock:
+        chan = _handoff_channels.get(channel_fd)
+        if chan is None:
+            chan = socket.socket(fileno=channel_fd)
+            _handoff_channels[channel_fd] = chan
+        chan.settimeout(timeout)
+        chan.sendall(b"c")
+        _, fds, _, _ = socket.recv_fds(chan, 1, 1)
+    if not fds:
+        raise OSError("the proxy channel replied without a connection")
+    sock = socket.socket(fileno=fds[0])
+    sock.settimeout(timeout)
+    return sock
 
 
 class HostRefusedError(OSError):
@@ -132,7 +168,9 @@ def _connect_tunnel(endpoint: tuple, host: str, port: int, timeout) -> socket.so
     host:port. Returns a socket that is an opaque tunnel to the target.
     The proxy resolves the hostname host-side and refuses hosts outside
     the allowlist."""
-    if endpoint[0] == "unix":
+    if endpoint[0] == "fd":
+        sock = _handoff(endpoint[1], timeout)
+    elif endpoint[0] == "unix":
         sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         sock.settimeout(timeout)
         sock.connect(endpoint[1])
