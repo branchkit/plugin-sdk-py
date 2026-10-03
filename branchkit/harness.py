@@ -331,10 +331,15 @@ def _lookup_harness_binary() -> str | None:
         "/Applications/BranchKit.app/Contents/Resources/branchkit-test-harness",
         os.path.expanduser("~/Applications/BranchKit.app/Contents/Resources/branchkit-test-harness"),
     ]
+    # Cargo writes branchkit-test-harness.exe on Windows; without the suffix
+    # every candidate misses there and harness tests skip. (shutil.which
+    # already honours PATHEXT.)
+    suffixes = ("", ".exe") if os.name == "nt" else ("",)
     for c in candidates:
-        abs_path = os.path.abspath(c)
-        if os.path.exists(abs_path):
-            return abs_path
+        for suffix in suffixes:
+            abs_path = os.path.abspath(c + suffix)
+            if os.path.exists(abs_path):
+                return abs_path
     return shutil.which("branchkit-test-harness")
 
 
