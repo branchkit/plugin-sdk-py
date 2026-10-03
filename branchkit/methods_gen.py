@@ -618,6 +618,7 @@ from .contracts_gen import (
     METHOD_PLUGIN_DATA_EXPORT,
     METHOD_PLUGIN_DEBUG,
     METHOD_PLUGIN_REPORT_HEALTH,
+    METHOD_PLUGIN_REPORT_SETUP,
     METHOD_PRIVACY_GET_RECORDING,
     METHOD_PRIVACY_SET_RECORDING,
     METHOD_PRIVILEGES_LIST,
@@ -1046,6 +1047,7 @@ if TYPE_CHECKING:
         SessionEndCleanupResponse,
         SettingsRulesCreateResponse,
         SettingsRulesUpdateResponse,
+        SetupStepState,
         Shape,
         ShortcutInfo,
         SpaceInfo,
@@ -6746,6 +6748,28 @@ class MethodsMixin:
         if reason is not None:
             params["reason"] = reason
         await self.call(METHOD_PLUGIN_REPORT_HEALTH, params)
+
+    async def plugin_report_setup(self, *, state: "SetupStepState", step: str, summary: str | None = None) -> None:
+        """Report where one of this plugin's Setup steps stands — done, needs the person, or in progress — with one line of summary shown while it is folded. Only steps the plugin declared in implements.setup_steps.
+
+        state: Where the step stands now. A step never reported reads as
+            `needs_you` when it is required, and as optional otherwise.
+        step: The step being reported: the `key` of one of this plugin's
+            `implements.setup_steps`. A key the plugin did not declare is refused.
+            non-empty
+        summary: One user-facing line shown beside the step while it is folded —
+            "Large · 1.5 GB · commands on". The plugin owns this text. Trimmed,
+            cut to 120 characters, and rendered as data, never markup. Omitted or
+            empty clears it.
+            default null
+        """
+        params: dict[str, Any] = {
+            "state": state,
+            "step": step,
+        }
+        if summary is not None:
+            params["summary"] = summary
+        await self.call(METHOD_PLUGIN_REPORT_SETUP, params)
 
     async def privacy_get_recording(self, *, name: str) -> PrivacyGetRecordingResponse:
         """Read the effective recording flag for a log-kind collection (privacy control plane)

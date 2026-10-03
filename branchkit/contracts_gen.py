@@ -617,6 +617,7 @@ METHOD_PLATFORM_PROFILE = "platform.profile"  # since 0.2.0
 METHOD_PLUGIN_DATA_EXPORT = "plugin.data.export"  # since 0.1.0
 METHOD_PLUGIN_DEBUG = "plugin.debug"  # since 0.1.0
 METHOD_PLUGIN_REPORT_HEALTH = "plugin.report_health"  # since 0.1.0
+METHOD_PLUGIN_REPORT_SETUP = "plugin.report_setup"  # since 0.1.0
 METHOD_PRIVACY_GET_RECORDING = "privacy.get_recording"  # stable, since 0.1.0
 METHOD_PRIVACY_SET_RECORDING = "privacy.set_recording"  # stable, since 0.1.0
 METHOD_PRIVILEGES_LIST = "privileges.list"  # since 0.1.0

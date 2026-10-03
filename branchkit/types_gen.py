@@ -1699,6 +1699,9 @@ SettingsTagSchemaInfo = TypedDict("SettingsTagSchemaInfo", {
     "source_plugin": str,
 })
 
+# Where one Setup step stands, as its plugin reports it.
+SetupStepState = Literal["done", "needs_you", "in_progress"]
+
 # One shape.
 ShapeRect = TypedDict("ShapeRect", {
     "kind": Literal["rect"],
@@ -6730,6 +6733,22 @@ PluginReportHealthRequest = TypedDict("PluginReportHealthRequest", {
     # `plugin.debug`) and rendered as data, never markup.
     # default null
     "reason": NotRequired[str],
+})
+
+PluginReportSetupRequest = TypedDict("PluginReportSetupRequest", {
+    # Where the step stands now. A step never reported reads as
+    # `needs_you` when it is required, and as optional otherwise.
+    "state": "SetupStepState",
+    # The step being reported: the `key` of one of this plugin's
+    # `implements.setup_steps`. A key the plugin did not declare is refused.
+    # non-empty
+    "step": str,
+    # One user-facing line shown beside the step while it is folded —
+    # "Large · 1.5 GB · commands on". The plugin owns this text. Trimmed,
+    # cut to 120 characters, and rendered as data, never markup. Omitted or
+    # empty clears it.
+    # default null
+    "summary": NotRequired[str],
 })
 
 PrivacyGetRecordingRequest = TypedDict("PrivacyGetRecordingRequest", {
