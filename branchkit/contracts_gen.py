@@ -607,6 +607,7 @@ METHOD_OVERLAY_CLEAR = "overlay.clear"  # since 0.2.0
 METHOD_OVERLAY_SHOW = "overlay.show"  # since 0.2.0
 METHOD_OVERRIDES_APPLY = "overrides.apply"  # stable, since 0.1.0
 METHOD_OVERRIDES_LIST = "overrides.list"  # since 0.1.0
+METHOD_PIPELINES_AUDIO_LEVEL = "pipelines.audio_level"  # since 0.1.0
 METHOD_PIPELINES_GRAMMAR = "pipelines.grammar"  # since 0.1.0
 METHOD_PIPELINES_INJECT = "pipelines.inject"  # since 0.1.0
 METHOD_PIPELINES_RUN = "pipelines.run"  # since 0.1.0

@@ -6571,6 +6571,31 @@ OverridesListResponse = TypedDict("OverridesListResponse", {
     "overlays": list["OverlayRow"],
 })
 
+PipelinesAudioLevelRequest = TypedDict("PipelinesAudioLevelRequest", {
+    # A moment in Unix milliseconds (the wall clock). When given, the
+    # result's `peak_db` is the loudest audio captured since then, looking
+    # back at most 30 seconds.
+    # wire uint64 (64-bit) · default null · min 0
+    "since_ms": NotRequired[int],
+})
+
+PipelinesAudioLevelResponse = TypedDict("PipelinesAudioLevelResponse", {
+    # The quietest level reported, in dBFS. Audio at the floor is digital
+    # silence — no signal at all, which a quiet room never produces: the
+    # system is recording from the wrong or a muted input, or is not
+    # letting BranchKit hear the microphone.
+    # wire double
+    "floor_db": float,
+    # How loud the audio crossing the pipelines is now, in dBFS. Absent
+    # when nothing is being captured.
+    # wire double
+    "level_db": NotRequired[float],
+    # The loudest level since `since_ms`, in dBFS. Absent when no audio was
+    # captured in that time, or `since_ms` was not given.
+    # wire double
+    "peak_db": NotRequired[float],
+})
+
 PipelinesGrammarRequest = TypedDict("PipelinesGrammarRequest", {
     # When true, also return the full `vocabulary_update` payload a starting
     # recognition pipeline would be seeded with — words plus narrow_to,

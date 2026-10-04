@@ -608,6 +608,7 @@ from .contracts_gen import (
     METHOD_OVERLAY_SHOW,
     METHOD_OVERRIDES_APPLY,
     METHOD_OVERRIDES_LIST,
+    METHOD_PIPELINES_AUDIO_LEVEL,
     METHOD_PIPELINES_GRAMMAR,
     METHOD_PIPELINES_INJECT,
     METHOD_PIPELINES_RUN,
@@ -1013,6 +1014,7 @@ if TYPE_CHECKING:
         OverlayRow,
         OverridesApplyResponse,
         OwnedCollection,
+        PipelinesAudioLevelResponse,
         PipelinesGrammarResponse,
         PipelinesInjectResponse,
         PipelinesRunResponse,
@@ -6569,6 +6571,21 @@ class MethodsMixin:
         """List overlay entries — a plugin sees which collections carry its annotations (including dangling ids to prune); the host sees every tenant"""
         result = await self.call(METHOD_OVERRIDES_LIST)
         return (result or {}).get("overlays") or []
+
+    async def pipelines_audio_level(self, *, since_ms: int | None = None) -> PipelinesAudioLevelResponse:
+        """How loud the captured audio is, now and at its loudest since a moment you name (dBFS) — tells a working microphone from a silent one
+
+        since_ms: A moment in Unix milliseconds (the wall clock). When given, the
+            result's `peak_db` is the loudest audio captured since then, looking
+            back at most 30 seconds.
+            wire uint64 (64-bit) · default null · min 0
+        """
+        params: dict[str, Any] = {
+        }
+        if since_ms is not None:
+            params["since_ms"] = since_ms
+        result = await self.call(METHOD_PIPELINES_AUDIO_LEVEL, params)
+        return result
 
     async def pipelines_grammar(self, *, full: bool | None = None) -> PipelinesGrammarResponse:
         """Get the current command grammar word list — or, with full=true, the complete vocabulary_update seed payload (words, narrow_to, weights, DAG)
