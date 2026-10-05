@@ -8,11 +8,10 @@ only egress is an actuator-run HTTP CONNECT proxy enforcing the declared
 hostname allowlist. The actuator advertises the endpoint in
 BRANCHKIT_PROXY:
 
-    unix:///path/to/endpoint.sock  — UNIX socket (Linux, bind-mounted into
-                                     the sandbox at the same path; and
-                                     macOS, whose Seatbelt has no per-host
-                                     primitive either)
-    http://127.0.0.1:<port>        — localhost TCP (legacy Windows path)
+    unix:///path/to/endpoint.sock  — UNIX socket (macOS, whose Seatbelt has
+                                     no per-host primitive; the one socket
+                                     path the plugin's sandbox allows)
+    http://127.0.0.1:<port>        — localhost TCP (test harnesses only)
     npipe://<pipe name>            — a named pipe ACLd to the container (Windows)
     fd://<n>                       — an inherited channel each connection is
                                      handed over (Linux): the plugin opens no
@@ -128,8 +127,8 @@ def dial(host: str, port: int, timeout: float | None = None):
     Inside the sandbox the plugin has no direct egress; the platform's
     filtering proxy is the only route and it enforces the manifest's
     declared host allowlist. ``dial`` is that route: when BRANCHKIT_PROXY
-    is set the connection is a CONNECT tunnel through the proxy (unix:// on
-    Linux and macOS, npipe:// on Windows — the same dial the installed
+    is set the connection is a CONNECT tunnel through the proxy (fd:// on
+    Linux, unix:// on macOS, npipe:// on Windows — the same dial the installed
     ``urllib`` opener uses), and the proxy records every attempt as
     ``plugin.network_connect``. When BRANCHKIT_PROXY is unset (an
     unsandboxed dev run) the dial is direct.
