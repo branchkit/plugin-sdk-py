@@ -54,7 +54,7 @@ class HarnessTests(unittest.TestCase):
     def test_simulate_command_tie(self):
         h = self.start()
         # Seed the consumed `apps` vocabulary so the capture branch is live —
-        # helloworld only consumes it; in production the system plugin
+        # helloworld only consumes it; in production the apps plugin
         # provides it (the stub carries the same schema, and the writer must
         # be the introducer because named_entities pins introducer_only).
         # With "branchkit" seeded, "hello branchkit" completes BOTH
@@ -64,7 +64,7 @@ class HarnessTests(unittest.TestCase):
         # act and surfaces the tied set rather than guessing.
         h.load_manifest(APPS_PROVIDER_DIR)
         h.write_collection(
-            "apps", {"spoken": "branchkit", "bundle_id": "com.test.branchkit"}, "apps-provider-stub"
+            "apps", {"spoken": "branchkit", "app_id": "com.test.branchkit"}, "apps-provider-stub"
         )
         result = h.simulate_command("hello branchkit")
         self.assertFalse(result.matched, "expected a surfaced tie, got a single winner")
@@ -84,7 +84,7 @@ class HarnessTests(unittest.TestCase):
         # action's "{apps}" placeholder carries the bundle id.
         h.load_manifest(APPS_PROVIDER_DIR)
         h.write_collection(
-            "apps", {"spoken": "finder", "bundle_id": "com.apple.finder"}, "apps-provider-stub"
+            "apps", {"spoken": "finder", "app_id": "com.apple.finder"}, "apps-provider-stub"
         )
         result = h.must_simulate_command("hello finder")
         self.assertEqual(result.action_params().get("name"), "com.apple.finder")
