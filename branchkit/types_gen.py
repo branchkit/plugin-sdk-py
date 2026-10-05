@@ -343,6 +343,17 @@ CameraDevice = TypedDict("CameraDevice", {
     "unique_id": str,
 })
 
+# The text on either side of the caret in the focused text field: up to 64
+# characters before the selection's start and after its end (with nothing
+# selected, both sides of the caret). What a plugin
+# typing into the field needs to fit its text into what is already there: a
+# leading space, a capital at a sentence start. Never read from a password
+# field: the capability answers nothing there.
+CaretContext = TypedDict("CaretContext", {
+    "after": str,
+    "before": str,
+})
+
 # Clipboard contents read from the OS.
 ClipboardContents = TypedDict("ClipboardContents", {
     "available_types": list[str],
@@ -3712,6 +3723,10 @@ NativeCaptureWindowResponse = TypedDict("NativeCaptureWindowResponse", {
     "format": str,
     # Base64-encoded PNG bytes.
     "image_base64": str,
+})
+
+NativeCaretContextResponse = TypedDict("NativeCaretContextResponse", {
+    "context": NotRequired["CaretContext"],
 })
 
 NativeCascadeWindowsRequest = TypedDict("NativeCascadeWindowsRequest", {

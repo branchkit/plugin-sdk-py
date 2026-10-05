@@ -155,6 +155,7 @@ from .contracts_gen import (
     METHOD_NATIVE_CAMERA_PERMISSION,
     METHOD_NATIVE_CAPS_LOCK_STATE,
     METHOD_NATIVE_CAPTURE_WINDOW,
+    METHOD_NATIVE_CARET_CONTEXT,
     METHOD_NATIVE_CASCADE_WINDOWS,
     METHOD_NATIVE_CENTER_WINDOW,
     METHOD_NATIVE_CHECK_PERMISSION,
@@ -780,6 +781,7 @@ if TYPE_CHECKING:
         NativeCameraPermissionResponse,
         NativeCapsLockStateResponse,
         NativeCaptureWindowResponse,
+        NativeCaretContextResponse,
         NativeCheckPermissionResponse,
         NativeClipboardChangeCountResponse,
         NativeClipboardImageDimensionsResponse,
@@ -2238,7 +2240,7 @@ class MethodsMixin:
         await self.call(METHOD_INPUT_TRIPLE_CLICK, params)
 
     async def input_type_text(self, *, text: str) -> None:
-        """Type text into the active application via clipboard paste
+        """Type text into the focused application as synthesized key events (the clipboard is not used)
 
         text: Text to type into the active application.
         """
@@ -2928,6 +2930,11 @@ class MethodsMixin:
             "window_id": window_id,
         }
         result = await self.call(METHOD_NATIVE_CAPTURE_WINDOW, params)
+        return result
+
+    async def native_caret_context(self) -> NativeCaretContextResponse:
+        """Get the text on either side of the caret in the focused text field: up to 64 characters before the selection's start and after its end. For fitting typed text into what is already there (spacing, a capital at a sentence start). Answers nothing for a password field, a control with no text, or when the field cannot be read."""
+        result = await self.call(METHOD_NATIVE_CARET_CONTEXT)
         return result
 
     async def native_cascade_windows(self, *, bundle_id: str) -> bool:
