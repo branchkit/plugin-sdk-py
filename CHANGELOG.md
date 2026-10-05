@@ -5,6 +5,23 @@ git history.
 
 ## Unreleased
 
+### Speech engines (stage runtime)
+
+- Added `branchkit.pipeline.serve_speech_engine` /
+  `serve_speech_engine_on` with the `SpeechEngine` base class and `SpeakCtx`:
+  the third stage shape, a text-to-speech engine. Each `speak` request
+  becomes an audio session the stage streams back (`start`, then `audio` per
+  piece); the runtime keeps requests in order, cancels the one in progress
+  the moment the platform sends its `audio_stop` (`cancelled()`, `done()`),
+  closes a queued one that is cancelled before it starts, and ends every
+  utterance with exactly one `audio_stop`, after an `error` when `speak`
+  raises.
+- Added `branchkit.pipeline.shared_clock_ms`, the clock the platform stamps
+  microphone audio with (`CLOCK_UPTIME_RAW` on macOS, `CLOCK_MONOTONIC` on
+  other unixes, wall time on Windows).
+- Generated: `Speak`, `PlaybackStarted`, `PlaybackEnded` and their event
+  tags; `Capability.voices` with `VoiceInfo`.
+
 ### Device triggers
 
 - Added `bindings_set_triggers` (`TriggerDecl`, `TriggerKind`): a device plugin publishes

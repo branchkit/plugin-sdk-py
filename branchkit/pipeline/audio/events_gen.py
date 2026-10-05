@@ -6,7 +6,8 @@
 # types). Framing lives in the hand-written reader/writer alongside this file.
 #
 # The audio session vocabulary. Import this if your stage produces or
-# consumes an audio stream.
+# consumes an audio stream — a speech engine (`speak` in, audio out) and an
+# audio sink (audio in, `playback_*` out) included.
 
 from typing import Any, NotRequired, TypedDict
 
@@ -15,6 +16,9 @@ from typing import Any, NotRequired, TypedDict
 EVENT_AUDIO_CHUNK = "audio_chunk"
 EVENT_AUDIO_START = "audio_start"
 EVENT_AUDIO_STOP = "audio_stop"
+EVENT_PLAYBACK_ENDED = "playback_ended"
+EVENT_PLAYBACK_STARTED = "playback_started"
+EVENT_SPEAK = "speak"
 
 AudioChunk = TypedDict("AudioChunk", {
     "session_id": str,
@@ -44,5 +48,63 @@ AudioStop = TypedDict("AudioStop", {
     # everything.
     "cutoff_ms": NotRequired[int],
     "session_id": str,
+})
+
+# `playback_ended`: an audio session's last sound left the speakers, or it
+# was cut off.
+PlaybackEnded = TypedDict("PlaybackEnded", {
+    # When, on the shared clock (as `playback_started`'s `at_ms`).
+    "at_ms": int,
+    # True when playback was stopped before the audio ran out.
+    "interrupted": NotRequired[bool],
+    "session_id": str,
+})
+
+# `playback_started`: an audio session's first sound left the speakers.
+#
+# Emitted by an audio sink (`stage_type` `speaker`) — the stage that plays
+# audio rather than processing it — so the platform knows exactly when the
+# person, and the microphone, began to hear it.
+PlaybackStarted = TypedDict("PlaybackStarted", {
+    # When, on the shared clock (the `AudioChunk` `timestamp_ms` timebase,
+    # which each SDK's stage runtime reads for you). Comparable with the
+    # onsets a recognizer
+    # reports, which is what lets the platform drop its own voice coming
+    # back through the microphone.
+    "at_ms": int,
+    "session_id": str,
+})
+
+# The `speak` request: say these words. Sent by the platform to a speech
+# engine (`stage_type` `tts`), one per utterance.
+#
+# The engine answers on the same `session_id` with the audio session
+# vocabulary, run the other way: `audio_start` (its format), `audio_chunk`s
+# as it synthesizes — streaming, so the first words play while the rest are
+# still being made — and exactly one `audio_stop` when the utterance is
+# over, whether it finished, failed (an `error` with this `session_id`
+# first) or was cancelled. Every request gets that one `audio_stop`, even
+# one cancelled before it started, so the platform never waits on an
+# utterance that will not come.
+#
+# Cancel is an inbound `audio_stop` naming the session: the engine stops
+# producing for it at once and closes it. Requests are spoken in the order
+# they arrive; which utterance goes first, and what cuts in, is the
+# platform's decision, not the engine's.
+Speak = TypedDict("Speak", {
+    # BCP 47 tag of the language `text` is in, when the caller knows it. An
+    # engine with voices in several languages may use it to pick one when no
+    # voice is named.
+    "locale": NotRequired[str],
+    # Pace relative to the voice's own: 1.0 is normal, 2.0 twice as fast.
+    # Absent → 1.0. An engine that cannot change pace speaks at 1.0.
+    "rate": NotRequired[float],
+    # The utterance. Every event the engine sends about it carries this.
+    "session_id": str,
+    # The words, plain text without markup, read as written.
+    "text": str,
+    # The `id` of one of the engine's `voices` (its capability). Absent, or
+    # not one the engine declared → its default voice (the first declared).
+    "voice": NotRequired[str],
 })
 

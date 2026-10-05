@@ -32,6 +32,13 @@ from .stagelog import (
     set_log_session,
     stage_log,
 )
+from .speech import (
+    SpeakCtx,
+    SpeechEngine,
+    serve_speech_engine,
+    serve_speech_engine_on,
+    shared_clock_ms,
+)
 from .stage import (
     NO_CREDIT,
     AudioConsumer,
@@ -62,6 +69,8 @@ __all__ = [  # noqa: F405 — the generated names come in via the star import
     "NO_CREDIT",
     "SourceCtx",
     "SourceOptions",
+    "SpeakCtx",
+    "SpeechEngine",
     "LOG_LINE_PREFIX",
     "MAX_PAYLOAD",
     "Reader",
@@ -78,6 +87,9 @@ __all__ = [  # noqa: F405 — the generated names come in via the star import
     "serve_audio_consumer_on",
     "serve_source",
     "serve_source_on",
+    "serve_speech_engine",
+    "serve_speech_engine_on",
+    "shared_clock_ms",
     "set_log_session",
     "stage_log",
 ]
