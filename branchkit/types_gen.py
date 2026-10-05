@@ -7213,6 +7213,34 @@ SpeechSayResponse = TypedDict("SpeechSayResponse", {
     "ok": bool,
 })
 
+StagesRequestRequest = TypedDict("StagesRequestRequest", {
+    # What to ask. Opaque to the platform by design: carried to the stage
+    # unread, its shape the stage's own contract with the plugin.
+    # default null
+    "body": NotRequired[Any],
+    # Arguments the stage is started with, as `--key value` pairs, the way a
+    # pipeline passes a stage's params. `model` names one of the caller's
+    # artifacts and grants the stage read access to it. One warm process is
+    # kept per stage and set of arguments.
+    # default {}
+    "params": NotRequired[dict[str, str]],
+    # A request stage the caller ships (`stage_type: "request"` in its
+    # manifest's `provides.stages`), by its name there.
+    # non-empty
+    "stage": str,
+    # How long to wait for the answer, in milliseconds. Default 30000, at
+    # most 120000. A stage that does not answer in time is stopped.
+    # wire uint64 (64-bit) · default null · min 0
+    "timeout_ms": NotRequired[int],
+})
+
+StagesRequestResponse = TypedDict("StagesRequestResponse", {
+    # The stage's answer, as it sent it. Opaque to the platform by design:
+    # its shape is the contract between the stage and the plugin that ships
+    # it, as the request's `body` is.
+    "body": Any,
+})
+
 SystemLaunchAppRequest = TypedDict("SystemLaunchAppRequest", {
     # Bundle ID of the application to launch (e.g. "com.apple.Safari").
     # non-empty

@@ -32,6 +32,7 @@ from .stagelog import (
     set_log_session,
     stage_log,
 )
+from .request import RequestHandler, serve_requests, serve_requests_on
 from .speech import (
     SpeakCtx,
     SpeechEngine,
@@ -74,6 +75,7 @@ __all__ = [  # noqa: F405 — the generated names come in via the star import
     "LOG_LINE_PREFIX",
     "MAX_PAYLOAD",
     "Reader",
+    "RequestHandler",
     "WireError",
     "Writer",
     "clear_log_session",
@@ -83,6 +85,8 @@ __all__ = [  # noqa: F405 — the generated names come in via the star import
     "log_trace",
     "log_warn",
     "run",
+    "serve_requests",
+    "serve_requests_on",
     "serve_audio_consumer",
     "serve_audio_consumer_on",
     "serve_source",

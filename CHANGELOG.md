@@ -5,6 +5,15 @@ git history.
 
 ## Unreleased
 
+### Request stages (stage runtime)
+
+- Added `branchkit.pipeline.serve_requests` / `serve_requests_on`: the fourth
+  stage shape, one answer per request (a language model, a translator, a
+  classifier). The capability declares `stage_type: "request"`; each
+  `request {request_id, body}` gets exactly one `reply` with the same id, in
+  arrival order, carrying the handler's answer as `body` or its exception as
+  `error`. A request with no id gets a non-fatal `bad_request` error event.
+
 ### Speech engines (stage runtime)
 
 - Added `branchkit.pipeline.serve_speech_engine` /

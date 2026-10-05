@@ -649,6 +649,7 @@ from .contracts_gen import (
     METHOD_SPEECH_RESTART_ENGINE,
     METHOD_SPEECH_SAY,
     METHOD_SPEECH_STOP,
+    METHOD_STAGES_REQUEST,
     METHOD_SYSTEM_LAUNCH_APP,
     METHOD_SYSTEM_NOTIFY,
     METHOD_SYSTEM_RUN_SHELL,
@@ -1061,6 +1062,7 @@ if TYPE_CHECKING:
         SpeechLocale,
         SpeechSayResponse,
         SpotlightResult,
+        StagesRequestResponse,
         ThunderboltDevice,
         TileableEntry,
         TrialBeginResponse,
@@ -7242,6 +7244,36 @@ class MethodsMixin:
     async def speech_stop(self) -> None:
         """Stop the system voice now and drop anything queued behind it"""
         await self.call(METHOD_SPEECH_STOP)
+
+    async def stages_request(self, *, stage: str, body: Any | None = None, params_: dict[str, str] | None = None, timeout_ms: int | None = None) -> StagesRequestResponse:
+        """Ask a request stage the caller ships for one answer
+
+        body: What to ask. Opaque to the platform by design: carried to the stage
+            unread, its shape the stage's own contract with the plugin.
+            default null
+        params_: Arguments the stage is started with, as `--key value` pairs, the way a
+            pipeline passes a stage's params. `model` names one of the caller's
+            artifacts and grants the stage read access to it. One warm process is
+            kept per stage and set of arguments.
+            default {}
+        stage: A request stage the caller ships (`stage_type: "request"` in its
+            manifest's `provides.stages`), by its name there.
+            non-empty
+        timeout_ms: How long to wait for the answer, in milliseconds. Default 30000, at
+            most 120000. A stage that does not answer in time is stopped.
+            wire uint64 (64-bit) · default null · min 0
+        """
+        params: dict[str, Any] = {
+            "stage": stage,
+        }
+        if body is not None:
+            params["body"] = body
+        if params_ is not None:
+            params["params"] = params_
+        if timeout_ms is not None:
+            params["timeout_ms"] = timeout_ms
+        result = await self.call(METHOD_STAGES_REQUEST, params)
+        return result
 
     async def system_launch_app(self, *, bundle_id: str, new_instance: bool | None = None) -> None:
         """Launch an app and post a 'Launching' notification to the HUD

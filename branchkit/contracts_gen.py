@@ -648,6 +648,7 @@ METHOD_SPEECH_ENGINES = "speech.engines"  # since 0.2.0
 METHOD_SPEECH_RESTART_ENGINE = "speech.restart_engine"  # since 0.2.0
 METHOD_SPEECH_SAY = "speech.say"  # since 0.1.0
 METHOD_SPEECH_STOP = "speech.stop"  # since 0.1.0
+METHOD_STAGES_REQUEST = "stages.request"  # since 0.2.0
 METHOD_SYSTEM_LAUNCH_APP = "system.launch_app"  # since 0.1.0
 METHOD_SYSTEM_NOTIFY = "system.notify"  # since 0.1.0
 METHOD_SYSTEM_RUN_SHELL = "system.run_shell"  # since 0.1.0

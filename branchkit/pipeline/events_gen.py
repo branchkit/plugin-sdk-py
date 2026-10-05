@@ -16,6 +16,8 @@ from .audio.events_gen import AudioFormat
 EVENT_CAPABILITY = "capability"
 EVENT_ERROR = "error"
 EVENT_FLOW_CREDIT = "flow_credit"
+EVENT_REPLY = "reply"
+EVENT_REQUEST = "request"
 
 # The open namespace a stage emits custom events under: at least three
 # non-empty dot segments, `ext.<vendor>.<name>`.
@@ -164,6 +166,24 @@ ErrorEvent = TypedDict("ErrorEvent", {
 FlowCredit = TypedDict("FlowCredit", {
     "frames": int,
     "session_id": str,
+})
+
+# `reply`: a request stage's answer to one `request`. Exactly one of `body`
+# (the answer) and `error` (why there is none) is set.
+Reply = TypedDict("Reply", {
+    "body": NotRequired[Any],
+    "error": NotRequired[str],
+    "request_id": str,
+})
+
+# `request`: the host asks a request stage (`stage_type: "request"`) for one
+# answer. The stage answers every request with exactly one `reply` carrying
+# the same `request_id`, in the order the requests arrived. What `body`
+# holds is between the stage and the plugin that ships it: the platform
+# carries it and never reads it.
+Request = TypedDict("Request", {
+    "body": NotRequired[Any],
+    "request_id": str,
 })
 
 # One steady `ext.*` stream a stage declares in Capability.streams: its exact type, the most events per second it will emit, and how subscribers receive it.
