@@ -25,7 +25,7 @@ class TestOutputHelpers(unittest.TestCase):
         self.assertEqual(json.dumps(dispatch_action("windows.close")), '{"dispatch": "windows.close"}')
 
     def test_vocabulary_is_generated_in_platform_order(self):
-        self.assertEqual(KNOWN_OUTPUT_KINDS, ("choices", "mode", "outcome", "problem", "progress"))
+        self.assertEqual(KNOWN_OUTPUT_KINDS, ("choices", "mode", "outcome", "problem", "progress", "notice"))
 
     def test_output_state_carries_the_document_and_decodes_the_answer(self):
         plugin = branchkit.Plugin()
