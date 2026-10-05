@@ -645,6 +645,8 @@ from .contracts_gen import (
     METHOD_SETTINGS_RULES_CREATE,
     METHOD_SETTINGS_RULES_UPDATE,
     METHOD_SPEECH_ANNOUNCE,
+    METHOD_SPEECH_ENGINES,
+    METHOD_SPEECH_RESTART_ENGINE,
     METHOD_SPEECH_SAY,
     METHOD_SPEECH_STOP,
     METHOD_SYSTEM_LAUNCH_APP,
@@ -1055,7 +1057,9 @@ if TYPE_CHECKING:
         Shape,
         ShortcutInfo,
         SpaceInfo,
+        SpeechEngineInfo,
         SpeechLocale,
+        SpeechSayResponse,
         SpotlightResult,
         ThunderboltDevice,
         TileableEntry,
@@ -7171,21 +7175,69 @@ class MethodsMixin:
         }
         await self.call(METHOD_SPEECH_ANNOUNCE, params)
 
-    async def speech_say(self, *, text: str, priority: str | None = None) -> None:
-        """Speak words through the system voice (a primitive: the platform makes the sound and reports the span for echo suppression; what to say is the caller's policy)
+    async def speech_engines(self, *, engine: str | None = None) -> list[SpeechEngineInfo]:
+        """List the speech engines `speech.say` can speak through, and the voices each offers; naming one starts it and waits for its voices
 
+        engine: Start this engine if it is not running and wait (up to 30 s) for its
+            voices. Omitted: list every engine as it is, starting none — an
+            engine holds its model in memory once started.
+            default null
+        """
+        params: dict[str, Any] = {
+        }
+        if engine is not None:
+            params["engine"] = engine
+        result = await self.call(METHOD_SPEECH_ENGINES, params)
+        return (result or {}).get("engines") or []
+
+    async def speech_restart_engine(self, *, engine: str) -> None:
+        """Stop a speech engine the caller ships so its next utterance starts it afresh (a new model chosen)
+
+        engine: A speech engine stage the calling plugin ships.
+            non-empty
+        """
+        params: dict[str, Any] = {
+            "engine": engine,
+        }
+        await self.call(METHOD_SPEECH_RESTART_ENGINE, params)
+
+    async def speech_say(self, *, text: str, engine: str | None = None, locale: str | None = None, priority: str | None = None, rate: float | None = None, voice: str | None = None) -> SpeechSayResponse:
+        """Speak words through the system voice or a speech engine stage (a primitive: the platform makes the sound and reports the span for echo suppression; what to say is the caller's policy)
+
+        engine: What speaks it: `"system"` (the default) is the operating system's
+            own voice; otherwise the qualified name of a speech engine stage a
+            plugin ships (`stage_type` `tts`), started with its first utterance
+            and kept running.
+            default null
+        locale: BCP 47 tag of the language the words are in, when known.
+            default null
         priority: `"normal"` queues behind whatever is playing; `"high"` cuts it off
             and speaks now. Defaults to normal.
             default null
+        rate: Pace relative to the voice's normal one: 1.0 is normal, 2.0 twice as
+            fast. Speech engines only, today.
+            wire float · default null
         text: The words. Plain language, no markup; the system voice reads it as is.
             non-empty
+        voice: A voice the engine declared (its capability's `voices`); absent or
+            unknown means the engine's default. Speech engines only, today.
+            default null
         """
         params: dict[str, Any] = {
             "text": text,
         }
+        if engine is not None:
+            params["engine"] = engine
+        if locale is not None:
+            params["locale"] = locale
         if priority is not None:
             params["priority"] = priority
-        await self.call(METHOD_SPEECH_SAY, params)
+        if rate is not None:
+            params["rate"] = rate
+        if voice is not None:
+            params["voice"] = voice
+        result = await self.call(METHOD_SPEECH_SAY, params)
+        return result
 
     async def speech_stop(self) -> None:
         """Stop the system voice now and drop anything queued behind it"""

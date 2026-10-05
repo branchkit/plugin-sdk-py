@@ -1773,10 +1773,33 @@ SpaceInfo = TypedDict("SpaceInfo", {
     "space_type": str,
 })
 
+# One engine in `speech.engines`.
+SpeechEngineInfo = TypedDict("SpeechEngineInfo", {
+    # What `speech.say` names it by: `system`, or a stage's qualified name.
+    "engine": str,
+    # Why the engine asked for could not start (a model not downloaded).
+    "error": NotRequired[str],
+    # Running now (the OS voice always is).
+    "running": bool,
+    # The voices it declared when it last started; empty for an engine
+    # not yet started, and for the OS voice today.
+    "voices": list["SpeechVoice"],
+})
+
 SpeechLocale = TypedDict("SpeechLocale", {
     "identifier": str,
     "is_available": bool,
     "language": str,
+})
+
+# One voice an engine declared.
+SpeechVoice = TypedDict("SpeechVoice", {
+    # What `speech.say`'s `voice` names it by.
+    "id": str,
+    # BCP 47 tag of the language it speaks.
+    "locale": str,
+    # The voice as a person would choose it.
+    "name": str,
 })
 
 # A Spotlight search result.
@@ -7139,14 +7162,55 @@ SpeechAnnounceRequest = TypedDict("SpeechAnnounceRequest", {
     "text": str,
 })
 
+SpeechEnginesRequest = TypedDict("SpeechEnginesRequest", {
+    # Start this engine if it is not running and wait (up to 30 s) for its
+    # voices. Omitted: list every engine as it is, starting none — an
+    # engine holds its model in memory once started.
+    # default null
+    "engine": NotRequired[str],
+})
+
+SpeechEnginesResponse = TypedDict("SpeechEnginesResponse", {
+    "engines": list["SpeechEngineInfo"],
+})
+
+SpeechRestartEngineRequest = TypedDict("SpeechRestartEngineRequest", {
+    # A speech engine stage the calling plugin ships.
+    # non-empty
+    "engine": str,
+})
+
 SpeechSayRequest = TypedDict("SpeechSayRequest", {
+    # What speaks it: `"system"` (the default) is the operating system's
+    # own voice; otherwise the qualified name of a speech engine stage a
+    # plugin ships (`stage_type` `tts`), started with its first utterance
+    # and kept running.
+    # default null
+    "engine": NotRequired[str],
+    # BCP 47 tag of the language the words are in, when known.
+    # default null
+    "locale": NotRequired[str],
     # `"normal"` queues behind whatever is playing; `"high"` cuts it off
     # and speaks now. Defaults to normal.
     # default null
     "priority": NotRequired[str],
+    # Pace relative to the voice's normal one: 1.0 is normal, 2.0 twice as
+    # fast. Speech engines only, today.
+    # wire float · default null
+    "rate": NotRequired[float],
     # The words. Plain language, no markup; the system voice reads it as is.
     # non-empty
     "text": str,
+    # A voice the engine declared (its capability's `voices`); absent or
+    # unknown means the engine's default. Speech engines only, today.
+    # default null
+    "voice": NotRequired[str],
+})
+
+SpeechSayResponse = TypedDict("SpeechSayResponse", {
+    # The utterance: `_platform.speech.started` / `finished` carry it.
+    "id": str,
+    "ok": bool,
 })
 
 SystemLaunchAppRequest = TypedDict("SystemLaunchAppRequest", {
@@ -7846,6 +7910,26 @@ SelectionPickedEventParams = TypedDict("SelectionPickedEventParams", {
     "item_id": str,
     # Phonetic tag used to select the item.
     "tag": str,
+})
+
+# Payload of the `_platform.speech.finished` event.
+SpeechFinishedEventParams = TypedDict("SpeechFinishedEventParams", {
+    # What spoke it, as in `_platform.speech.started`.
+    "engine": str,
+    # The utterance, as `speech.say` returned it.
+    "id": str,
+    # True when it was stopped, superseded or failed before its end.
+    # default false
+    "interrupted": NotRequired[bool],
+})
+
+# Payload of the `_platform.speech.started` event.
+SpeechStartedEventParams = TypedDict("SpeechStartedEventParams", {
+    # What spoke it: `system` for the OS voice, otherwise the speech
+    # engine stage's qualified name.
+    "engine": str,
+    # The utterance, as `speech.say` returned it.
+    "id": str,
 })
 
 # Payload of the `_platform.thermal.changed` event.
