@@ -1340,8 +1340,9 @@ OutputState = TypedDict("OutputState", {
     # A trailing line — "say a command, or wait".
     "footer": NotRequired[str],
     # One of the closed [`OutputKind`] vocabulary: `choices`, `mode`,
-    # `outcome`, `problem`, `progress`. Carried as a string so a kind this
-    # platform does not know degrades to `outcome` instead of failing.
+    # `outcome`, `problem`, `progress`, `notice`. Carried as a string so a
+    # kind this platform does not know degrades to `outcome` instead of
+    # failing.
     "kind": str,
     # BCP 47 language tag of every phrase in this document — "en", "pt-BR".
     "locale": str,

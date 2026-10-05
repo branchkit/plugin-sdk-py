@@ -129,6 +129,7 @@ OUTPUT_KIND_MODE = "mode"
 OUTPUT_KIND_OUTCOME = "outcome"
 OUTPUT_KIND_PROBLEM = "problem"
 OUTPUT_KIND_PROGRESS = "progress"
+OUTPUT_KIND_NOTICE = "notice"
 
 # KNOWN_OUTPUT_KINDS lists the full closed-vocabulary set, in the
 # platform's own order.
@@ -138,6 +139,7 @@ KNOWN_OUTPUT_KINDS = (
     "outcome",
     "problem",
     "progress",
+    "notice",
 )
 
 # OUTPUT_URGENCY_* are the closed-vocabulary `urgency` values of a
