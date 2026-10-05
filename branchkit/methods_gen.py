@@ -3965,7 +3965,7 @@ class MethodsMixin:
         return result
 
     async def native_hostname_resolve(self, *, hostname: str) -> list[str]:
-        """Resolve a hostname to IP addresses
+        """Resolve a hostname to IP addresses. A plugin may resolve only a host it declares in requires.network that the user has switched on
 
         hostname: non-empty
         """
@@ -4413,12 +4413,12 @@ class MethodsMixin:
         return result
 
     async def native_network_quality(self) -> NativeNetworkQualityResponse:
-        """Run a quick network quality test (upload/download Mbps). Exists only on macOS; elsewhere it is refused with platform_no_analogue"""
+        """Run a quick network quality test (upload/download Mbps). The test contacts Apple, so a plugin declares mensura.cdn-apple.com in requires.network. Exists only on macOS; elsewhere it is refused with platform_no_analogue"""
         result = await self.call(METHOD_NATIVE_NETWORK_QUALITY)
         return result
 
     async def native_network_reachable(self, *, host: str) -> NativeNetworkReachableResponse:
-        """Check if a host is reachable via network
+        """Check if a host is reachable via network. A plugin may check only a host it declares in requires.network that the user has switched on
 
         host: non-empty
         """
@@ -4653,7 +4653,7 @@ class MethodsMixin:
         return result
 
     async def native_ping(self, *, host: str) -> float:
-        """Ping a host and return latency in milliseconds
+        """Ping a host and return latency in milliseconds. A plugin may ping only a host it declares in requires.network that the user has switched on
 
         host: non-empty
         """
@@ -4841,7 +4841,7 @@ class MethodsMixin:
         return result
 
     async def native_public_ip(self) -> NativePublicIPResponse:
-        """Get the external/public IP address via a DNS lookup (no HTTP)"""
+        """Get the external/public IP address via a DNS lookup (no HTTP). The lookup asks OpenDNS, so a plugin declares resolver1.opendns.com in requires.network"""
         result = await self.call(METHOD_NATIVE_PUBLIC_IP)
         return result
 
