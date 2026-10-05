@@ -5,6 +5,13 @@ git history.
 
 ## Unreleased
 
+### Output
+
+- `output_state(..., draws_own_window=True)`: publish a state for every
+  other renderer (speech, the window's accessibility element) while the
+  plugin keeps drawing its own window with `hud.push`; the platform draws
+  nothing.
+
 ### Request stages (stage runtime)
 
 - Added `branchkit.pipeline.serve_requests` / `serve_requests_on`: the fourth

@@ -6488,15 +6488,24 @@ class MethodsMixin:
         result = await self.call(METHOD_OUTPUT_CLEAR, params)
         return result
 
-    async def output_state(self, *, state: "OutputState") -> OutputStateResponse:
+    async def output_state(self, *, state: "OutputState", draws_own_window: bool | None = None) -> OutputStateResponse:
         """Set a HUD channel's current semantic output state — a document of what is true for the person, in human language, consumed by every renderer; supersedes the previous state
 
+        draws_own_window: The calling plugin draws this channel's window itself (with
+            `hud.push`), and publishes the state only so the meaning reaches every
+            other renderer: speech, the window's accessibility element, any
+            plugin that renders states. The platform then holds and broadcasts
+            the state as usual but draws nothing into the window, so the plugin's
+            own drawing stays. Default `false`: the platform draws the window.
+            default false
         state: The document that becomes the channel's current state. Its `channel`
             must be owned by the calling plugin.
         """
         params: dict[str, Any] = {
             "state": state,
         }
+        if draws_own_window is not None:
+            params["draws_own_window"] = draws_own_window
         result = await self.call(METHOD_OUTPUT_STATE, params)
         return result
 
