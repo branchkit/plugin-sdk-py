@@ -16,7 +16,12 @@ Handlers may be `async def` (run on the loop) or plain `def`
 plugin). Stdlib-only by design: importing the SDK forces no third-party
 dependency on any plugin."""
 
+from . import _sandbox_tmp
 from . import proxy as _proxy
+
+# On macOS, point Apple's frameworks at the temporary directory the sandbox
+# grants, before anything can load one (see _sandbox_tmp).
+_sandbox_tmp.adopt()
 
 # Route stdlib HTTP through BRANCHKIT_PROXY when sandboxed (per-host
 # tier) — same import-time side effect as the TS SDK's entry module.
