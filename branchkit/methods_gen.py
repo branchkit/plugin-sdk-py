@@ -5202,7 +5202,7 @@ class MethodsMixin:
         return (result or {}).get("paths") or []
 
     async def native_selected_text(self) -> NativeSelectedTextResponse:
-        """Get the currently selected text from the frontmost app"""
+        """Get the text selected in the focused app, never from a password field. Read through the OS accessibility interface; on macOS, an app that offers no selection through it is asked to copy, and the clipboard is put back."""
         result = await self.call(METHOD_NATIVE_SELECTED_TEXT)
         return result
 
