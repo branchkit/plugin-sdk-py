@@ -7890,6 +7890,13 @@ PipelineWarmedEventParams = TypedDict("PipelineWarmedEventParams", {
     "pipeline": str,
 })
 
+# Payload of the `_platform.pipeline.warming` event.
+PipelineWarmingEventParams = TypedDict("PipelineWarmingEventParams", {
+    "pipeline": str,
+    # The consumer stages being started, by qualified name.
+    "stages": list[str],
+})
+
 # Payload of the `_platform.plugin.degraded` event.
 PluginDegradedEventParams = TypedDict("PluginDegradedEventParams", {
     # How many consecutive RPC timeouts drove this. `0` when the plugin
