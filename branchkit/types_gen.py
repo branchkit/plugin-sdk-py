@@ -830,7 +830,7 @@ EnumeratedCommand = TypedDict("EnumeratedCommand", {
     "sets_tags": list[str],
 })
 
-# One action's result in a [`PipelineExecutedEventParams`]. Carries the
+# One action's result in a `_platform.pipeline.executed` event. Carries the
 # action's type, never its params: those can hold what the person said.
 ExecutedActionReport = TypedDict("ExecutedActionReport", {
     # Dotted action type (`tiling.snap`); `sequence` for a sequence.
