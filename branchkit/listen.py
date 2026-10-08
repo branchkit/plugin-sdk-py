@@ -51,8 +51,56 @@ def _granted_ports() -> list[int]:
     return out
 
 
-_RELAY_HEADER_PREFIX = "BKRELAY/1 "
+# Version 2 of the relay header asks the actuator to answer "OK <peer>\n",
+# <peer> being the client's address as its public listener accepted it
+# ("127.0.0.1:50741"). The socket the plugin holds is the rendezvous pipe,
+# whose own peer says nothing about the client, so the paired request reports
+# <peer> as its client address — ListenRequest.remote_addr is the client's,
+# exactly as on an inherited fd. A plugin that asks the platform which app
+# owns the other end of a loopback connection needs that port. A bare "OK\n"
+# (an actuator speaking version 1) is still accepted, with no peer.
+_RELAY_HEADER_PREFIX = "BKRELAY/2 "
 _RELAY_POOL_SIZE = 4
+_RELAY_ANSWER_MAX = 128  # "OK " plus an address
+
+
+def _parse_relay_answer(line: bytes):
+    """Parse the actuator's answer line, without its newline. Returns
+    (True, (host, port)) for "OK <peer>", (True, None) for a bare "OK", and
+    (False, None) for anything else."""
+    if line == b"OK":
+        return True, None
+    if not line.startswith(b"OK "):
+        return False, None
+    try:
+        rest = line[3:].decode("ascii")
+    except UnicodeDecodeError:
+        return False, None
+    host, sep, port_s = rest.rpartition(":")
+    if not sep or not port_s.isdigit() or len(port_s) > 5:
+        return False, None
+    port = int(port_s)
+    if not 0 < port <= 65535:
+        return False, None
+    v6 = host.startswith("[") and host.endswith("]")
+    if v6:
+        host = host[1:-1]
+    try:
+        socket.inet_pton(socket.AF_INET6 if v6 else socket.AF_INET, host)
+    except (OSError, ValueError):
+        return False, None
+    return True, (host, port)
+
+
+def _format_addr(addr) -> str:
+    """A client address tuple as "host:port" ("[host]:port" for IPv6), the
+    form Go's Request.RemoteAddr takes."""
+    if not isinstance(addr, tuple) or len(addr) < 2:
+        return ""
+    host, port = addr[0], addr[1]
+    if ":" in str(host):
+        return "[%s]:%s" % (host, port)
+    return "%s:%s" % (host, port)
 
 
 def _relay_env() -> tuple[tuple[str, int], str] | None:
@@ -91,12 +139,15 @@ def _granted_listeners() -> list[tuple[str, int]]:
 
 class ListenRequest:
     """The request a route handler receives: `method`, `path`, `headers`,
-    and `body()` for the raw payload bytes."""
+    `remote_addr` (the client's "host:port", as Go's Request.RemoteAddr and
+    Node's req.socket give it — through the actuator's relay too), and
+    `body()` for the raw payload bytes."""
 
     def __init__(self, handler: http.server.BaseHTTPRequestHandler, path: str):
         self.method = handler.command
         self.path = path
         self.headers = handler.headers
+        self.remote_addr = _format_addr(handler.client_address)
         self._handler = handler
 
     def body(self) -> bytes:
@@ -255,15 +306,18 @@ def _start_relay_pool(server: "_Server", rendezvous: tuple[str, int], token: str
                 s.sendall(f"{_RELAY_HEADER_PREFIX}{listener_id} {token}\n".encode("utf-8"))
                 s.settimeout(None)
                 # A byte at a time: the client's first bytes may follow the
-                # OK in the same segment and must stay in the socket for the
-                # HTTP parser.
+                # answer in the same segment and must stay in the socket for
+                # the HTTP parser.
                 got = b""
-                while len(got) < 3:
+                while not got.endswith(b"\n"):
+                    if len(got) > _RELAY_ANSWER_MAX:
+                        raise OSError("relay answer too long")
                     b = s.recv(1)
                     if not b:
                         raise OSError("rendezvous closed")
                     got += b
-                if got != b"OK\n":
+                ok, peer = _parse_relay_answer(got[:-1])
+                if not ok:
                     raise OSError("bad relay answer")
             except OSError:
                 with lock:
@@ -277,7 +331,7 @@ def _start_relay_pool(server: "_Server", rendezvous: tuple[str, int], token: str
             # A replacement first, so the pool never dips while this one serves.
             threading.Thread(target=park, name="branchkit-relay", daemon=True).start()
             try:
-                server.process_request(s, s.getpeername())
+                server.process_request(s, peer if peer is not None else s.getpeername())
             except OSError:
                 s.close()
             return

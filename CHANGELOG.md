@@ -5,6 +5,14 @@ git history.
 
 ## Unreleased
 
+### Listen
+
+- `ListenRequest.remote_addr`: the client's `"host:port"`, on an
+  inherited listener and through the actuator's listener relay (Windows)
+  alike. The relay header is now `BKRELAY/2`, whose answer carries the
+  peer (`OK <addr>`); a bare `OK` from an older actuator is still accepted.
+  Needs an actuator that speaks version 2.
+
 ### Output
 
 - `output_state(..., draws_own_window=True)`: publish a state for every
