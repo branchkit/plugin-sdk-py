@@ -830,6 +830,19 @@ EnumeratedCommand = TypedDict("EnumeratedCommand", {
     "sets_tags": list[str],
 })
 
+# One action's result in a [`PipelineExecutedEventParams`]. Carries the
+# action's type, never its params: those can hold what the person said.
+ExecutedActionReport = TypedDict("ExecutedActionReport", {
+    # Dotted action type (`tiling.snap`); `sequence` for a sequence.
+    "action_type": str,
+    # Why it was refused, when `status` is `denied` and the platform knows.
+    "denial": NotRequired[str],
+    # Plugin that handled it, when it routed to one.
+    "handler": NotRequired[str],
+    # `ok`, `error`, `not_handled`, `denied` or `simulated`.
+    "status": str,
+})
+
 ExternalDisk = TypedDict("ExternalDisk", {
     "file_system": NotRequired[str],
     # wire uint64 (64-bit) · min 0
@@ -7838,6 +7851,24 @@ PermissionChangedEventParams = TypedDict("PermissionChangedEventParams", {
 PipelineErrorEventParams = TypedDict("PipelineErrorEventParams", {
     "error": str,
     "pipeline": str,
+})
+
+# Payload of the `_platform.pipeline.executed` event.
+PipelineExecutedEventParams = TypedDict("PipelineExecutedEventParams", {
+    # One entry per action, in the order they ran.
+    # default []
+    "actions": NotRequired[list["ExecutedActionReport"]],
+    # `"ran"`: every action in `actions` was executed (each with its own
+    # status). `"dropped"`: the owner's `on_transcript` call failed (it
+    # timed out, returned an error, was not running, or answered with
+    # actions that could not be read) and nothing ran; a late answer is
+    # discarded. `reason` says which.
+    "outcome": str,
+    # The pipeline's owner, the plugin that introduced it.
+    "owner_plugin": str,
+    "pipeline": str,
+    # Why the turn was dropped. Absent when it ran.
+    "reason": NotRequired[str],
 })
 
 # Payload of the `_platform.pipeline.started` event.
