@@ -185,7 +185,7 @@ ActiveSpace = TypedDict("ActiveSpace", {
 })
 
 # Anchor position for a HUD window on screen.
-Anchor = Literal["top-left", "top-right", "bottom-left", "bottom-right", "bottom-center", "center"]
+Anchor = Literal["top-left", "top-right", "top-center", "bottom-left", "bottom-right", "bottom-center", "center"]
 
 # One app's audio in the system mixer: its own volume and mute, apart from
 # the device's. An app with several streams (a browser's tabs) is one
