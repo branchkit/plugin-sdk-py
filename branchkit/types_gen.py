@@ -1634,6 +1634,10 @@ ResolveResult = TypedDict("ResolveResult", {
     "clears_tags": list[str],
     # wire uint · min 0
     "consumed_count": int,
+    # The required tag is a select mode's: the platform draws its list as
+    # a palette card itself, so a renderer of its own (voice's Discovery
+    # window) leaves it to that card.
+    "drawn_by_platform": bool,
     # The winning command's dictated-argument descriptor, if declared: the
     "has_completions": bool,
     "items": list["DiscoverItem"],
@@ -2698,6 +2702,10 @@ CommandsResolveResponse = TypedDict("CommandsResolveResponse", {
     "clears_tags": list[str],
     # wire uint · min 0
     "consumed_count": int,
+    # The required tag is a select mode's: the platform draws its list as
+    # a palette card itself, so a renderer of its own (voice's Discovery
+    # window) leaves it to that card.
+    "drawn_by_platform": NotRequired[bool],
     # The winning command's dictated-argument descriptor, if declared: the
     "has_completions": bool,
     "items": list["DiscoverItem"],
