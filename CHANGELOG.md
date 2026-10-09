@@ -11,8 +11,18 @@ git history.
   menu bar's on macOS, the primary monitor on Windows, RandR's primary
   output on X11). False for every display where the system cannot say.
 
+### Native
+
+- `native_caret_bounds`: where the caret is on screen in the focused text
+  field (`text.caret`). Nothing for a password field or a field that
+  cannot say; on Linux, X11 only.
+
 ### HUD
 
+- `relative_to="caret"`: a window above or below the line being typed,
+  lined up with the text caret where it was when the window opened. Needs
+  the `text.caret` privilege; otherwise, or where the caret cannot be
+  read, on the display.
 - Anchors cover the whole three-by-three grid: `"center-left"` and
   `"center-right"` join the seven there were.
 - `hud_create_channel` takes `relative_to` (`"display"`, the default,

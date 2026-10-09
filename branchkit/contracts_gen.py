@@ -154,6 +154,7 @@ METHOD_NATIVE_CAMERA_PERMISSION = "native.camera_permission"  # since 0.1.0
 METHOD_NATIVE_CAMERAS = "native.cameras"  # since 0.1.0
 METHOD_NATIVE_CAPS_LOCK_STATE = "native.caps_lock_state"  # since 0.1.0
 METHOD_NATIVE_CAPTURE_WINDOW = "native.capture_window"  # since 0.1.0
+METHOD_NATIVE_CARET_BOUNDS = "native.caret_bounds"  # since 0.2.0
 METHOD_NATIVE_CARET_CONTEXT = "native.caret_context"  # since 0.2.0
 METHOD_NATIVE_CASCADE_WINDOWS = "native.cascade_windows"  # since 0.1.0
 METHOD_NATIVE_CENTER_WINDOW = "native.center_window"  # since 0.1.0

@@ -1572,7 +1572,7 @@ RedecodeNoise = TypedDict("RedecodeNoise", {
 })
 
 # What a HUD window is placed against.
-RelativeTo = Literal["display", "focused_window", "pointer"]
+RelativeTo = Literal["display", "focused_window", "pointer", "caret"]
 
 ReminderItem = TypedDict("ReminderItem", {
     "due_date": NotRequired[str],
@@ -3791,6 +3791,10 @@ NativeCaptureWindowResponse = TypedDict("NativeCaptureWindowResponse", {
     "format": str,
     # Base64-encoded PNG bytes.
     "image_base64": str,
+})
+
+NativeCaretBoundsResponse = TypedDict("NativeCaretBoundsResponse", {
+    "bounds": NotRequired["AccessibleBounds"],
 })
 
 NativeCaretContextResponse = TypedDict("NativeCaretContextResponse", {

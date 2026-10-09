@@ -155,6 +155,7 @@ from .contracts_gen import (
     METHOD_NATIVE_CAMERA_PERMISSION,
     METHOD_NATIVE_CAPS_LOCK_STATE,
     METHOD_NATIVE_CAPTURE_WINDOW,
+    METHOD_NATIVE_CARET_BOUNDS,
     METHOD_NATIVE_CARET_CONTEXT,
     METHOD_NATIVE_CASCADE_WINDOWS,
     METHOD_NATIVE_CENTER_WINDOW,
@@ -784,6 +785,7 @@ if TYPE_CHECKING:
         NativeCameraPermissionResponse,
         NativeCapsLockStateResponse,
         NativeCaptureWindowResponse,
+        NativeCaretBoundsResponse,
         NativeCaretContextResponse,
         NativeCheckPermissionResponse,
         NativeClipboardChangeCountResponse,
@@ -2947,6 +2949,11 @@ class MethodsMixin:
             "window_id": window_id,
         }
         result = await self.call(METHOD_NATIVE_CAPTURE_WINDOW, params)
+        return result
+
+    async def native_caret_bounds(self) -> NativeCaretBoundsResponse:
+        """Get where the caret is on screen: the rectangle of the selection's start in the focused text field (a thin one at a bare caret), in the coordinates window frames use. For putting something beside where the person is typing. Answers nothing for a password field, a control with no text, or when the field cannot say."""
+        result = await self.call(METHOD_NATIVE_CARET_BOUNDS)
         return result
 
     async def native_caret_context(self) -> NativeCaretContextResponse:
