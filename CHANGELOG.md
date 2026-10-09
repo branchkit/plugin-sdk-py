@@ -5,6 +5,12 @@ git history.
 
 ## Unreleased
 
+### World
+
+- `DisplayInfo.is_primary`: whether a display is the system's main one (the
+  menu bar's on macOS, the primary monitor on Windows, RandR's primary
+  output on X11). False for every display where the system cannot say.
+
 ### HUD
 
 - Anchors cover the whole three-by-three grid: `"center-left"` and

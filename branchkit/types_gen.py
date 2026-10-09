@@ -724,6 +724,11 @@ DisplayInfo = TypedDict("DisplayInfo", {
     # known, not drawing until it wakes. Default false.
     # default false
     "is_asleep": bool,
+    # The system's main display: where the menu bar is (macOS), the
+    # primary monitor (Windows), RandR's primary output (X11). Default
+    # false; a source that cannot say leaves every display false.
+    # default false
+    "is_primary": bool,
     # wire int32 · default 0
     "visible_h": int,
     # wire int32 · default 0
