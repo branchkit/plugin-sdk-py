@@ -5,6 +5,15 @@ git history.
 
 ## Unreleased
 
+### HUD
+
+- Anchors cover the whole three-by-three grid: `"center-left"` and
+  `"center-right"` join the seven there were.
+- `hud_create_channel` takes `relative_to` (`"display"`, the default,
+  `"focused_window"` or `"pointer"`) and `offset` (`{"x": ..., "y": ...}`
+  in pixels), as the manifest's `hud_windows` do. Needs an actuator that
+  knows them.
+
 ### Listen
 
 - `ListenRequest.remote_addr`: the client's `"host:port"`, on an

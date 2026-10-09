@@ -1012,6 +1012,7 @@ if TYPE_CHECKING:
         NetworkInterface,
         NetworkRequestHostResponse,
         OcrRegion,
+        Offset,
         OnPointer,
         OutputClearResponse,
         OutputState,
@@ -1040,6 +1041,7 @@ if TYPE_CHECKING:
         RecognitionBiasSetResponse,
         RecognitionRedecodeResponse,
         RedecodeItem,
+        RelativeTo,
         ReminderItem,
         ReplaceScope,
         RunningApp,
@@ -1834,7 +1836,7 @@ class MethodsMixin:
         result = await self.call(METHOD_HTTP_REQUEST, params)
         return result
 
-    async def hud_create_channel(self, *, channel: str, accepts_input: bool | None = None, anchor: "Anchor" | None = None, description: str | None = None, draggable: bool | None = None, follows_focus: bool | None = None, min_height: int | None = None, on_pointer: "OnPointer" | None = None, stack_order: int | None = None, transparent: bool | None = None, width: int | None = None) -> None:
+    async def hud_create_channel(self, *, channel: str, accepts_input: bool | None = None, anchor: "Anchor" | None = None, description: str | None = None, draggable: bool | None = None, follows_focus: bool | None = None, min_height: int | None = None, offset: "Offset" | None = None, on_pointer: "OnPointer" | None = None, relative_to: "RelativeTo" | None = None, stack_order: int | None = None, transparent: bool | None = None, width: int | None = None) -> None:
         """Create a new HUD broadcast channel at runtime
 
         accepts_input: Whether the channel's window receives keyboard/mouse input.
@@ -1863,9 +1865,14 @@ class MethodsMixin:
             default true
         min_height: Minimum window height in points. Defaults to 100.
             wire uint32 · default 100 · min 0
+        offset: A nudge from the anchored place, in pixels: `x` right, `y` down.
+            default {"x":0,"y":0}
         on_pointer: Pointer-dodge behavior: "none" (default) or "fade" (dodge the mouse —
             fade to near-transparent while the pointer is inside the frame).
             default "none"
+        relative_to: What the window is placed against: `display` (the default),
+            `focused_window` or `pointer`.
+            default "display"
         stack_order: Stack position among windows sharing this anchor: offsets ascend from the
             anchor edge, so the lowest pins at the corner (a persistent status window)
             and higher values stack away (transient toasts). Ties broken by channel
@@ -1895,8 +1902,12 @@ class MethodsMixin:
             params["follows_focus"] = follows_focus
         if min_height is not None:
             params["min_height"] = min_height
+        if offset is not None:
+            params["offset"] = offset
         if on_pointer is not None:
             params["on_pointer"] = on_pointer
+        if relative_to is not None:
+            params["relative_to"] = relative_to
         if stack_order is not None:
             params["stack_order"] = stack_order
         if transparent is not None:
