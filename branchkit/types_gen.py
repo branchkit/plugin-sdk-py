@@ -527,19 +527,8 @@ CommandOverride = TypedDict("CommandOverride", {
 CommandRowData = TypedDict("CommandRowData", {
     "action": str,
     # Raw action JSON for editor decomposition (complements the display
-    # `action` string).
-    #
-    # OPEN BY DESIGN — do not declare this `Option<Action>`. It is built by
-    # `crate::actions::action_to_json`, which is NOT `serde::to_value`: for
-    # a parameterized command (`Action::Template` / `CompiledTemplate`, the
-    # shape every command with captures carries) it deliberately emits the
-    # AUTHORED dialect — a flat `{"type": "browser.scroll", …}` whose `type`
-    # is the dotted plugin action type, not the `Action` tag. That is the
-    # right thing for an editor, which decomposes and round-trips what the
-    # author wrote, but it is a superset of the `Action` wire shape and one
-    # generated type would lie about it. Same verdict, same reason, as
-    # `CommandSpec.action`: this field's verdict follows the function that
-    # builds it (`action_to_json`), not the type it is built from.
+    # `action` string), in the authored dialect a command's `action` is
+    # written in.
     "action_json": NotRequired[Any],
     "canonical": str,
     "category": str,
@@ -574,25 +563,11 @@ CommandSnapshot = TypedDict("CommandSnapshot", {
 # value, so adding/removing a field here doesn't change runtime
 # behavior. Edit `commands::PartialCommand` first; mirror here.
 CommandSpec = TypedDict("CommandSpec", {
-    # Action fired on match.
-    #
-    # OPEN BY DESIGN — deliberately NOT declared `crate::actions::Action`,
-    # unlike `dispatch`'s `action` and `commands.resolve`'s, which are
-    # typed. What `commands.push` accepts is the AUTHORED dialect, and
-    # `crate::actions::parse_action_or_template` shows it is a strict
-    # superset of the `Action` wire shape: the tagged form
-    # (`{"type":"plugin","action_type":…,"params":{…}}`), the sequence
-    # envelope (`{"type":"sequence","actions":[…]}`) whose entries are
-    # themselves authored-dialect, AND the flat form
-    # (`{"type":"browser.click", …}`) where `type` carries a dotted plugin
-    # action type and the remaining keys are the params. Commands whose
-    # pattern has captures additionally carry `{N}` placeholders, which
-    # `templateify_commands` later turns into `Action::Template`.
-    #
-    # One generated type would have to lie about at least two of those, so
-    # this stays `Value`, deliberately open rather than counted as a gap to
-    # close. `branchkit-gen` types the params per plugin from the plugin's
-    # own `action_types`, which is where an author actually gets checked.
+    # Action fired on match, in the authored dialect: the tagged form
+    # (`{"type":"plugin","action_type":…,"params":{…}}`), a sequence
+    # (`{"type":"sequence","actions":[…]}`), or the flat form
+    # (`{"type":"browser.click", …}`) where `type` is the dotted plugin
+    # action type and the remaining keys are its params.
     "action": Any,
     # When true, this gated command is allowed to win during a
     # mid-bridge restricted resolve. Default false: gated sibling
@@ -1204,12 +1179,8 @@ MemoryInfo = TypedDict("MemoryInfo", {
     "used_bytes": int,
 })
 
-# A menu bar item (or submenu) from an application.
-#
-# Self-referential via `children: Vec<MenuItem>`. schemars handles
-# the recursion via a `$defs` entry; the previous utoipa-specific
-# `#[schema(no_recursion)]` annotation was dropped in
-# Phase 2j-utoipa-removal.
+# A menu bar item (or submenu) from an application. Submenus nest through
+# `children`.
 MenuItem = TypedDict("MenuItem", {
     # Child menu items (submenus).
     "children": list["MenuItem"],
@@ -1321,7 +1292,8 @@ OutputItem = TypedDict("OutputItem", {
     # deliberately, as a versioned addition, rather than read quietly from
     # `extra`.
     "alt_phrases": NotRequired[list[str]],
-    # Open extension, namespaced by plugin id — see [`OutputState::extra`].
+    # Open extension, namespaced by plugin id (`{"voice": {...}}`), with the
+    # same rules as the state's own `extra`.
     "extra": NotRequired[dict[str, Any]],
     # Stable within the document — what a renderer reports back as chosen.
     "id": str,
@@ -1373,7 +1345,7 @@ OutputState = TypedDict("OutputState", {
     "extra": NotRequired[dict[str, Any]],
     # A trailing line — "say a command, or wait".
     "footer": NotRequired[str],
-    # One of the closed [`OutputKind`] vocabulary: `choices`, `mode`,
+    # One of a closed vocabulary: `choices`, `mode`,
     # `outcome`, `problem`, `progress`, `notice`. Carried as a string so a
     # kind this platform does not know degrades to `outcome` instead of
     # failing.
@@ -1393,12 +1365,12 @@ OutputState = TypedDict("OutputState", {
     "sections": NotRequired[list["OutputSection"]],
     # The state in a few words — what a screen shows as the heading.
     "title": str,
-    # One of the closed [`OutputUrgency`] vocabulary: `ambient`, `notable`,
+    # One of a closed vocabulary: `ambient`, `notable`,
     # `interrupt`. A string for the same reason `kind` is; unknown degrades
     # to `ambient`.
     "urgency": str,
-    # The contract version this document was written against
-    # ([`OUTPUT_STATE_V`]). Information for a renderer, never a gate.
+    # The contract version this document was written against (currently
+    # `1`). Information for a renderer, never a gate.
     # wire uint32 · min 0
     "v": int,
 })
@@ -1679,10 +1651,8 @@ ResolveResult = TypedDict("ResolveResult", {
     "trace_id": str,
 })
 
-# Serializable mirror of `crate::matching::MatchDecisionTelemetry`. The
-# internal type can't derive `Serialize`/`JsonSchema` because it lives in
-# the matching crate alongside non-serializable internals — this struct
-# is the wire shape exposed through `commands.resolve`.
+# How the matcher reached its decision for `commands.resolve`: which
+# kind of command won, and what it saw on the way.
 ResolveTelemetry = TypedDict("ResolveTelemetry", {
     # True iff any gated command's Partial was observed during
     # categorization. When `winner == Ungated` and this is `true`, the
@@ -2558,20 +2528,8 @@ CommandsListOverridesResponse = TypedDict("CommandsListOverridesResponse", {
 
 CommandsPushRequest = TypedDict("CommandsPushRequest", {
     # The commands to push. Replaces the commands contributed by the
-    # calling plugin (the whole set, or one `group`).
-    #
-    # The RUNTIME type stays `serde_json::Value` deliberately: each entry
-    # is parsed individually into `commands::PartialCommand` further in,
-    # so one malformed command is reported as one malformed command
-    # rather than failing the caller's whole push. The SCHEMA says what
-    # the entries are (2026-09-19 census) — this is the one place
-    # `#[schemars(with = ...)]` earns its keep, making the schema MORE
-    # precise than the declaration rather than less, which is the exact
-    # opposite of every other use of it this census deleted.
-    #
-    # Until now the generated wrapper took raw JSON, which is why all
-    # three SDKs hand-wrote a typed push beside it (Go's
-    # `PushCommandSpecs`).
+    # calling plugin (the whole set, or one `group`). A malformed entry is
+    # reported on its own; the rest of the push still applies.
     # default null
     "commands": NotRequired[list["CommandSpec"]],
     # Optional named group this push owns. Absent replaces the plugin's
@@ -7322,7 +7280,7 @@ SystemNotifyRequest = TypedDict("SystemNotifyRequest", {
     # Notification body text (rendered inside `<div id="body-text">`).
     "body": str,
     # Auto-dismiss duration in seconds. When absent, defaults to
-    # [`DEFAULT_NOTIFY_DURATION_SECS`] (5s). Pass `0` for a sticky
+    # 5 seconds. Pass `0` for a sticky
     # notification that only closes when the user clicks Dismiss.
     # Pass any positive integer for a custom duration.
     # wire uint32 · default null · min 0

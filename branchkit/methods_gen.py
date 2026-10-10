@@ -1521,20 +1521,8 @@ class MethodsMixin:
         """Register commands with the matching engine to the matching engine
 
         commands: The commands to push. Replaces the commands contributed by the
-            calling plugin (the whole set, or one `group`).
-
-            The RUNTIME type stays `serde_json::Value` deliberately: each entry
-            is parsed individually into `commands::PartialCommand` further in,
-            so one malformed command is reported as one malformed command
-            rather than failing the caller's whole push. The SCHEMA says what
-            the entries are (2026-09-19 census) — this is the one place
-            `#[schemars(with = ...)]` earns its keep, making the schema MORE
-            precise than the declaration rather than less, which is the exact
-            opposite of every other use of it this census deleted.
-
-            Until now the generated wrapper took raw JSON, which is why all
-            three SDKs hand-wrote a typed push beside it (Go's
-            `PushCommandSpecs`).
+            calling plugin (the whole set, or one `group`). A malformed entry is
+            reported on its own; the rest of the push still applies.
             default null
         group: Optional named group this push owns. Absent replaces the plugin's
             ENTIRE command set (the original semantics, unchanged); present
@@ -7322,7 +7310,7 @@ class MethodsMixin:
 
         body: Notification body text (rendered inside `<div id="body-text">`).
         duration_secs: Auto-dismiss duration in seconds. When absent, defaults to
-            [`DEFAULT_NOTIFY_DURATION_SECS`] (5s). Pass `0` for a sticky
+            5 seconds. Pass `0` for a sticky
             notification that only closes when the user clicks Dismiss.
             Pass any positive integer for a custom duration.
             wire uint32 · default null · min 0
