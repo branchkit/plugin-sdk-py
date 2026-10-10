@@ -1486,6 +1486,10 @@ PipelineStatusEntry = TypedDict("PipelineStatusEntry", {
     "name": str,
 })
 
+# Why a pipeline stopped. Only `requested` is a stop someone asked for; the
+# others end a run its owner may want to start again.
+PipelineStopReason = Literal["requested", "ended", "error", "reload"]
+
 PluginLogLevel = Literal["trace", "info", "warn", "error", "debug"]
 
 PoolStageStatusEntry = TypedDict("PoolStageStatusEntry", {
@@ -7923,7 +7927,13 @@ PipelineStartedEventParams = TypedDict("PipelineStartedEventParams", {
 
 # Payload of the `_platform.pipeline.stopped` event.
 PipelineStoppedEventParams = TypedDict("PipelineStoppedEventParams", {
+    # What went wrong, when `reason` is `error`. The same text
+    # `_platform.pipeline.error` carried just before.
+    "error": NotRequired[str],
     "pipeline": str,
+    "reason": "PipelineStopReason",
+    # `keybind` when the pipeline's own keybind trigger stopped it.
+    "trigger": NotRequired[str],
 })
 
 # Payload of the `_platform.pipeline.transcript` event.
