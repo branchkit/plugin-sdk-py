@@ -338,17 +338,30 @@ class TestDial(unittest.TestCase):
         self.addCleanup(broker.close)
         self.addCleanup(plugin_end.close)
 
+        # The broker keeps its copy of the last passed socket until the SDK
+        # asks again (so it has received that one) or the channel closes.
+        # Closing it straight after send_fds leaves the message the socket's
+        # only reference while it waits in the channel, and macOS then
+        # sometimes delivers the socket already shut for reading.
         def serve():
-            while True:
-                try:
-                    if not broker.recv(1):
+            held = None
+            try:
+                while True:
+                    try:
+                        if not broker.recv(1):
+                            return
+                    except OSError:
                         return
-                except OSError:
-                    return
-                up = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-                up.connect(self._sock_path)
-                socket.send_fds(broker, [b"c"], [up.fileno()])
-                up.close()
+                    if held is not None:
+                        held.close()
+                        held = None
+                    up = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+                    up.connect(self._sock_path)
+                    socket.send_fds(broker, [b"c"], [up.fileno()])
+                    held = up
+            finally:
+                if held is not None:
+                    held.close()
 
         threading.Thread(target=serve, daemon=True).start()
         os.environ["BRANCHKIT_PROXY"] = f"fd://{plugin_end.fileno()}"
