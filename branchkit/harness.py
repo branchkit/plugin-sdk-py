@@ -286,8 +286,10 @@ class Harness:
 # The one message every SDK gives when the binary is absent: where it ships
 # and how to build it.
 _HARNESS_MISSING = (
-    "harness: cannot find branchkit-test-harness binary. It ships inside "
-    "BranchKit.app (Contents/Resources); install the app, or set "
+    "harness: cannot find branchkit-test-harness binary. It ships with "
+    "the BranchKit app beside branchkit-cli (macOS: BranchKit.app/Contents/Resources; "
+    "Linux packages: /usr/bin; Windows: %LOCALAPPDATA%\\Programs\\BranchKit); "
+    "install the app, or set "
     "BRANCHKIT_TEST_HARNESS to a harness binary. In an app-repo checkout, "
     "build it with `cargo build -p branchkit-test-harness` (it lands in "
     "target/debug/branchkit-test-harness)."
@@ -315,9 +317,10 @@ def harness_binary_available() -> bool:
 
 def _lookup_harness_binary() -> str | None:
     """BRANCHKIT_TEST_HARNESS wins; then a Cargo target directory walking up
-    from the working directory (app-repo checkouts), then the installed app,
-    then PATH. A freshly built binary is searched before the installed app's
-    so a stale installed harness never shadows the one just built."""
+    from the working directory (app-repo checkouts), then the installed app
+    (macOS bundle, Windows install folder), then PATH (the Linux packages).
+    A freshly built binary is searched before the installed app's so a stale
+    installed harness never shadows the one just built."""
     env = os.environ.get("BRANCHKIT_TEST_HARNESS")
     if env:
         return env
@@ -331,6 +334,11 @@ def _lookup_harness_binary() -> str | None:
         "/Applications/BranchKit.app/Contents/Resources/branchkit-test-harness",
         os.path.expanduser("~/Applications/BranchKit.app/Contents/Resources/branchkit-test-harness"),
     ]
+    # The Windows install folder, which is not on PATH. (The Linux packages
+    # put the harness in /usr/bin, so PATH below finds it.)
+    local_app_data = os.environ.get("LOCALAPPDATA")
+    if local_app_data:
+        candidates.append(os.path.join(local_app_data, "Programs", "BranchKit", "branchkit-test-harness"))
     # Cargo writes branchkit-test-harness.exe on Windows; without the suffix
     # every candidate misses there and harness tests skip. (shutil.which
     # already honours PATHEXT.)
