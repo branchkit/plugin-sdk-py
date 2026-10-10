@@ -369,6 +369,54 @@ class TestDial(unittest.TestCase):
         with conn:
             self.assertEqual(_echo_once(conn, b"through the handoff"), b"through the handoff")
 
+    def test_a_handoff_after_a_timed_out_read_gets_its_own_connection(self):
+        # A dial whose read of the channel times out leaves its reply to
+        # arrive later. The next dial must still get the connection answering
+        # ITS ask, not that late one. The fake broker answers the first ask
+        # only after the first dial has given up, and tags each connection.
+        broker, plugin_end = socket.socketpair()
+        self.addCleanup(broker.close)
+        self.addCleanup(plugin_end.close)
+        fd = plugin_end.fileno()
+
+        def forget_channel():
+            chan = proxy._handoff_channels.pop(fd, None)
+            if chan is not None:
+                chan.detach()  # plugin_end owns the descriptor
+            proxy._handoff_owed.pop(fd, None)
+
+        self.addCleanup(forget_channel)
+        late = threading.Event()
+        held = []
+        self.addCleanup(lambda: [s.close() for s in held])
+
+        def serve():
+            tag = ord("1")
+            while True:
+                try:
+                    if not broker.recv(1):
+                        return
+                except OSError:
+                    return
+                if tag == ord("1"):
+                    late.wait(5)
+                mine, theirs = socket.socketpair()
+                held.extend((mine, theirs))  # every passed socket, until cleanup
+                mine.sendall(bytes([tag]))
+                try:
+                    socket.send_fds(broker, [b"c"], [theirs.fileno()])
+                except OSError:
+                    return
+                tag += 1
+
+        threading.Thread(target=serve, daemon=True).start()
+        with self.assertRaises(OSError):
+            proxy._handoff(fd, 0.05)
+        late.set()
+        conn = proxy._handoff(fd, 5)
+        with conn:
+            self.assertEqual(conn.recv(1), b"2", "the late answer to the first ask was taken")
+
     def test_direct_when_unset(self):
         os.environ.pop("BRANCHKIT_PROXY", None)
         conn = branchkit.dial("127.0.0.1", self._port, timeout=5)

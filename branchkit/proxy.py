@@ -68,6 +68,25 @@ def parse_proxy_url(v: str) -> tuple:
 
 _handoff_lock = threading.Lock()
 _handoff_channels: dict = {}
+# Replies asked for and not yet read, per channel. A read that times out
+# leaves its reply to arrive later; each is read and discarded before the
+# next ask, so a dial always takes the reply to its own ask, never an
+# earlier one.
+_handoff_owed: dict = {}
+
+
+def _read_reply(chan: socket.socket, channel_fd: int) -> list:
+    """Read one reply off the channel and return the descriptors it carries.
+    A read that times out takes nothing off the channel and raises."""
+    msg, fds, _, _ = socket.recv_fds(chan, 1, 1)
+    if not msg:
+        for fd in fds:
+            os.close(fd)
+        raise OSError("the proxy channel closed")
+    _handoff_owed[channel_fd] -= 1
+    for extra in fds[1:]:
+        os.close(extra)
+    return fds[:1]
 
 
 def _handoff(channel_fd: int, timeout) -> socket.socket:
@@ -82,9 +101,18 @@ def _handoff(channel_fd: int, timeout) -> socket.socket:
         if chan is None:
             chan = socket.socket(fileno=channel_fd)
             _handoff_channels[channel_fd] = chan
+            _handoff_owed[channel_fd] = 0
         chan.settimeout(timeout)
+        while _handoff_owed[channel_fd] > 0:
+            try:
+                late = _read_reply(chan, channel_fd)
+            except (socket.timeout, BlockingIOError) as e:
+                raise OSError("the proxy channel has not yet answered an earlier ask") from e
+            for fd in late:
+                os.close(fd)
         chan.sendall(b"c")
-        _, fds, _, _ = socket.recv_fds(chan, 1, 1)
+        _handoff_owed[channel_fd] += 1
+        fds = _read_reply(chan, channel_fd)
     if not fds:
         raise OSError("the proxy channel replied without a connection")
     sock = socket.socket(fileno=fds[0])

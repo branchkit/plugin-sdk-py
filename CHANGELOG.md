@@ -5,6 +5,15 @@ git history.
 
 ## Unreleased
 
+### Network
+
+- Over a handed-off proxy channel (`BRANCHKIT_PROXY=fd://N`, Linux), a `dial()`
+  whose timeout passed while waiting for the channel's answer no longer
+  leaves the next dial one answer behind. The late answer is read and
+  discarded before the next ask, so every dial gets the connection that
+  answers its own ask; before, it got the previous dial's, and so did every
+  dial after it.
+
 ### World
 
 - `DisplayInfo.is_primary`: whether a display is the system's main one (the
