@@ -338,7 +338,7 @@ def _lookup_harness_binary() -> str | None:
     # put the harness in /usr/bin, so PATH below finds it.)
     local_app_data = os.environ.get("LOCALAPPDATA")
     if local_app_data:
-        candidates.append(os.path.join(local_app_data, "Programs", "BranchKit", "branchkit-test-harness"))
+        candidates.append(os.path.join(local_app_data, "Programs", "BranchKit", "branchkit-test-harness"))  # build-identity: allow — the Windows install folder, not app data
     # Cargo writes branchkit-test-harness.exe on Windows; without the suffix
     # every candidate misses there and harness tests skip. (shutil.which
     # already honours PATHEXT.)
