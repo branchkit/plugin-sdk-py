@@ -124,6 +124,7 @@ METHOD_NATIVE_AX_OBSERVE = "native.ax_observe"  # since 0.1.0
 METHOD_NATIVE_AX_PERFORM_ACTION = "native.ax_perform_action"  # since 0.1.0
 METHOD_NATIVE_AX_READ_ATTRIBUTES = "native.ax_read_attributes"  # since 0.1.0
 METHOD_NATIVE_AX_SET_ATTRIBUTE = "native.ax_set_attribute"  # since 0.1.0
+METHOD_NATIVE_AX_TARGETS = "native.ax_targets"  # since 0.2.0
 METHOD_NATIVE_AX_UNOBSERVE = "native.ax_unobserve"  # since 0.1.0
 METHOD_NATIVE_BACKGROUND_ITEMS = "native.background_items"  # since 0.2.0
 METHOD_NATIVE_BATCH_IS_TILEABLE = "native.batch_is_tileable"  # since 0.1.0

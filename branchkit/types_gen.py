@@ -219,6 +219,24 @@ AudioDevice = TypedDict("AudioDevice", {
     "uid": str,
 })
 
+# One control a person can act on.
+AxTarget = TypedDict("AxTarget", {
+    # The action that acts on it: `press`, `toggle`, `focus`, `expand` or
+    # `show_menu`.
+    "action": str,
+    # Where it is on screen, in the coordinates window frames use.
+    "bounds": "AccessibleBounds",
+    # The element's handle, for `native.ax_perform_action`.
+    "id": str,
+    # What it is called: its name, else its description. Absent when it
+    # has neither, and always absent for a protected (password) field.
+    "name": NotRequired[str],
+    # A password field: its name is withheld.
+    "protected": bool,
+    # Its ARIA role (`button`, `link`, `checkbox`, `textbox`, ...).
+    "role": str,
+})
+
 # A program that runs in the background or starts at login
 # (`native.background_items`).
 BackgroundItem = TypedDict("BackgroundItem", {
@@ -3527,6 +3545,35 @@ NativeAxSetAttributeRequest = TypedDict("NativeAxSetAttributeRequest", {
 
 NativeAxSetAttributeResponse = TypedDict("NativeAxSetAttributeResponse", {
     "result": bool,
+})
+
+NativeAxTargetsRequest = TypedDict("NativeAxTargetsRequest", {
+    # The most elements to read (default 1500, at most 3000).
+    # wire uint32 · default null · min 0
+    "budget": NotRequired[int],
+    # The most targets to return (default 200).
+    # wire uint32 · default null · min 0
+    "limit": NotRequired[int],
+    # The application to read; the one in front when absent.
+    # wire int32 · default null
+    "pid": NotRequired[int],
+    # Only controls whose centre lies inside this rectangle (a gaze point
+    # and its surroundings); the whole focused window when absent.
+    "region": NotRequired["AccessibleBounds"],
+})
+
+NativeAxTargetsResponse = TypedDict("NativeAxTargetsResponse", {
+    # The application whose window was read.
+    # wire int32
+    "pid": int,
+    # The controls, in walk order: the window's own controls breadth
+    # first, web content (a browser page, an Electron app's document)
+    # after them.
+    "targets": list["AxTarget"],
+    # A limit stopped the walk: the list is not the whole window.
+    "truncated": bool,
+    # The window's own bounds, when it reports them.
+    "window": NotRequired["AccessibleBounds"],
 })
 
 NativeAxUnobserveRequest = TypedDict("NativeAxUnobserveRequest", {

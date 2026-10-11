@@ -125,6 +125,7 @@ from .contracts_gen import (
     METHOD_NATIVE_AX_PERFORM_ACTION,
     METHOD_NATIVE_AX_READ_ATTRIBUTES,
     METHOD_NATIVE_AX_SET_ATTRIBUTE,
+    METHOD_NATIVE_AX_TARGETS,
     METHOD_NATIVE_AX_UNOBSERVE,
     METHOD_NATIVE_BACKGROUND_ITEMS,
     METHOD_NATIVE_BATCH_IS_TILEABLE,
@@ -665,6 +666,7 @@ from .contracts_gen import (
 
 if TYPE_CHECKING:
     from .types_gen import (
+        AccessibleBounds,
         AccessibleNode,
         AccessibleRef,
         Action,
@@ -769,6 +771,7 @@ if TYPE_CHECKING:
         NativeAutomationPermissionResponse,
         NativeAxElementAtPointResponse,
         NativeAxObserveResponse,
+        NativeAxTargetsResponse,
         NativeBatteryHealthResponse,
         NativeBatteryResponse,
         NativeBleSubscribeAllThenWriteResponse,
@@ -2652,6 +2655,31 @@ class MethodsMixin:
         }
         result = await self.call(METHOD_NATIVE_AX_SET_ATTRIBUTE, params)
         return bool((result or {}).get("result", False))
+
+    async def native_ax_targets(self, *, budget: int | None = None, limit: int | None = None, pid: int | None = None, region: "AccessibleBounds" | None = None) -> NativeAxTargetsResponse:
+        """Get the controls a person can act on in an application's focused window: role, name, action and bounds of each, without field values (a password field's name is withheld). For choosing a control to act on by voice, gaze or switch
+
+        budget: The most elements to read (default 1500, at most 3000).
+            wire uint32 · default null · min 0
+        limit: The most targets to return (default 200).
+            wire uint32 · default null · min 0
+        pid: The application to read; the one in front when absent.
+            wire int32 · default null
+        region: Only controls whose centre lies inside this rectangle (a gaze point
+            and its surroundings); the whole focused window when absent.
+        """
+        params: dict[str, Any] = {
+        }
+        if budget is not None:
+            params["budget"] = budget
+        if limit is not None:
+            params["limit"] = limit
+        if pid is not None:
+            params["pid"] = pid
+        if region is not None:
+            params["region"] = region
+        result = await self.call(METHOD_NATIVE_AX_TARGETS, params)
+        return result
 
     async def native_ax_unobserve(self, *, subscription_id: str) -> bool:
         """Stop observing accessibility changes. A plugin can end only its own subscriptions
