@@ -7025,9 +7025,13 @@ class MethodsMixin:
             credential that can never be read can still be sent to the wrong
             place.
 
-            Optional today because substitution is not built yet, and a store
-            written before bindings existed holds none. An unbound secret is
-            refused at substitution rather than treated as usable anywhere.
+            Must be a host this plugin can reach: one its manifest declares, or
+            one it asked for with `network.request_host` (a server address the
+            person typed, say). Any other host is refused.
+
+            Optional because a store written before bindings existed holds none.
+            An unbound secret is refused at substitution rather than treated as
+            usable anywhere.
         name: The secret's name within this plugin. What a manifest or a script
             header refers to.
             non-empty
