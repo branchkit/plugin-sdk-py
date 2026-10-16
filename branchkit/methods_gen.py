@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING, Any
 
 from .contracts_gen import (
     METHOD_ACTIONS_LIST,
+    METHOD_ACTIONS_PUSH,
     METHOD_ARTIFACT_DELETE,
     METHOD_BINDINGS_PROPOSE,
     METHOD_BINDINGS_REPORT,
@@ -670,7 +671,9 @@ if TYPE_CHECKING:
         AccessibleNode,
         AccessibleRef,
         Action,
+        ActionTypeSchema,
         ActionsListResponse,
+        ActionsPushResponse,
         ActiveSpace,
         Anchor,
         AppVolume,
@@ -1095,6 +1098,26 @@ class MethodsMixin:
     async def actions_list(self) -> ActionsListResponse:
         """Return all action type schemas keyed by fully-qualified name"""
         result = await self.call(METHOD_ACTIONS_LIST)
+        return result
+
+    async def actions_push(self, *, actions: dict[str, "ActionTypeSchema"], group: str | None = None) -> ActionsPushResponse:
+        """Declare action types at run time, beside the manifest's: replaces what this plugin pushed (all of it, or one group)
+
+        actions: Action types by name, without the plugin's `action_prefix`
+            (`linear.update_issue` becomes `<prefix>.linear.update_issue`). The
+            same shape as the manifest's `action_types`. Replaces what this
+            plugin pushed before: all of it, or one `group`. An empty map clears.
+            A name the manifest declares is refused: a pushed action cannot
+            redefine one the person consented to at install.
+        group: Replace only this group of your pushed actions (one per connected
+            server, say), leaving the others. Omit to replace the whole set.
+        """
+        params: dict[str, Any] = {
+            "actions": actions,
+        }
+        if group is not None:
+            params["group"] = group
+        result = await self.call(METHOD_ACTIONS_PUSH, params)
         return result
 
     async def artifact_delete(self, *, ref: str) -> None:
