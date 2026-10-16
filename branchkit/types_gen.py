@@ -334,6 +334,17 @@ BleWriteEntry = TypedDict("BleWriteEntry", {
     "write_type": NotRequired[str],
 })
 
+# A command the words name that the platform has switched off.
+BlockedCommand = TypedDict("BlockedCommand", {
+    # The command's name.
+    "command": str,
+    # The gate tags themselves (`_platform.unavailable:<op>`,
+    # `_platform.action_absent:<type>`, `_platform.action_changed:<type>`).
+    "gates": list[str],
+    # Why, one sentence per gate, in the person's words.
+    "reasons": list[str],
+})
+
 # A paired or connected Bluetooth device.
 BluetoothDevice = TypedDict("BluetoothDevice", {
     # Device MAC address.
@@ -548,6 +559,11 @@ CommandRowData = TypedDict("CommandRowData", {
     # `action` string), in the authored dialect a command's `action` is
     # written in.
     "action_json": NotRequired[Any],
+    # Why the platform has this command switched off, one sentence per
+    # reason (an operation this machine refuses; a pushed action gone or
+    # changed); empty when it is live. A changed action needs the person to
+    # open the command and save it again.
+    "blocked_reasons": list[str],
     "canonical": str,
     "category": str,
     "clears_tags": list[str],
@@ -1654,6 +1670,13 @@ ResolveResult = TypedDict("ResolveResult", {
     # design: each value is whatever its capture bound (a word, a number, a
     # collection record), so it stays raw JSON.
     "args": dict[str, Any],
+    # When nothing matched because the command the words name is switched
+    # off by the platform itself (an operation this machine refuses, a
+    # pushed action gone or changed), which command and why, so the caller
+    # can say so instead of nothing (bug fdd14d7). Never set for a mode or
+    # context the person has not entered: only platform gates are lifted to
+    # find it.
+    "blocked": NotRequired["BlockedCommand"],
     # True when an active `PendingPartial` bridge survived this resolve
     # (either advanced one token, or rejected the new utterance without
     # dropping). Tells the voice plugin to leave the discovery HUD as-is
@@ -2732,6 +2755,13 @@ CommandsResolveResponse = TypedDict("CommandsResolveResponse", {
     # design: each value is whatever its capture bound (a word, a number, a
     # collection record), so it stays raw JSON.
     "args": dict[str, Any],
+    # When nothing matched because the command the words name is switched
+    # off by the platform itself (an operation this machine refuses, a
+    # pushed action gone or changed), which command and why, so the caller
+    # can say so instead of nothing (bug fdd14d7). Never set for a mode or
+    # context the person has not entered: only platform gates are lifted to
+    # find it.
+    "blocked": NotRequired["BlockedCommand"],
     # True when an active `PendingPartial` bridge survived this resolve
     # (either advanced one token, or rejected the new utterance without
     # dropping). Tells the voice plugin to leave the discovery HUD as-is
