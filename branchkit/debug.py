@@ -1,7 +1,7 @@
 """Per-plugin leveled log façade over `plugin.debug` (the RPC method).
 Python twin of debug.{go,ts}. Lines land in
 `<app_support>/plugin-logs/<pluginID>.log`; warn/error cross-post to
-actuator.log. The default per-plugin threshold is info."""
+branchkit.log. The default per-plugin threshold is info."""
 
 from __future__ import annotations
 
@@ -29,11 +29,11 @@ class DebugMixin:
         await self.call(METHOD_PLUGIN_DEBUG, {"tag": tag, "data": data, "level": "info"})
 
     async def warn(self, tag: str, data: Any) -> None:
-        """Warning line, cross-posted to actuator.log."""
+        """Warning line, cross-posted to branchkit.log."""
         await self.call(METHOD_PLUGIN_DEBUG, {"tag": tag, "data": data, "level": "warn"})
 
     async def error(self, tag: str, data: Any) -> None:
-        """Error line, cross-posted to actuator.log."""
+        """Error line, cross-posted to branchkit.log."""
         await self.call(METHOD_PLUGIN_DEBUG, {"tag": tag, "data": data, "level": "error"})
 
     async def log_at(self, level: str, tag: str, data: Any) -> None:

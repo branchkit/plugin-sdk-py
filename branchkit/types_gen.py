@@ -6841,7 +6841,7 @@ PluginDebugRequest = TypedDict("PluginDebugRequest", {
     # falls through to `Debug`; v2 callers pass one of
     # `trace`/`debug`/`info`/`warn`/`error`. Lines below the per-plugin
     # threshold are dropped at the handler; `warn`/`error` additionally
-    # cross-post to `actuator.log` via the `plugin.diagnostic` event.
+    # cross-post to `branchkit.log` via the `plugin.diagnostic` event.
     "level": NotRequired["PluginLogLevel"],
     # Optional structural tag (e.g. `BK_ACTIVATE_PATH`, `STT_BATCH`).
     # Renders between the timestamp and the payload in the per-plugin

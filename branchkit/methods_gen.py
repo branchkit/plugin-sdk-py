@@ -6768,7 +6768,7 @@ class MethodsMixin:
         return result
 
     async def plugin_debug(self, *, data: Any | None = None, level: "PluginLogLevel" | None = None, tag: str | None = None) -> None:
-        """Write a diagnostic line to this plugin's per-plugin log file. Use shared.Logf instead for cross-cutting coordination lines that belong in actuator.log.
+        """Write a diagnostic line to this plugin's per-plugin log file. Use shared.Logf instead for cross-cutting coordination lines that belong in branchkit.log.
 
         data: Arbitrary JSON payload — serialized to one line in the log file
             so `tail -f` and `grep` work, while `jq` can still operate on
@@ -6778,7 +6778,7 @@ class MethodsMixin:
             falls through to `Debug`; v2 callers pass one of
             `trace`/`debug`/`info`/`warn`/`error`. Lines below the per-plugin
             threshold are dropped at the handler; `warn`/`error` additionally
-            cross-post to `actuator.log` via the `plugin.diagnostic` event.
+            cross-post to `branchkit.log` via the `plugin.diagnostic` event.
         tag: Optional structural tag (e.g. `BK_ACTIVATE_PATH`, `STT_BATCH`).
             Renders between the timestamp and the payload in the per-plugin
             log file, matching the actuator log's `[TAG]` column convention.
