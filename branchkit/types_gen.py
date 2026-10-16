@@ -2156,7 +2156,8 @@ ActionsPushRequest = TypedDict("ActionsPushRequest", {
     # plugin pushed before: all of it, or one `group`. An empty map clears.
     # A name the manifest declares is refused: a pushed action cannot
     # redefine one the person consented to at install.
-    "actions": dict[str, "PushedActionType"],
+    # default {}
+    "actions": NotRequired[dict[str, "PushedActionType"]],
     # Replace only this group of your pushed actions (one per connected
     # server, say), leaving the others. Omit to replace the whole set.
     "group": NotRequired[str],

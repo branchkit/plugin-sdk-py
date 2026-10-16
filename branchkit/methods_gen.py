@@ -1100,7 +1100,7 @@ class MethodsMixin:
         result = await self.call(METHOD_ACTIONS_LIST)
         return result
 
-    async def actions_push(self, *, actions: dict[str, "PushedActionType"], group: str | None = None) -> ActionsPushResponse:
+    async def actions_push(self, *, actions: dict[str, "PushedActionType"] | None = None, group: str | None = None) -> ActionsPushResponse:
         """Declare action types at run time, beside the manifest's: replaces what this plugin pushed (all of it, or one group)
 
         actions: Action types by name, without the plugin's `action_prefix`
@@ -1109,12 +1109,14 @@ class MethodsMixin:
             plugin pushed before: all of it, or one `group`. An empty map clears.
             A name the manifest declares is refused: a pushed action cannot
             redefine one the person consented to at install.
+            default {}
         group: Replace only this group of your pushed actions (one per connected
             server, say), leaving the others. Omit to replace the whole set.
         """
         params: dict[str, Any] = {
-            "actions": actions,
         }
+        if actions is not None:
+            params["actions"] = actions
         if group is not None:
             params["group"] = group
         result = await self.call(METHOD_ACTIONS_PUSH, params)
