@@ -98,7 +98,7 @@ ActionFieldSchema = TypedDict("ActionFieldSchema", {
     # ("Auto-correct when Whisper outputs entirely in UPPERCASE"), and a
     # field described here is described identically in every surface that
     # renders it, including your own.
-    "description": NotRequired[str],
+    "description": str,
     # Optional display role for generic UI rendering. See `FieldDisplay`.
     # Currently consumed by the Collections tab's log-kind timeline view
     # to pick which fields appear in the row summary.
@@ -114,13 +114,13 @@ ActionFieldSchema = TypedDict("ActionFieldSchema", {
     # warning for every unknown role it degraded.
     "display": NotRequired["FieldDisplay"],
     # Allowed string values for `field_type: "enum"`. Ignored otherwise.
-    "enum_values": NotRequired[list[str]],
+    "enum_values": list[str],
     # Declared type for this field. See `FieldType`.
     # default "string"
-    "field_type": NotRequired["FieldType"],
+    "field_type": "FieldType",
     # Nested field list for `field_type: "object"` (recursive). Ignored
     # for other field types.
-    "fields": NotRequired[list["ActionFieldSchema"]],
+    "fields": list["ActionFieldSchema"],
     # `secret_ref` only: the ONE host the stored credential may be sent
     # to. A credential saved from Settings is bound to this, and the binding
     # comes from here — from the manifest the user consented to — never
@@ -131,12 +131,12 @@ ActionFieldSchema = TypedDict("ActionFieldSchema", {
     "key": str,
     # Human-readable label for UI rendering.
     # default ""
-    "label": NotRequired[str],
+    "label": str,
     # Placeholder text for input fields.
     "placeholder": NotRequired[str],
     # Whether this field is required.
     # default false
-    "required": NotRequired[bool],
+    "required": bool,
 })
 
 # Schema declaration for a plugin-defined action type.
@@ -152,17 +152,17 @@ ActionTypeSchema = TypedDict("ActionTypeSchema", {
     # to the claim.
     "consequence": NotRequired["Consequence"],
     # Ordered list of fields for this action type.
-    "fields": NotRequired[list["ActionFieldSchema"]],
+    "fields": list["ActionFieldSchema"],
     # Human-readable label (e.g. "Click Element", "Snap Window").
     # default ""
-    "label": NotRequired[str],
+    "label": str,
     # Supported interaction modes: "tap" (single press), "hold" (start/stop via phase),
     # and/or "toggle" (start/stop cycle). Defaults to ["tap"] if omitted.
     # Modes are declared, not inferred (modelled on QMK keycode types and
     # Stream Deck action manifests): a "hold" action handles press/release
     # itself via `phase`, so a peripheral UI should not ask the user to pick
     # a separate release action for it.
-    "modes": NotRequired[list[str]],
+    "modes": list[str],
     # Platform operations this action cannot work without (e.g.
     # `["native.toggle_fullscreen"]`). Where the machine refuses any of
     # them — the OS, the desktop session or the host cannot provide it —
@@ -171,7 +171,7 @@ ActionTypeSchema = TypedDict("ActionTypeSchema", {
     # grammar so the utterance cannot land on a different command. List
     # only what the action has no way around; an operation it merely
     # prefers belongs in the handler's own `Supports` check.
-    "uses": NotRequired[list[str]],
+    "uses": list[str],
 })
 
 # The currently active space per display.
@@ -1528,6 +1528,46 @@ ProcessInfo = TypedDict("ProcessInfo", {
     "user": NotRequired[str],
 })
 
+# One input of a pushed action type: the manifest's `ActionFieldSchema`,
+# request-side. No `default`: it would be untyped JSON, and a pushed
+# action's caller fills every input it needs.
+PushedActionField = TypedDict("PushedActionField", {
+    "description": NotRequired[str],
+    "display": NotRequired["FieldDisplay"],
+    "enum_values": NotRequired[list[str]],
+    "field_type": NotRequired["FieldType"],
+    # Nested inputs of an `object` field.
+    "fields": NotRequired[list["PushedActionField"]],
+    "for_host": NotRequired[str],
+    # JSON key name.
+    "key": str,
+    "label": NotRequired[str],
+    "placeholder": NotRequired[str],
+    "required": NotRequired[bool],
+})
+
+# One action type as `actions.push` takes it: the manifest's
+# `ActionTypeSchema` with the inputs a plugin may leave out optional, and a
+# `label` it must give (a pushed action is read by a person in the builder).
+# Its own type, not `ActionTypeSchema`, because a request-side type's
+# defaulted fields are generated optional: sharing it would turn the
+# fields every plugin READS (`actions.list`, `render_settings`) into
+# pointers. Same field names, so it converts to the manifest shape as is;
+# `pushed_types_track_the_manifest_shape` fails if the two drift.
+PushedActionType = TypedDict("PushedActionType", {
+    # Whether running it can be undone; omitted means unclassified,
+    # treated as risky.
+    "consequence": NotRequired["Consequence"],
+    # Its inputs, in order.
+    "fields": NotRequired[list["PushedActionField"]],
+    # What the person sees in the builder ("Update an issue").
+    "label": str,
+    # `tap`, `hold` and/or `toggle`; `["tap"]` when omitted.
+    "modes": NotRequired[list[str]],
+    # Platform operations it cannot work without, by method name.
+    "uses": NotRequired[list[str]],
+})
+
 RedecodeItem = TypedDict("RedecodeItem", {
     # When set, the platform stamps the live never-standalone Lever E penalty
     # (`build_never_standalone_weights_inner`) onto this item so the re-decode
@@ -2116,7 +2156,7 @@ ActionsPushRequest = TypedDict("ActionsPushRequest", {
     # plugin pushed before: all of it, or one `group`. An empty map clears.
     # A name the manifest declares is refused: a pushed action cannot
     # redefine one the person consented to at install.
-    "actions": dict[str, "ActionTypeSchema"],
+    "actions": dict[str, "PushedActionType"],
     # Replace only this group of your pushed actions (one per connected
     # server, say), leaving the others. Omit to replace the whole set.
     "group": NotRequired[str],

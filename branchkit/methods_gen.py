@@ -671,7 +671,6 @@ if TYPE_CHECKING:
         AccessibleNode,
         AccessibleRef,
         Action,
-        ActionTypeSchema,
         ActionsListResponse,
         ActionsPushResponse,
         ActiveSpace,
@@ -1044,6 +1043,7 @@ if TYPE_CHECKING:
         PrivilegesRelinquishResponse,
         PrivilegesRequestResponse,
         ProcessInfo,
+        PushedActionType,
         RecognitionBiasApplyResponse,
         RecognitionBiasGetResponse,
         RecognitionBiasSetResponse,
@@ -1100,7 +1100,7 @@ class MethodsMixin:
         result = await self.call(METHOD_ACTIONS_LIST)
         return result
 
-    async def actions_push(self, *, actions: dict[str, "ActionTypeSchema"], group: str | None = None) -> ActionsPushResponse:
+    async def actions_push(self, *, actions: dict[str, "PushedActionType"], group: str | None = None) -> ActionsPushResponse:
         """Declare action types at run time, beside the manifest's: replaces what this plugin pushed (all of it, or one group)
 
         actions: Action types by name, without the plugin's `action_prefix`
