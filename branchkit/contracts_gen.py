@@ -4,7 +4,7 @@
 # BranchKit API version (from contracts/api-version.json).
 API_VERSION = "0.2.0"
 
-# RPC method names: plugin → actuator (use with plugin.call()).
+# RPC method names: plugin → platform (use with plugin.call()).
 METHOD_ACTIONS_LIST = "actions.list"  # since 0.1.0
 METHOD_ARTIFACT_DELETE = "artifact.delete"  # since 0.1.0
 METHOD_BINDINGS_PROPOSE = "bindings.propose"  # since 0.1.0
@@ -662,7 +662,7 @@ METHOD_TRIAL_RESOLVE_SAMPLES = "trial.resolve_samples"  # since 0.1.0
 METHOD_VOCABULARY_COMMIT = "vocabulary.commit"  # since 0.1.0
 METHOD_WIRING_DESCRIBE = "wiring.describe"  # since 0.1.0
 
-# RPC method names: actuator → plugin (use with plugin.handle()).
+# RPC method names: platform → plugin (use with plugin.handle()).
 HOOK_ON_ACTION = "on_action"  # since 0.1.0
 HOOK_ON_COMMANDS_CHANGED = "on_commands_changed"  # since 0.1.0
 HOOK_ON_TRANSCRIPT = "on_transcript"  # since 0.1.0

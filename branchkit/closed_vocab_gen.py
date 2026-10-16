@@ -36,13 +36,13 @@ KNOWN_EFFECTS = (
     "suppress_voice_commands",
 )
 
-# ERROR_KIND_* are the closed-vocabulary `kind` values the actuator puts
+# ERROR_KIND_* are the closed-vocabulary `kind` values the platform puts
 # in a JSON-RPC error's `data.kind`. Branch on RpcCallError.kind rather
 # than matching the message prose. Source of truth:
 # `core/src/fault.rs::ErrorKind`.
 #
 # NOTE: ErrorKind is `str`, deliberately NOT a Literal union of the
-# values below. An actuator newer than this SDK may send a kind that is
+# values below. A platform newer than this SDK may send a kind that is
 # not listed here, and that must fall through a match rather than fail
 # to parse.
 ErrorKind = str
@@ -57,8 +57,8 @@ ERROR_KIND_INVALID_PARAMS = "invalid_params"
 ERROR_KIND_UNSUPPORTED = "unsupported"
 ERROR_KIND_INTERNAL = "internal"
 
-# ERROR_CODE_FOR maps a kind to the JSON-RPC error code the actuator
-# sends with it. Derived from the kind actuator-side.
+# ERROR_CODE_FOR maps a kind to the JSON-RPC error code the platform
+# sends with it. Derived from the kind platform-side.
 ERROR_CODE_FOR: dict[str, int] = {
     "not_permitted": -32002,
     "recording_disabled": -32006,
@@ -119,7 +119,7 @@ KNOWN_UNSUPPORTED_REASONS = (
 
 # OUTPUT_KIND_* are the closed-vocabulary `kind` values of a semantic
 # output document (`output.state`): what a person needs in order to
-# act. A plugin never invents a kind — the actuator renders an
+# act. A plugin never invents a kind — the platform renders an
 # unknown one as OUTPUT_KIND_OUTCOME. `OutputKind` is `str`, not a
 # Literal, for the same reason ErrorKind is. Source of truth:
 # `core/src/output_state.rs::OutputKind`.

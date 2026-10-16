@@ -56,7 +56,7 @@ class TestCommandBuilder(unittest.TestCase):
         self.assertEqual(cmds.text(), "<text>")
 
     def test_normalize_drops_null_array_fields(self):
-        # A file-loaded spec may carry an explicit null; the actuator rejects
+        # A file-loaded spec may carry an explicit null; the platform rejects
         # null but accepts absence, so the key goes rather than becoming [].
         spec = {"pattern": ["x"], "requires_tags": None, "variants": None}
         out = cmds._normalize_command_spec(spec)
@@ -136,7 +136,7 @@ class TestErrors(unittest.TestCase):
         self.assertNotIsInstance(other, UnsupportedError)
 
     def test_missing_data_leaves_kind_none(self):
-        e = rpc_error_for(-1, "old actuator")
+        e = rpc_error_for(-1, "old platform")
         self.assertIsNone(e.kind)
         self.assertEqual(e.code, -1)
 
@@ -190,7 +190,7 @@ class _Sockets:
 
 
 def _mini_proxy(path: str, allowed_host: str) -> _Sockets:
-    """Test-side CONNECT proxy over AF_UNIX mirroring the actuator's
+    """Test-side CONNECT proxy over AF_UNIX mirroring the platform's
     host_proxy: allow -> tunnel, deny -> 403. Serves one connection per
     accept on a daemon thread; returns the tracker whose close() shuts the
     listener and every connection it served."""
@@ -513,7 +513,7 @@ class TestPatternListeners(unittest.TestCase):
             ("scripts.*.charged", "scripts.headphones.charged", True),
             ("*.headphones.charged", "scripts.headphones.charged", True),
             # `*` is ONE segment. A pattern that swallowed trailing segments
-            # would route events the actuator's own gate never delivered.
+            # would route events the platform's own gate never delivered.
             ("scripts.*", "scripts.headphones.charged", False),
             ("scripts.*.*", "scripts.headphones", False),
             ("scripts.*.*", "browser.tab.opened", False),
@@ -575,7 +575,7 @@ class TestPatternDelivery(unittest.IsolatedAsyncioTestCase):
 
 
 class TestStateStreamDelivery(unittest.IsolatedAsyncioTestCase):
-    """A state stream — an event notification the actuator marks
+    """A state stream — an event notification the platform marks
     `delivery: "latest"` — holds one place in the notification queue, newest
     value winning. The Go and TS SDKs do the same; the sdk-test coalescing
     case holds all three to it."""
@@ -684,7 +684,7 @@ class TestEventOrigin(unittest.IsolatedAsyncioTestCase):
                     "on_behalf_of": "headphones.lua",
                 },
                 {"method": "scripts.headphones.charged", "source": "impostor"},
-                # No origin at all: an older actuator, or a notification that
+                # No origin at all: an older platform, or a notification that
                 # is not a bus event. Must not inherit the previous sender.
                 {"method": "scripts.headphones.charged"},
             ],
@@ -853,7 +853,7 @@ class TestHandleAction(unittest.IsolatedAsyncioTestCase):
         core.handle_action("foo.focus", lambda req: None)
         self.assertEqual(sorted(core.registered_action_types()), ["foo.focus", "foo.snap"])
 
-        # The built-in list_action_types the actuator validates against
+        # The built-in list_action_types the platform validates against
         # reports the same set.
         written.clear()
         await core._handle_request(2, "list_action_types", {}, None)

@@ -19,7 +19,7 @@ EVENT_VOCABULARY_UPDATE = "vocabulary_update"
 # The engine-facing wire projection of the compiled grammar DAG (Phase D2
 # contract).
 #
-# This is the JSON the actuator attaches to a `vocabulary_update` and the CTC
+# This is the JSON the platform attaches to a `vocabulary_update` and the CTC
 # stage feeds to the patched `GrammarBuilder` to build `G`. It is a *reduced*
 # view of the DAG — exactly what FST construction needs, nothing the matcher
 # keeps:
@@ -94,9 +94,9 @@ Transcript = TypedDict("Transcript", {
 # The `vocabulary_update` payload: the recognition word union plus the
 # optional grammar stamps the platform attaches at delivery time.
 #
-# This struct is the typed contract; the actuator's producer side still
+# This struct is the typed contract; the platform's producer side still
 # assembles the payload field-by-field (the three delivery-time grammar
-# stamps mutate the JSON per event), and an actuator-side test pins that
+# stamps mutate the JSON per event), and a platform-side test pins that
 # assembly to this shape so the two cannot drift silently. A consumer
 # stage should treat every field but `words` as optional and fall back
 # to the flat word list when a stamp is absent or malformed.

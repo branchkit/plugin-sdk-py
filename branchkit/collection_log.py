@@ -43,19 +43,19 @@ def _record_to_log_entry(r: dict) -> dict:
 
 class CollectionLogMixin:
     async def append(self, name: str, payload: Any) -> str:
-        """Append an entry to a log-kind collection; the actuator assigns a
+        """Append an entry to a log-kind collection; the platform assigns a
         ULID and timestamp. Returns the assigned entry id. Raises
         RecordingDisabledError if the collection's recording flag is off."""
         entry = await self.collection_append(name=name, payload=payload)
         if not entry:
-            raise RuntimeError("collection.append: actuator returned no entry")
+            raise RuntimeError("collection.append: platform returned no entry")
         return entry["id"]
 
     async def append_entry(self, name: str, payload: Any) -> dict:
         """Like `append` but returns the full LogEntry."""
         entry = await self.collection_append(name=name, payload=payload)
         if not entry:
-            raise RuntimeError("collection.append: actuator returned no entry")
+            raise RuntimeError("collection.append: platform returned no entry")
         return entry
 
     async def append_keyed(self, name: str, key: str, payload: Any) -> None:

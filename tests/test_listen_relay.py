@@ -1,4 +1,4 @@
-"""The relay branch of listen_local, with a stand-in for the actuator's
+"""The relay branch of listen_local, with a stand-in for the platform's
 relay (listener_relay.rs): parked plugin connections presenting the right
 header, OK written on one per client, bytes pumped both ways."""
 
@@ -104,7 +104,7 @@ class FakeRelay:
 
 
 class ListenRelayTest(unittest.TestCase):
-    def test_listen_local_serves_through_the_actuators_relay(self):
+    def test_listen_local_serves_through_the_platforms_relay(self):
         relay = FakeRelay()
         env = dict(os.environ)
         os.environ["LISTEN_FDS"] = ""
@@ -133,7 +133,7 @@ class ListenRelayTest(unittest.TestCase):
             relay.stop()
 
     def test_a_relayed_request_carries_the_clients_address(self):
-        # The plugin holds only the rendezvous connection; the actuator's
+        # The plugin holds only the rendezvous connection; the platform's
         # answer carries who the client is, and remote_addr reports it.
         for with_peer in (True, False):
             relay = FakeRelay(with_peer)

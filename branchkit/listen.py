@@ -1,7 +1,7 @@
 """Localhost listener for external-service connections. Python twin of
 listen.{go,ts}.
 
-When the actuator granted listener sockets (manifest `sockets.listen`,
+When the platform granted listener sockets (manifest `sockets.listen`,
 delivered per the LISTEN_FDS convention at fds 3+), the FIRST granted
 listener (fd 3) is used instead of self-binding. This is not an
 optimization: inside the Linux sandbox the plugin runs in an empty
@@ -27,9 +27,9 @@ from typing import Callable
 
 
 def inherited_listener_count() -> int:
-    """Number of actuator-granted listener sockets (0 when none). Unlike
+    """Number of platform-granted listener sockets (0 when none). Unlike
     systemd's convention, LISTEN_PID is deliberately not set or checked:
-    the actuator cannot know the child pid before spawn, and plugin
+    the platform cannot know the child pid before spawn, and plugin
     identity is already established by fd ownership."""
     raw = os.environ.get("LISTEN_FDS", "")
     try:
@@ -40,7 +40,7 @@ def inherited_listener_count() -> int:
 
 
 def _granted_ports() -> list[int]:
-    """Ports of the actuator-granted listeners, parsed from
+    """Ports of the platform-granted listeners, parsed from
     BRANCHKIT_LISTEN_PORTS ("id=port" pairs, comma-separated)."""
     raw = os.environ.get("BRANCHKIT_LISTEN_PORTS", "")
     out = []
@@ -51,21 +51,21 @@ def _granted_ports() -> list[int]:
     return out
 
 
-# Version 2 of the relay header asks the actuator to answer "OK <peer>\n",
+# Version 2 of the relay header asks the platform to answer "OK <peer>\n",
 # <peer> being the client's address as its public listener accepted it
 # ("127.0.0.1:50741"). The socket the plugin holds is the rendezvous pipe,
 # whose own peer says nothing about the client, so the paired request reports
 # <peer> as its client address — ListenRequest.remote_addr is the client's,
 # exactly as on an inherited fd. A plugin that asks the platform which app
 # owns the other end of a loopback connection needs that port. A bare "OK\n"
-# (an actuator speaking version 1) is still accepted, with no peer.
+# (a platform speaking version 1) is still accepted, with no peer.
 _RELAY_HEADER_PREFIX = "BKRELAY/2 "
 _RELAY_POOL_SIZE = 4
 _RELAY_ANSWER_MAX = 128  # "OK " plus an address
 
 
 def _parse_relay_answer(line: bytes):
-    """Parse the actuator's answer line, without its newline. Returns
+    """Parse the platform's answer line, without its newline. Returns
     (True, (host, port)) for "OK <peer>", (True, None) for a bare "OK", and
     (False, None) for anything else."""
     if line == b"OK":
@@ -104,14 +104,14 @@ def _format_addr(addr) -> str:
 
 
 def _relay_env() -> tuple[tuple[str, int], str] | None:
-    """The actuator's listener relay for this spawn — (rendezvous, token) —
+    """The platform's listener relay for this spawn — (rendezvous, token) —
     or None. On Windows a listener the plugin binds inside its AppContainer
     is unreachable from outside (the loopback exemption is outbound-only),
-    so the actuator binds the declared listeners outside the sandbox and
+    so the platform binds the declared listeners outside the sandbox and
     relays inbound connections over connections the plugin opens outward
-    (the actuator's listener relay). Chosen
+    (the platform's listener relay). Chosen
     by the environment, not the platform, so a test anywhere can play the
-    actuator."""
+    platform."""
     raw = os.environ.get("BRANCHKIT_LISTEN_RELAY", "")
     token = os.environ.get("BRANCHKIT_LISTEN_RELAY_TOKEN", "")
     if not raw or not token:
@@ -128,7 +128,7 @@ def _relay_env() -> tuple[tuple[str, int], str] | None:
 
 
 def _granted_listeners() -> list[tuple[str, int]]:
-    """(id, port) of the actuator-granted listeners, in declaration order."""
+    """(id, port) of the platform-granted listeners, in declaration order."""
     out = []
     for pair in os.environ.get("BRANCHKIT_LISTEN_PORTS", "").split(","):
         lid, sep, port_s = pair.strip().partition("=")
@@ -140,7 +140,7 @@ def _granted_listeners() -> list[tuple[str, int]]:
 class ListenRequest:
     """The request a route handler receives: `method`, `path`, `headers`,
     `remote_addr` (the client's "host:port", as Go's Request.RemoteAddr and
-    Node's req.socket give it — through the actuator's relay too), and
+    Node's req.socket give it — through the platform's relay too), and
     `body()` for the raw payload bytes."""
 
     def __init__(self, handler: http.server.BaseHTTPRequestHandler, path: str):
@@ -168,7 +168,7 @@ class Listener:
         self._serving = False
         self._routes: dict[str, Callable] = {}
         self.plugin = plugin
-        # Internal — set when the actuator relays: stops the parked pool.
+        # Internal — set when the platform relays: stops the parked pool.
         self._relay_stop: Callable[[], None] | None = None
 
     def handle_func(self, method: str, path: str, handler: Callable) -> None:
@@ -279,7 +279,7 @@ class _RequestHandler(http.server.BaseHTTPRequestHandler):
 
 
 def _start_relay_pool(server: "_Server", rendezvous: tuple[str, int], token: str, listener_id: str) -> Callable[[], None]:
-    """Keep _RELAY_POOL_SIZE connections parked at the actuator's rendezvous
+    """Keep _RELAY_POOL_SIZE connections parked at the platform's rendezvous
     and hand each one it pairs to the HTTP server as a request. Returns the
     stop function."""
     stop = threading.Event()
@@ -354,7 +354,7 @@ def _start_relay_pool(server: "_Server", rendezvous: tuple[str, int], token: str
 
 def listen_local(plugin) -> Listener:
     """Bind a localhost TCP port for an external service to connect to
-    (or serve the actuator-granted inherited listener at fd 3 when
+    (or serve the platform-granted inherited listener at fd 3 when
     present). Generates a pairing token and writes a connect.json
     discovery file to BRANCHKIT_PLUGIN_DIR."""
     token = secrets.token_hex(32)
@@ -362,7 +362,7 @@ def listen_local(plugin) -> Listener:
     if inherited_listener_count() > 0:
         sock = socket.socket(fileno=3)
         # Tripwire for runtimes that accept an fd but silently bind a fresh
-        # socket: when the actuator published the granted ports, serving
+        # socket: when the platform published the granted ports, serving
         # anywhere else means the inherited listener was dropped.
         granted = _granted_ports()
         port = sock.getsockname()[1]
@@ -373,10 +373,10 @@ def listen_local(plugin) -> Listener:
                 f"(serving :{port}, granted :{', :'.join(map(str, granted))})"
             )
     elif (relay := _relay_env()) is not None:
-        # No fd, but the actuator bound the listener outside the sandbox and
+        # No fd, but the platform bound the listener outside the sandbox and
         # relays to us (Windows). The socket here is never accepted on; it
         # only gives the HTTPServer an address. The public port is the one
-        # the actuator published.
+        # the platform published.
         granted = _granted_listeners()
         if not granted:
             raise OSError("BRANCHKIT_LISTEN_RELAY is set but BRANCHKIT_LISTEN_PORTS names no listener")

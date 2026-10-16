@@ -32,7 +32,7 @@ class PlatformTest(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(await p.supports("native.cpu_usage"))
         self.assertTrue(await p.supports("vendor.never_heard_of_it"))
 
-    async def test_an_old_actuators_bare_on_ready_leaves_no_profile(self):
+    async def test_an_old_platforms_bare_on_ready_leaves_no_profile(self):
         p = branchkit.Plugin(detached=True)
         deliver(p, "on_ready", {})
         self.assertIsNone(p.platform())

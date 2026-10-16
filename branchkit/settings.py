@@ -65,7 +65,7 @@ class SettingsMirror:
         are `writers: platform_only` — a plugin never saves settings on its
         own initiative — so this writes tenant `_user`: the choice is the
         user's and this plugin is the transport. The write and the mirror
-        refresh are ONE operation on purpose: the actuator re-renders the
+        refresh are ONE operation on purpose: the platform re-renders the
         settings tab the moment your handler returns, and a re-render that
         reads a stale mirror draws the stale value. After set_user
         resolves, get() observes the write."""

@@ -1,4 +1,4 @@
-"""The one route the actuator serves for settings-UI → plugin method
+"""The one route the platform serves for settings-UI → plugin method
 calls (`/v1/plugins/{plugin_id}/methods/{*method_path}`). Hand-writing
 this shape is how four plugins ended up with dead settings tabs — the
 segment lives here so there is one spelling of it. Python twin of the
@@ -14,7 +14,7 @@ _METHOD_ROUTE_PREFIX = "/v1/plugins/"
 def method_url(method: str) -> str:
     """The settings-UI route that invokes `method` on this plugin. The
     plugin id comes from BRANCHKIT_PLUGIN_ID, so a renamed plugin cannot
-    desync its own URLs. The actuator normalizes `-` and `/` to `_` before
+    desync its own URLs. The platform normalizes `-` and `/` to `_` before
     dispatch."""
     plugin_id = os.environ.get("BRANCHKIT_PLUGIN_ID") or "unknown"
     return f"{_METHOD_ROUTE_PREFIX}{plugin_id}/methods/{method.lstrip('/')}"

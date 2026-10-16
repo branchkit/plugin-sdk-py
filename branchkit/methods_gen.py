@@ -1086,7 +1086,7 @@ if TYPE_CHECKING:
 
 
 class MethodsMixin:
-    """One typed wrapper per actuator RPC method — prefer these over raw call()."""
+    """One typed wrapper per platform RPC method — prefer these over raw call()."""
 
     if TYPE_CHECKING:
         # Provided by the Plugin core; declared for type checkers only.
@@ -1694,7 +1694,7 @@ class MethodsMixin:
         """Send a control signal to the Swift shell via the control stream
 
         signal: Raw control-stream signal string (e.g. "open hud", "hide discovery").
-            Forwarded verbatim to the Swift shell via the actuator's control stream.
+            Forwarded verbatim to the Swift shell via the platform's control stream.
             non-empty
         """
         params: dict[str, Any] = {
@@ -1788,7 +1788,7 @@ class MethodsMixin:
         data: Free-form event payload published to subscribers.
             default null
         event_type: Convention-based event type (e.g. "clipboard.copied"). The
-            `_platform.*` namespace is reserved for the actuator.
+            `_platform.*` namespace is reserved for the platform.
             non-empty
         """
         params: dict[str, Any] = {
@@ -6781,7 +6781,7 @@ class MethodsMixin:
             cross-post to `branchkit.log` via the `plugin.diagnostic` event.
         tag: Optional structural tag (e.g. `BK_ACTIVATE_PATH`, `STT_BATCH`).
             Renders between the timestamp and the payload in the per-plugin
-            log file, matching the actuator log's `[TAG]` column convention.
+            log file, matching the platform log's `[TAG]` column convention.
             Empty/missing renders as `[<ts>] <payload>` with no tag bracket.
             default null
         """
@@ -6944,7 +6944,7 @@ class MethodsMixin:
         return result
 
     async def recognition_redecode(self, *, items: list["RedecodeItem"], model: str, stage: str, max_active: int | None = None) -> RecognitionRedecodeResponse:
-        """Re-decode the caller's own captured audio through a registered recognizer stage against the LIVE grammar (the fragility ladder) — the actuator runs it because the grammar is platform state and plugins cannot exec
+        """Re-decode the caller's own captured audio through a registered recognizer stage against the LIVE grammar (the fragility ladder) — the platform runs it because the grammar is platform state and plugins cannot exec
 
         max_active: wire uint32 · default null · min 0
         model: Model dir name under app-support `models/` (single component, no
@@ -7358,7 +7358,7 @@ class MethodsMixin:
         await self.call(METHOD_SYSTEM_NOTIFY, params)
 
     async def system_run_shell(self, *, command: str) -> None:
-        """Start a shell command via /bin/bash -c, run by the actuator outside any plugin sandbox (security-sensitive; not on Windows)
+        """Start a shell command via /bin/bash -c, run by the platform outside any plugin sandbox (security-sensitive; not on Windows)
 
         command: Shell command to execute via `/bin/bash -c`.
             non-empty

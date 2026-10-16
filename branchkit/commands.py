@@ -16,10 +16,10 @@ import json
 import os
 from typing import Any
 
-# The actuator's command parser rejects an explicit JSON `null` for these
+# The platform's command parser rejects an explicit JSON `null` for these
 # array fields (it accepts an array or an absent field). The builder never
 # sets one it was not given, but a spec from load_commands carries whatever
-# the file had — drop a None before the wire so the actuator applies its
+# the file had — drop a None before the wire so the platform applies its
 # default, the same absent shape the Go and TS builders produce.
 _COMMAND_SPEC_ARRAY_FIELDS = (
     "requires_tags",
@@ -57,7 +57,7 @@ class CommandBuilder:
 
     def __init__(self, slots: list):
         # Only the pattern: every other field is optional on the wire, and an
-        # unset one is simply absent — the actuator applies its default, and
+        # unset one is simply absent — the platform applies its default, and
         # the Go and TS builders produce the same shape.
         self._spec: dict[str, Any] = {"pattern": list(slots)}
 
@@ -100,7 +100,7 @@ class CommandBuilder:
         """Declare the command's prefix-discovery affordance ("prefix",
         "exclusive", or "select" — select points at entries via
         platform-assigned alphabet codewords instead of their names). Valid
-        only on a literal-prefix + single-tail-capture pattern; the actuator
+        only on a literal-prefix + single-tail-capture pattern; the platform
         rejects other shapes at load. Select keeps churning item names out of
         the grammar."""
         self._spec["discovery"] = mode

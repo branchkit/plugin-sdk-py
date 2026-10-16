@@ -1,5 +1,5 @@
 """Plugin-author test harness client — drives `branchkit-test-harness`
-(a real actuator core in test mode) over stdio. Python twin of
+(a real platform core in test mode) over stdio. Python twin of
 harness.{go,ts}. Synchronous by design: it exists to be called from
 plain `unittest` test bodies, which are not async.
 

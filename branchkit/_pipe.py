@@ -1,7 +1,7 @@
 r"""Windows named-pipe transport for the sandbox proxy and listener relay.
 
 On Windows a plugin runs in an AppContainer with no loopback exemption, so the
-actuator hands it the filtering proxy and the relay rendezvous over NAMED PIPES
+platform hands it the filtering proxy and the relay rendezvous over NAMED PIPES
 ACL'd to the plugin's container SID (``npipe://\\.\pipe\...``), not loopback TCP
 (a loopback exemption would open every loopback port on the machine).
 

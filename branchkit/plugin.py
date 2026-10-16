@@ -40,10 +40,10 @@ _READ_LIMIT = 64 * 1024 * 1024
 
 
 class RpcCallError(Exception):
-    """An error returned by the actuator in response to a plugin call.
+    """An error returned by the platform in response to a plugin call.
 
     Branch on `kind`, never on the message prose — the wording is not part
-    of the contract. Version skew: an actuator predating structured errors
+    of the contract. Version skew: a platform predating structured errors
     sends no `data`, so `kind` is None and only `code` and the message are
     meaningful.
     """
@@ -66,7 +66,7 @@ class RecordingDisabledError(RpcCallError):
 
 class CallTimeoutError(TimeoutError):
     """What `call` raises when no answer arrives in time. It is not a
-    failure: the actuator may have carried the call out and only the answer
+    failure: the platform may have carried the call out and only the answer
     is missing, so a write that timed out may have been committed. Tell it
     apart from a definite refusal (RpcCallError) with isinstance, and for a
     write, re-read or re-assert rather than assume either outcome. A
@@ -92,7 +92,7 @@ class UnsupportedError(RpcCallError):
 
     def __init__(self, code: int, message: str, data: dict | None = None):
         super().__init__(code, message, data)
-        # From `data.reason`; None only when the actuator sent none. A value
+        # From `data.reason`; None only when the platform sent none. A value
         # newer than this SDK passes through as-is.
         self.reason: str | None = data.get("reason") if isinstance(data, dict) else None
 
@@ -130,7 +130,7 @@ class PluginCore:
         # touches stdin or stdout: every call raises DetachedError at once,
         # notifications go nowhere, mirrors never fetch, run() returns
         # immediately. A host built on it exercises the plugin's own logic
-        # without a live actuator; swap a seam or a mirror for the platform
+        # without a live platform; swap a seam or a mirror for the platform
         # behaviour a test needs.
         self._detached = detached
         self._plugin_id: str = "detached" if detached else os.environ.get("BRANCHKIT_PLUGIN_ID", "unknown")
@@ -159,7 +159,7 @@ class PluginCore:
         # them in wire order, matching the Go and TS SDKs; responses resolve
         # outside this queue, so it cannot deadlock.
         #
-        # A state stream (an event notification the actuator marks
+        # A state stream (an event notification the platform marks
         # `delivery: "latest"`) holds at most ONE place in the queue. The read
         # loop never waits, so a listener slower than a 250 Hz position stream
         # would otherwise build a backlog that only grows — every position
@@ -179,7 +179,7 @@ class PluginCore:
         self._platform: dict | None = None
         self.on("on_ready", self._take_platform)
 
-        # Built-in introspection: the actuator calls list_action_types after
+        # Built-in introspection: the platform calls list_action_types after
         # readiness to validate handlers against the manifest's
         # `action_types`; list_methods feeds the settings-HTML validator.
         async def _list_action_types(params):
@@ -193,14 +193,14 @@ class PluginCore:
 
     @property
     def id(self) -> str:
-        """This plugin's own id, as the actuator assigned it
-        (BRANCHKIT_PLUGIN_ID), or "unknown" outside the actuator."""
+        """This plugin's own id, as the platform assigned it
+        (BRANCHKIT_PLUGIN_ID), or "unknown" outside the platform."""
         return self._plugin_id
 
     # --- Registration ---
 
     def handle(self, method: str, fn: Callable | None = None):
-        """Register a handler for actuator→plugin requests. Usable directly
+        """Register a handler for platform→plugin requests. Usable directly
         (`plugin.handle("m", fn)`) or as a decorator (`@plugin.handle("m")`).
 
         `handle("on_action", ...)` and `handle_action(...)` are mutually
@@ -298,7 +298,7 @@ class PluginCore:
         return result
 
     def on(self, method: str, fn: Callable | None = None):
-        """Register a listener for actuator→plugin notifications
+        """Register a listener for platform→plugin notifications
         (fire-and-forget). Multiple listeners may share a method. The
         ordered pump awaits each listener before delivering the next
         notification, so listeners observe wire order."""
@@ -351,7 +351,7 @@ class PluginCore:
         """What this machine can do (a `PlatformProfileResponse`): the OS,
         the Linux desktop session, the host, every operation a call to which
         would be refused here (with the refusal's own reason), and the host
-        events that never fire. The actuator sends it with on_ready, so it is
+        events that never fire. The platform sends it with on_ready, so it is
         set by the time an on_ready callback runs; None before, unless
         supports() has already fetched it."""
         return self._platform
@@ -377,7 +377,7 @@ class PluginCore:
         return not any(u.get("op") == method for u in self._platform.get("unavailable", []))
 
     def _take_platform(self, params) -> None:
-        # An actuator older than the profile sends a bare on_ready;
+        # A platform older than the profile sends a bare on_ready;
         # supports() then fetches it on first use.
         profile = params.get("platform") if isinstance(params, dict) else None
         if profile:
@@ -386,7 +386,7 @@ class PluginCore:
     # --- Outbound ---
 
     async def call(self, method: str, params: Any = None, timeout: float | None = None) -> Any:
-        """Send a request to the actuator and wait for the response.
+        """Send a request to the platform and wait for the response.
         Default timeout 10s (T1); override per call (T3). Raises
         RpcCallError for wire errors, CallTimeoutError (a TimeoutError) on
         expiry."""
@@ -429,7 +429,7 @@ class PluginCore:
         return cfut.result()
 
     def notify(self, method: str, params: Any = None) -> None:
-        """Send a fire-and-forget notification to the actuator."""
+        """Send a fire-and-forget notification to the platform."""
         msg: dict[str, Any] = {"jsonrpc": "2.0", "method": method}
         if params is not None:
             msg["params"] = params
@@ -491,7 +491,7 @@ class PluginCore:
         reader = asyncio.StreamReader(limit=_READ_LIMIT)
         if sys.platform == "win32":
             # connect_read_pipe needs an OVERLAPPED handle on Windows, and the
-            # stdin the actuator hands a plugin is a plain inherited pipe: the
+            # stdin the platform hands a plugin is a plain inherited pipe: the
             # attach succeeded and no read ever completed, so a Windows plugin
             # handshook (writes work) and then never received a call or a
             # notification — found 2026-09-18, the SDK's first run on Windows.
@@ -562,7 +562,7 @@ class PluginCore:
                 sys.stdout.buffer.write(line.encode("utf-8"))
                 sys.stdout.buffer.flush()
             except (BrokenPipeError, ValueError):
-                # The actuator side went away mid-write; shutdown follows
+                # The platform side went away mid-write; shutdown follows
                 # from the read loop's EOF.
                 pass
 
@@ -613,7 +613,7 @@ class PluginCore:
                 else:
                     fut.set_result(msg.get("result"))
             return
-        # Request from actuator — id + method. Fire a task; never block the
+        # Request from platform — id + method. Fire a task; never block the
         # read loop (C1).
         if msg_id is not None and method:
             asyncio.ensure_future(
@@ -732,18 +732,18 @@ _DELIVERY_LATEST = "latest"
 
 
 def api_version() -> str:
-    """The BranchKit API version from the actuator (env var), falling back
+    """The BranchKit API version from the platform (env var), falling back
     to the version this SDK was generated against."""
     return os.environ.get("BRANCHKIT_API_VERSION") or _COMPILED_API_VERSION
 
 
 def plugin_dir() -> str:
     """The plugin's installation directory (BRANCHKIT_PLUGIN_DIR), falling
-    back to "." when unset — what a plugin run by hand outside the actuator
+    back to "." when unset — what a plugin run by hand outside the platform
     sees. Launch-contract surface, same class as api_version().
 
     The command loaders deliberately do NOT route through this: they
-    distinguish unset ("not actuator-launched, load nothing") from a
+    distinguish unset ("not platform-launched, load nothing") from a
     directory, and a "." fallback would have them scan the working
     directory for commands.json."""
     return os.environ.get("BRANCHKIT_PLUGIN_DIR") or "."
@@ -752,7 +752,7 @@ def plugin_dir() -> str:
 def plugin_data_dir() -> str:
     """The directory this plugin may read and write freely
     (BRANCHKIT_PLUGIN_DATA) — its OWN data namespace, shared with the
-    stages it ships. Returns "" when unset (not launched by the actuator):
+    stages it ships. Returns "" when unset (not launched by the platform):
     a "." fallback would have a hand-run plugin write into its own source
     tree, silently."""
     return os.environ.get("BRANCHKIT_PLUGIN_DATA", "")

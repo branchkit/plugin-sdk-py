@@ -9,7 +9,7 @@ import branchkit
 
 
 def fake_plugin(store: dict) -> branchkit.Plugin:
-    """A Plugin whose actuator calls are answered in-process: the composed
+    """A Plugin whose platform calls are answered in-process: the composed
     settings read serves `store`."""
     p = branchkit.Plugin()
 

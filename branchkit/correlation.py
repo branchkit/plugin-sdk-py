@@ -1,6 +1,6 @@
 # Ambient inbound-correlation tracking.
 #
-# The actuator carries correlation in a thread-local read via
+# The platform carries correlation in a thread-local read via
 # `correlation::current()` and stamps every event it emits from the live
 # scope. The Python SDK mirrors that with a `contextvars.ContextVar`: each
 # request/notification is dispatched in its own asyncio task (which owns a

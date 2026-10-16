@@ -4,7 +4,7 @@
 # matches it, and the event type alone does not say who emitted it: a
 # subscription to `*.focused` hears every plugin's `focused`, and a host that
 # relays its hosted things' events wants to know the event really came from
-# itself. The actuator puts the sender on the notification's envelope, and the
+# itself. The platform puts the sender on the notification's envelope, and the
 # SDK makes it readable from inside the listener — the same ambient shape as
 # the correlation id, so no listener signature changes.
 #
@@ -23,7 +23,7 @@ class EventOrigin(NamedTuple):
     `source` is the emitter the platform authenticated: a plugin id,
     `"_platform"` for platform events, or a stage's name for `ext.*` events.
     The platform force-sets it from the emitting connection, so a listener can
-    trust it. `""` outside an event listener, or from an actuator that
+    trust it. `""` outside an event listener, or from a platform that
     predates it.
 
     `on_behalf_of` is the emitter's actor label — which hosted thing it said

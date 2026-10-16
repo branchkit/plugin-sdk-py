@@ -1,11 +1,11 @@
-"""Transparent outbound proxy (the actuator's per-host network
-enforcement: the sandbox allows no other egress than the actuator's
+"""Transparent outbound proxy (the platform's per-host network
+enforcement: the sandbox allows no other egress than the platform's
 per-plugin CONNECT proxy).
 
 When a plugin declares `"network": {"hosts": [...]}`, platforms without an
 in-kernel per-host primitive run the plugin in a no-network sandbox whose
-only egress is an actuator-run HTTP CONNECT proxy enforcing the declared
-hostname allowlist. The actuator advertises the endpoint in
+only egress is a platform-run HTTP CONNECT proxy enforcing the declared
+hostname allowlist. The platform advertises the endpoint in
 BRANCHKIT_PROXY:
 
     unix:///path/to/endpoint.sock  — UNIX socket (macOS, whose Seatbelt has
