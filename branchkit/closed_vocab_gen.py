@@ -5,12 +5,12 @@ from typing import NotRequired, TypedDict
 
 # INPUT_DIRECTIVE_* are the closed-vocabulary keys plugins may write
 # into `_platform.input.directives`. Source of truth:
-# `actuator-core/src/state/input.rs::InputDirectives::KNOWN_KEYS`.
+# `core/src/state/input.rs::InputDirectives::KNOWN_KEYS`.
 INPUT_DIRECTIVE_LIFT_KEYS_ON_DISPATCH = "lift_keys_on_dispatch"
 
 # EFFECT_* are the registered effect names plugins may declare in
 # `consumes.effects`. Source of truth:
-# `actuator-core/src/effects.rs::EffectDef` inventory entries.
+# `core/src/effects.rs::EffectDef` inventory entries.
 EFFECT_DISABLE_SCREEN_DIM = "disable_screen_dim"
 EFFECT_PREVENT_SYSTEM_SLEEP = "prevent_system_sleep"
 EFFECT_SIGNAL_CLIPBOARD_IN_USE = "signal_clipboard_in_use"
@@ -39,7 +39,7 @@ KNOWN_EFFECTS = (
 # ERROR_KIND_* are the closed-vocabulary `kind` values the actuator puts
 # in a JSON-RPC error's `data.kind`. Branch on RpcCallError.kind rather
 # than matching the message prose. Source of truth:
-# `actuator-core/src/fault.rs::ErrorKind`.
+# `core/src/fault.rs::ErrorKind`.
 #
 # NOTE: ErrorKind is `str`, deliberately NOT a Literal union of the
 # values below. An actuator newer than this SDK may send a kind that is
@@ -88,7 +88,7 @@ KNOWN_ERROR_KINDS = (
 
 # FaultData is the structured payload of a JSON-RPC error's `data`
 # member. Only `kind` is guaranteed; the rest are populated when they
-# apply. Source of truth: `actuator-core/src/fault.rs::FaultData`.
+# apply. Source of truth: `core/src/fault.rs::FaultData`.
 FaultData = TypedDict("FaultData", {
     "kind": str,
     "collection": NotRequired[str],
@@ -104,7 +104,7 @@ FaultData = TypedDict("FaultData", {
 # of an ERROR_KIND_UNSUPPORTED error: why this platform or session
 # cannot run the op. Read one off UnsupportedError.reason.
 # `UnsupportedReason` is `str`, not a Literal, for the same reason
-# ErrorKind is. Source of truth: `actuator-core/src/fault.rs::UnsupportedReason`.
+# ErrorKind is. Source of truth: `core/src/fault.rs::UnsupportedReason`.
 UnsupportedReason = str
 UNSUPPORTED_REASON_PLATFORM_NO_ANALOGUE = "platform_no_analogue"
 UNSUPPORTED_REASON_PLATFORM_UNPORTED = "platform_unported"
@@ -122,7 +122,7 @@ KNOWN_UNSUPPORTED_REASONS = (
 # act. A plugin never invents a kind — the actuator renders an
 # unknown one as OUTPUT_KIND_OUTCOME. `OutputKind` is `str`, not a
 # Literal, for the same reason ErrorKind is. Source of truth:
-# `actuator-core/src/output_state.rs::OutputKind`.
+# `core/src/output_state.rs::OutputKind`.
 OutputKind = str
 OUTPUT_KIND_CHOICES = "choices"
 OUTPUT_KIND_MODE = "mode"
@@ -145,7 +145,7 @@ KNOWN_OUTPUT_KINDS = (
 # OUTPUT_URGENCY_* are the closed-vocabulary `urgency` values of a
 # semantic output document — the producer's claim; what it means is
 # each renderer's policy. Unknown degrades to OUTPUT_URGENCY_AMBIENT.
-# Source of truth: `actuator-core/src/output_state.rs::OutputUrgency`.
+# Source of truth: `core/src/output_state.rs::OutputUrgency`.
 OutputUrgency = str
 OUTPUT_URGENCY_AMBIENT = "ambient"
 OUTPUT_URGENCY_NOTABLE = "notable"
