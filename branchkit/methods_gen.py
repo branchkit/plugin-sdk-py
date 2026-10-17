@@ -6572,8 +6572,9 @@ class MethodsMixin:
         resource: A resource indicator (RFC 8707) sent with both requests, when the
             service wants one: an MCP server's own URL, for instance.
             default null
-        scopes: The scopes to ask for, as the service names them. Shown to the person
-            before they sign in.
+        scopes: The scopes to ask for, as the service names them: at most 20, each
+            1-200 printable characters with no spaces or quotes. Shown to the
+            person, as the service's words, before they sign in.
             default []
         token_endpoint: The service's token endpoint (https), when no `issuer` is given. It
             must be on the authorization endpoint's host or one of its

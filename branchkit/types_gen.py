@@ -6716,8 +6716,9 @@ OauthConnectRequest = TypedDict("OauthConnectRequest", {
     # service wants one: an MCP server's own URL, for instance.
     # default null
     "resource": NotRequired[str],
-    # The scopes to ask for, as the service names them. Shown to the person
-    # before they sign in.
+    # The scopes to ask for, as the service names them: at most 20, each
+    # 1-200 printable characters with no spaces or quotes. Shown to the
+    # person, as the service's words, before they sign in.
     # default []
     "scopes": NotRequired[list[str]],
     # The service's token endpoint (https), when no `issuer` is given. It
