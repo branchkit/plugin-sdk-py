@@ -606,6 +606,9 @@ from .contracts_gen import (
     METHOD_NATIVE_XCODE_VERSION,
     METHOD_NATIVE_ZIP,
     METHOD_NETWORK_REQUEST_HOST,
+    METHOD_OAUTH_CONNECT,
+    METHOD_OAUTH_DISCONNECT,
+    METHOD_OAUTH_STATUS,
     METHOD_OUTPUT_CLEAR,
     METHOD_OUTPUT_STATE,
     METHOD_OVERLAY_CLEAR,
@@ -1018,6 +1021,9 @@ if TYPE_CHECKING:
         NativeXcodeVersionResponse,
         NetworkInterface,
         NetworkRequestHostResponse,
+        OauthConnectResponse,
+        OauthDisconnectResponse,
+        OauthStatusResponse,
         OcrRegion,
         Offset,
         OnPointer,
@@ -1049,6 +1055,7 @@ if TYPE_CHECKING:
         RecognitionBiasSetResponse,
         RecognitionRedecodeResponse,
         RedecodeItem,
+        RedirectHost,
         RelativeTo,
         ReminderItem,
         ReplaceScope,
@@ -6532,6 +6539,78 @@ class MethodsMixin:
         if reason is not None:
             params["reason"] = reason
         result = await self.call(METHOD_NETWORK_REQUEST_HOST, params)
+        return result
+
+    async def oauth_connect(self, *, api_host: str, authorization_endpoint: str, client_id: str, provider: str, token_endpoint: str, redirect_host: "RedirectHost" | None = None, resource: str | None = None, scopes: list[str] | None = None) -> OauthConnectResponse:
+        """Ask the person to sign in to an outside service for this plugin. BranchKit runs the sign-in and keeps the tokens; the plugin spends the access token by naming oauth.<provider> in http.request
+
+        api_host: The host the access token is sent to (often the API host, which can
+            differ from the token endpoint's). Must be a host this plugin
+            declares or has requested.
+            non-empty
+        authorization_endpoint: The service's authorization endpoint (https). The person's browser
+            goes here.
+            non-empty
+        client_id: Your client ID with this service: one you registered as the plugin's
+            author, one you obtained by dynamic client registration, or the
+            person's own. A public client: no secret is sent, PKCE protects the
+            exchange.
+            non-empty
+        provider: Your name for the service, used again in `oauth.status`,
+            `oauth.disconnect` and the token's secret name (`oauth.<provider>`):
+            1-64 of `a-z 0-9 _ -`.
+            non-empty
+        redirect_host: The loopback name the service accepts in its redirect address.
+            Default `loopback` (`127.0.0.1`).
+        resource: A resource indicator (RFC 8707) sent with both requests, when the
+            service wants one: an MCP server's own URL, for instance.
+            default null
+        scopes: The scopes to ask for, as the service names them. Shown to the person
+            before they sign in.
+            default []
+        token_endpoint: The service's token endpoint (https). Must be a host this plugin
+            declares or has requested with `network.request_host`; the exchange
+            goes out through this plugin's network grants.
+            non-empty
+        """
+        params: dict[str, Any] = {
+            "api_host": api_host,
+            "authorization_endpoint": authorization_endpoint,
+            "client_id": client_id,
+            "provider": provider,
+            "token_endpoint": token_endpoint,
+        }
+        if redirect_host is not None:
+            params["redirect_host"] = redirect_host
+        if resource is not None:
+            params["resource"] = resource
+        if scopes is not None:
+            params["scopes"] = scopes
+        result = await self.call(METHOD_OAUTH_CONNECT, params)
+        return result
+
+    async def oauth_disconnect(self, *, provider: str) -> OauthDisconnectResponse:
+        """Forget this plugin's sign-in to a service: both tokens and the record
+
+        provider: The provider name given to `oauth.connect`.
+            non-empty
+        """
+        params: dict[str, Any] = {
+            "provider": provider,
+        }
+        result = await self.call(METHOD_OAUTH_DISCONNECT, params)
+        return result
+
+    async def oauth_status(self, *, provider: str) -> OauthStatusResponse:
+        """Whether this plugin is signed in to a service, what the service granted, and where the token goes. Never the token
+
+        provider: The provider name given to `oauth.connect`.
+            non-empty
+        """
+        params: dict[str, Any] = {
+            "provider": provider,
+        }
+        result = await self.call(METHOD_OAUTH_STATUS, params)
         return result
 
     async def output_clear(self, *, channel: str) -> OutputClearResponse:

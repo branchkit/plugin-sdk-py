@@ -1637,6 +1637,10 @@ RedecodeNoise = TypedDict("RedecodeNoise", {
     "snr_db": float,
 })
 
+# Which loopback name the service accepts in a redirect address. Some
+# accept only `localhost`, some only `127.0.0.1`.
+RedirectHost = Literal["loopback", "localhost"]
+
 # What a HUD window is placed against.
 RelativeTo = Literal["display", "focused_window", "pointer", "caret"]
 
@@ -6676,6 +6680,82 @@ NetworkRequestHostResponse = TypedDict("NetworkRequestHostResponse", {
     "status": str,
 })
 
+OauthConnectRequest = TypedDict("OauthConnectRequest", {
+    # The host the access token is sent to (often the API host, which can
+    # differ from the token endpoint's). Must be a host this plugin
+    # declares or has requested.
+    # non-empty
+    "api_host": str,
+    # The service's authorization endpoint (https). The person's browser
+    # goes here.
+    # non-empty
+    "authorization_endpoint": str,
+    # Your client ID with this service: one you registered as the plugin's
+    # author, one you obtained by dynamic client registration, or the
+    # person's own. A public client: no secret is sent, PKCE protects the
+    # exchange.
+    # non-empty
+    "client_id": str,
+    # Your name for the service, used again in `oauth.status`,
+    # `oauth.disconnect` and the token's secret name (`oauth.<provider>`):
+    # 1-64 of `a-z 0-9 _ -`.
+    # non-empty
+    "provider": str,
+    # The loopback name the service accepts in its redirect address.
+    # Default `loopback` (`127.0.0.1`).
+    "redirect_host": NotRequired["RedirectHost"],
+    # A resource indicator (RFC 8707) sent with both requests, when the
+    # service wants one: an MCP server's own URL, for instance.
+    # default null
+    "resource": NotRequired[str],
+    # The scopes to ask for, as the service names them. Shown to the person
+    # before they sign in.
+    # default []
+    "scopes": NotRequired[list[str]],
+    # The service's token endpoint (https). Must be a host this plugin
+    # declares or has requested with `network.request_host`; the exchange
+    # goes out through this plugin's network grants.
+    # non-empty
+    "token_endpoint": str,
+})
+
+OauthConnectResponse = TypedDict("OauthConnectResponse", {
+    # `asking`: the person is being asked. `_platform.oauth.changed` says
+    # how it ends.
+    "status": str,
+})
+
+OauthDisconnectRequest = TypedDict("OauthDisconnectRequest", {
+    # The provider name given to `oauth.connect`.
+    # non-empty
+    "provider": str,
+})
+
+OauthDisconnectResponse = TypedDict("OauthDisconnectResponse", {
+    # Whether there was a sign-in to forget.
+    "removed": bool,
+})
+
+OauthStatusRequest = TypedDict("OauthStatusRequest", {
+    # The provider name given to `oauth.connect`.
+    # non-empty
+    "provider": str,
+})
+
+OauthStatusResponse = TypedDict("OauthStatusResponse", {
+    # Where the token is sent, when signed in.
+    "api_host": NotRequired[str],
+    # Signed in: a request naming `oauth.<provider>` to the API host
+    # carries the token.
+    "connected": bool,
+    # When the access token stops working (milliseconds since the Unix
+    # epoch), if the service said.
+    # wire uint64 (64-bit) · min 0
+    "expires_at_ms": NotRequired[int],
+    # What the service granted, when signed in.
+    "scopes": list[str],
+})
+
 OutputClearRequest = TypedDict("OutputClearRequest", {
     # The channel on which nothing is true now. Must be owned by the
     # calling plugin.
@@ -7963,6 +8043,19 @@ NetworkChangedEventParams = TypedDict("NetworkChangedEventParams", {
     "interface": str,
     # Whether a usable network path exists right now.
     "reachable": bool,
+})
+
+# Payload of the `_platform.oauth.changed` event.
+OauthChangedEventParams = TypedDict("OauthChangedEventParams", {
+    # Signed in now: requests naming the provider's token will carry it.
+    "connected": bool,
+    # The plugin the sign-in is for.
+    "plugin": str,
+    # The provider name the plugin gave `oauth.connect`.
+    "provider": str,
+    # Why not, when `connected` is false: the person chose not now, the
+    # service refused, the exchange failed, or the person signed out.
+    "reason": NotRequired[str],
 })
 
 # Payload of the `_platform.output.cleared` event.
