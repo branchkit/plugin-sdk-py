@@ -143,13 +143,22 @@ ActionFieldSchema = TypedDict("ActionFieldSchema", {
 # Enables generic UI rendering (structured editor fields) for any plugin's actions.
 ActionTypeSchema = TypedDict("ActionTypeSchema", {
     # Whether running this action can be undone. Omitted means
-    # unclassified, which BranchKit treats as risky. Only `reversible`
-    # changes anything: the person may then always-allow a connected AI app
-    # to run it, and while it runs for such an app BranchKit refuses this
-    # plugin every platform call that cannot be undone. Ignored for a
-    # plugin that can act without platform calls (network access, running
-    # other programs, its own pipeline stages), since nothing could hold it
-    # to the claim.
+    # unclassified, which BranchKit treats as risky when a connected AI app
+    # asks to run it.
+    #
+    # `reversible`: the person may always-allow a connected AI app to run
+    # it, and while it runs for such an app BranchKit refuses this plugin
+    # every platform call that cannot be undone. Ignored for a plugin that
+    # can act without platform calls (network access, running other
+    # programs, its own pipeline stages), since nothing could hold it to the
+    # claim.
+    #
+    # `irreversible` or `external`: when the person has asked to be checked
+    # with before spoken commands that cannot be undone, a command that runs
+    # this action is held until they say go ahead. BranchKit words that
+    # question from this action type's label, its fields' values and your
+    # plugin's name. This is how a plugin gets a confirmation for its own
+    # destructive actions: declare it, here or when pushing the type.
     "consequence": NotRequired["Consequence"],
     # Ordered list of fields for this action type.
     "fields": list["ActionFieldSchema"],
@@ -858,7 +867,9 @@ ExecutedActionReport = TypedDict("ExecutedActionReport", {
     "denial": NotRequired[str],
     # Plugin that handled it, when it routed to one.
     "handler": NotRequired[str],
-    # `ok`, `error`, `not_handled`, `denied` or `simulated`.
+    # `ok`, `error`, `not_handled`, `denied` or `simulated`; `asking` while
+    # it waits for the person to say go ahead, `cancelled` when they did
+    # not.
     "status": str,
 })
 
@@ -1574,7 +1585,10 @@ PushedActionField = TypedDict("PushedActionField", {
 # `pushed_types_track_the_manifest_shape` fails if the two drift.
 PushedActionType = TypedDict("PushedActionType", {
     # Whether running it can be undone; omitted means unclassified,
-    # treated as risky.
+    # treated as risky for a connected AI app. `irreversible` or
+    # `external` makes a spoken command that runs it wait for the person to
+    # say go ahead, when they asked to be checked with first: declare it
+    # for a destructive tool, and BranchKit asks in its own words.
     "consequence": NotRequired["Consequence"],
     # Its inputs, in order.
     "fields": NotRequired[list["PushedActionField"]],
@@ -2882,7 +2896,10 @@ DispatchResponse = TypedDict("DispatchResponse", {
     "result": NotRequired[Any],
     # `"ok"` for success, `"denied"` if the caller lacks dispatch
     # permission, `"error"` for an internal panic captured by
-    # `std::panic::catch_unwind`.
+    # `std::panic::catch_unwind`. `"asking"`: the action cannot be undone
+    # and the person asked to be checked with before such a spoken command,
+    # so it runs only once they say go ahead; nothing reports back when it
+    # does.
     "status": str,
 })
 
@@ -8014,12 +8031,16 @@ PipelineExecutedEventParams = TypedDict("PipelineExecutedEventParams", {
     # status). `"dropped"`: the owner's `on_transcript` call failed (it
     # timed out, returned an error, was not running, or answered with
     # actions that could not be read) and nothing ran; a late answer is
-    # discarded. `reason` says which.
+    # discarded. `reason` says which. `"asking"`: the person asked to be
+    # checked with before a spoken command that cannot be undone, and one
+    # of these actions is one, so nothing has run yet. A second report
+    # follows on the same chain: `"ran"` when they said go ahead, or
+    # `"cancelled"` (with `reason`) when they did not.
     "outcome": str,
     # The pipeline's owner, the plugin that introduced it.
     "owner_plugin": str,
     "pipeline": str,
-    # Why the turn was dropped. Absent when it ran.
+    # Why the turn was dropped or cancelled. Absent when it ran.
     "reason": NotRequired[str],
 })
 
