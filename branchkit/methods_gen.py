@@ -6541,21 +6541,28 @@ class MethodsMixin:
         result = await self.call(METHOD_NETWORK_REQUEST_HOST, params)
         return result
 
-    async def oauth_connect(self, *, api_host: str, authorization_endpoint: str, client_id: str, provider: str, token_endpoint: str, redirect_host: "RedirectHost" | None = None, resource: str | None = None, scopes: list[str] | None = None) -> OauthConnectResponse:
+    async def oauth_connect(self, *, api_host: str, client_id: str, provider: str, authorization_endpoint: str | None = None, issuer: str | None = None, redirect_host: "RedirectHost" | None = None, resource: str | None = None, scopes: list[str] | None = None, token_endpoint: str | None = None) -> OauthConnectResponse:
         """Ask the person to sign in to an outside service for this plugin. BranchKit runs the sign-in and keeps the tokens; the plugin spends the access token by naming oauth.<provider> in http.request
 
         api_host: The host the access token is sent to (often the API host, which can
             differ from the token endpoint's). Must be a host this plugin
             declares or has requested.
             non-empty
-        authorization_endpoint: The service's authorization endpoint (https). The person's browser
-            goes here.
-            non-empty
+        authorization_endpoint: The service's authorization endpoint (https), when no `issuer` is
+            given. The person's browser goes here.
+            default null
         client_id: Your client ID with this service: one you registered as the plugin's
             author, one you obtained by dynamic client registration, or the
             person's own. A public client: no secret is sent, PKCE protects the
             exchange.
             non-empty
+        issuer: The service's issuer (https), for a service that publishes its
+            endpoints (RFC 8414 authorization server metadata, or OpenID Connect
+            discovery): BranchKit reads the authorization and token endpoints
+            from it, as this plugin, and they must name the same issuer. Give
+            this or both endpoints. Must be a host this plugin declares or has
+            requested.
+            default null
         provider: Your name for the service, used again in `oauth.status`,
             `oauth.disconnect` and the token's secret name (`oauth.<provider>`):
             1-64 of `a-z 0-9 _ -`.
@@ -6568,24 +6575,30 @@ class MethodsMixin:
         scopes: The scopes to ask for, as the service names them. Shown to the person
             before they sign in.
             default []
-        token_endpoint: The service's token endpoint (https). Must be a host this plugin
-            declares or has requested with `network.request_host`; the exchange
-            goes out through this plugin's network grants.
-            non-empty
+        token_endpoint: The service's token endpoint (https), when no `issuer` is given. It
+            must be on the authorization endpoint's host or one of its
+            subdomains: the place the person signs in vouches for where the code
+            is redeemed. Must be a host this plugin declares or has requested;
+            the exchange goes out through this plugin's network grants.
+            default null
         """
         params: dict[str, Any] = {
             "api_host": api_host,
-            "authorization_endpoint": authorization_endpoint,
             "client_id": client_id,
             "provider": provider,
-            "token_endpoint": token_endpoint,
         }
+        if authorization_endpoint is not None:
+            params["authorization_endpoint"] = authorization_endpoint
+        if issuer is not None:
+            params["issuer"] = issuer
         if redirect_host is not None:
             params["redirect_host"] = redirect_host
         if resource is not None:
             params["resource"] = resource
         if scopes is not None:
             params["scopes"] = scopes
+        if token_endpoint is not None:
+            params["token_endpoint"] = token_endpoint
         result = await self.call(METHOD_OAUTH_CONNECT, params)
         return result
 
