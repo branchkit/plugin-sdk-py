@@ -1074,6 +1074,7 @@ if TYPE_CHECKING:
         SetupStepState,
         Shape,
         ShortcutInfo,
+        SignInFlow,
         SpaceInfo,
         SpeechEngineInfo,
         SpeechLocale,
@@ -6541,7 +6542,7 @@ class MethodsMixin:
         result = await self.call(METHOD_NETWORK_REQUEST_HOST, params)
         return result
 
-    async def oauth_connect(self, *, api_host: str, client_id: str, provider: str, authorization_endpoint: str | None = None, issuer: str | None = None, redirect_host: "RedirectHost" | None = None, resource: str | None = None, scopes: list[str] | None = None, token_endpoint: str | None = None) -> OauthConnectResponse:
+    async def oauth_connect(self, *, api_host: str, client_id: str, provider: str, authorization_endpoint: str | None = None, device_authorization_endpoint: str | None = None, flow: "SignInFlow" | None = None, issuer: str | None = None, redirect_host: "RedirectHost" | None = None, resource: str | None = None, scopes: list[str] | None = None, token_endpoint: str | None = None) -> OauthConnectResponse:
         """Ask the person to sign in to an outside service for this plugin. BranchKit runs the sign-in and keeps the tokens; the plugin spends the access token by naming oauth.<provider> in http.request
 
         api_host: The host the access token is sent to (often the API host, which can
@@ -6556,6 +6557,14 @@ class MethodsMixin:
             person's own. A public client: no secret is sent, PKCE protects the
             exchange.
             non-empty
+        device_authorization_endpoint: The device flow's device authorization endpoint (https), when no
+            `issuer` is given. The token endpoint must be on its host or a
+            subdomain.
+            default null
+        flow: How the person approves: `browser` (default), the service's page in
+            the browser here, or `device`, a short code the person enters on the
+            service's page on this machine or another device (RFC 8628, for a
+            service that offers it).
         issuer: The service's issuer (https), for a service that publishes its
             endpoints (RFC 8414 authorization server metadata, or OpenID Connect
             discovery): BranchKit reads the authorization and token endpoints
@@ -6590,6 +6599,10 @@ class MethodsMixin:
         }
         if authorization_endpoint is not None:
             params["authorization_endpoint"] = authorization_endpoint
+        if device_authorization_endpoint is not None:
+            params["device_authorization_endpoint"] = device_authorization_endpoint
+        if flow is not None:
+            params["flow"] = flow
         if issuer is not None:
             params["issuer"] = issuer
         if redirect_host is not None:

@@ -1875,6 +1875,9 @@ ShortcutInfo = TypedDict("ShortcutInfo", {
     "name": str,
 })
 
+# How the person approves a sign-in.
+SignInFlow = Literal["browser", "device"]
+
 # Information about a macOS Space.
 SpaceInfo = TypedDict("SpaceInfo", {
     # The display ID this space belongs to.
@@ -6696,6 +6699,16 @@ OauthConnectRequest = TypedDict("OauthConnectRequest", {
     # exchange.
     # non-empty
     "client_id": str,
+    # The device flow's device authorization endpoint (https), when no
+    # `issuer` is given. The token endpoint must be on its host or a
+    # subdomain.
+    # default null
+    "device_authorization_endpoint": NotRequired[str],
+    # How the person approves: `browser` (default), the service's page in
+    # the browser here, or `device`, a short code the person enters on the
+    # service's page on this machine or another device (RFC 8628, for a
+    # service that offers it).
+    "flow": NotRequired["SignInFlow"],
     # The service's issuer (https), for a service that publishes its
     # endpoints (RFC 8414 authorization server metadata, or OpenID Connect
     # discovery): BranchKit reads the authorization and token endpoints
