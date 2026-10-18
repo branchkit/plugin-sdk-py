@@ -1101,7 +1101,7 @@ class MethodsMixin:
     """One typed wrapper per platform RPC method — prefer these over raw call()."""
 
     if TYPE_CHECKING:
-        # Provided by the Plugin core; declared for type checkers only.
+        # The Caller protocol (caller.py): the Plugin core's, or a Client's.
         async def call(self, method: str, params: Any = None, timeout: float | None = None) -> Any: ...
 
     async def actions_list(self) -> ActionsListResponse:

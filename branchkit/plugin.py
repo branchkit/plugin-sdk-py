@@ -385,6 +385,16 @@ class PluginCore:
 
     # --- Outbound ---
 
+    def with_timeout(self, timeout: float):
+        """The typed wrappers with ``timeout`` seconds as each call's
+        timeout, in place of call's 10 s default:
+        ``await plugin.with_timeout(30).pipelines_run(...)``. A timeout is
+        not a failure (see CallTimeoutError): the platform may have carried
+        the call out."""
+        from .caller import Client  # caller imports the generated wrappers
+
+        return Client(self, timeout)
+
     async def call(self, method: str, params: Any = None, timeout: float | None = None) -> Any:
         """Send a request to the platform and wait for the response.
         Default timeout 10s (T1); override per call (T3). Raises

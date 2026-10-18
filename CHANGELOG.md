@@ -5,6 +5,15 @@ git history.
 
 ## Unreleased
 
+### Typed wrappers
+
+- `Client(caller)` gives the generated wrappers (`MethodsMixin`) over any
+  `Caller` (anything with the plugin's `call`), such as a test's fake,
+  with no transport.
+- `plugin.with_timeout(seconds)` returns the wrappers with that timeout
+  for each call, in place of `call`'s 10 s default. Before, only a raw
+  `call(method, params, timeout=...)` could wait longer.
+
 ### Network
 
 - Over a handed-off proxy channel (`BRANCHKIT_PROXY=fd://N`, Linux), a `dial()`

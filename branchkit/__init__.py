@@ -50,6 +50,7 @@ from .effects import EffectsMixin
 from .hud import HudMixin
 from .log import log
 from .methods_gen import MethodsMixin
+from .caller import Caller, Client  # noqa: F401 — the wrappers over any caller
 from .mirror import CollectionMirror, MirrorMixin
 from .settings import SettingsMirror, SettingsMixin
 from .commands import (
