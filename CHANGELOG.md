@@ -5,6 +5,8 @@ git history.
 
 ## Unreleased
 
+## 0.7.0 — 2026-10-18
+
 ### Typed event subscription
 
 - One generated helper per platform event, beside the call wrappers:
