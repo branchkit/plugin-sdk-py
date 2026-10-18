@@ -5,6 +5,8 @@ git history.
 
 ## Unreleased
 
+## 0.6.0 — 2026-10-17
+
 ### Typed wrappers
 
 - `Client(caller)` gives the generated wrappers (`MethodsMixin`) over any
