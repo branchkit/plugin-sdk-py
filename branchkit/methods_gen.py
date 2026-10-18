@@ -696,6 +696,7 @@ if TYPE_CHECKING:
         BluetoothDevice,
         CalendarEvent,
         CameraDevice,
+        ClientAuth,
         ClipboardContents,
         ClipboardWriteItem,
         CollectionCountResponse,
@@ -6542,7 +6543,7 @@ class MethodsMixin:
         result = await self.call(METHOD_NETWORK_REQUEST_HOST, params)
         return result
 
-    async def oauth_connect(self, *, api_host: str, client_id: str, provider: str, authorization_endpoint: str | None = None, device_authorization_endpoint: str | None = None, flow: "SignInFlow" | None = None, issuer: str | None = None, redirect_host: "RedirectHost" | None = None, resource: str | None = None, scopes: list[str] | None = None, token_endpoint: str | None = None) -> OauthConnectResponse:
+    async def oauth_connect(self, *, api_host: str, client_id: str, provider: str, authorization_endpoint: str | None = None, client_auth: "ClientAuth" | None = None, client_secret: str | None = None, device_authorization_endpoint: str | None = None, flow: "SignInFlow" | None = None, issuer: str | None = None, redirect_host: "RedirectHost" | None = None, resource: str | None = None, scopes: list[str] | None = None, token_endpoint: str | None = None) -> OauthConnectResponse:
         """Ask the person to sign in to an outside service for this plugin. BranchKit runs the sign-in and keeps the tokens; the plugin spends the access token by naming oauth.<provider> in http.request
 
         api_host: The host the access token is sent to (often the API host, which can
@@ -6552,11 +6553,20 @@ class MethodsMixin:
         authorization_endpoint: The service's authorization endpoint (https), when no `issuer` is
             given. The person's browser goes here.
             default null
+        client_auth: How the client secret is sent: `basic` (default, HTTP Basic) or
+            `post` (in the form body), as the service requires.
         client_id: Your client ID with this service: one you registered as the plugin's
             author, one you obtained by dynamic client registration, or the
             person's own. A public client: no secret is sent, PKCE protects the
             exchange.
             non-empty
+        client_secret: For a service that insists on a client secret: the name of a secret
+            in this plugin's drawer, bound to the token endpoint's host. Ask the
+            person for it with `secrets.request_slot` (their own app's secret),
+            or store one the service publishes as not secret with `secrets.set`.
+            BranchKit sends it to the token endpoint and nowhere else; the plugin
+            never reads it back.
+            default null
         device_authorization_endpoint: The device flow's device authorization endpoint (https), when no
             `issuer` is given. The token endpoint must be on its host or a
             subdomain.
@@ -6599,6 +6609,10 @@ class MethodsMixin:
         }
         if authorization_endpoint is not None:
             params["authorization_endpoint"] = authorization_endpoint
+        if client_auth is not None:
+            params["client_auth"] = client_auth
+        if client_secret is not None:
+            params["client_secret"] = client_secret
         if device_authorization_endpoint is not None:
             params["device_authorization_endpoint"] = device_authorization_endpoint
         if flow is not None:
