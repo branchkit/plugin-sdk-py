@@ -617,12 +617,12 @@ CommandSpec = TypedDict("CommandSpec", {
     # (`{"type":"browser.click", …}`) where `type` is the dotted plugin
     # action type and the remaining keys are its params.
     "action": Any,
-    # When true, this gated command is allowed to win during a
-    # mid-bridge restricted resolve. Default false: gated sibling
-    # commands (`show_hints`, `dismiss`-style) are suppressed while
-    # the user is mid-codeword. Set true on explicit cancel words
-    # (`dismiss`, `cancel`, `exit`) that should be able to abort an
-    # in-progress bridge.
+    # When true, this gated command is allowed to win while a
+    # multi-word pattern is part-way through (a held partial match).
+    # Default false: a one-word gated command that does not continue
+    # the held match is suppressed until it completes. A command of two
+    # or more words wins without the flag. Set true on one-word cancel
+    # words (`over`) that should be able to abort the held match.
     "cancels_bridge": NotRequired[bool],
     # Category shown in Settings UI command lists.
     "category": NotRequired[str],
