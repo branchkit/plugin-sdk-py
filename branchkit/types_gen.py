@@ -8232,7 +8232,17 @@ PipelineTranscriptEventParams = TypedDict("PipelineTranscriptEventParams", {
     # means no active mode declared one, and the engine owner's default
     # (prose) stands.
     "dictation_profile": NotRequired[str],
+    # The application focused when this utterance ended: for a held
+    # pipeline, at the stop (the app the words were meant for); for one
+    # never stopped, now. Reported, never interpreted.
+    "focused_app": NotRequired[str],
+    # The application focused as this transcript is emitted. Differs from
+    # `focused_app` when focus moved while a held pipeline transcribed.
+    "focused_app_now": NotRequired[str],
     "is_final": bool,
+    # The engine's own "this text may still change" mark, as it sent it.
+    # default false
+    "partial": NotRequired[bool],
     "pipeline": str,
     "text": str,
     # Shared-clock onset (ms, the audio chunk timebase) of each word of

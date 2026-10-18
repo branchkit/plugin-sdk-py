@@ -5,6 +5,13 @@ git history.
 
 ## Unreleased
 
+### Transcript payload
+
+- `PipelineTranscriptEventParams` gains `focused_app`, `focused_app_now` and
+  `partial`. The platform always sent them; the declared type lacked them, so
+  a plugin on the typed helper could not read them. The platform now builds
+  the payload from the declared type, so the two cannot drift again.
+
 ### Handshake declared
 
 - The handshake every SDK answers itself is now declared in the platform's
