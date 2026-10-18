@@ -5,6 +5,15 @@ git history.
 
 ## Unreleased
 
+### Handshake declared
+
+- The handshake every SDK answers itself is now declared in the platform's
+  protocol and so generated: `HOOK_LIST_METHODS`, `HOOK_LIST_ACTION_TYPES`,
+  `HOOK_ON_READY` constants, and the `ListMethodsResponse`,
+  `ListActionTypesResponse` and `OnReadyRequest` types. The SDK registers
+  its own handshake through those constants. `OnReadyRequest.platform` is
+  the same `PlatformProfileResponse` type `platform.profile` returns.
+
 ## 0.7.0 — 2026-10-18
 
 ### Typed event subscription

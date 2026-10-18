@@ -1306,6 +1306,12 @@ Offset = TypedDict("Offset", {
 
 OnActionStatus = Literal["ok", "error", "not_handled"]
 
+# The result of `on_commands_changed`, and its SCHEMA, as the request is.
+OnCommandsChangedResponse = TypedDict("OnCommandsChangedResponse", {
+    # wire uint · min 0
+    "processed_count": int,
+})
+
 # What a HUD window does when the pointer moves into its frame.
 OnPointer = Literal["none", "fade"]
 
@@ -1511,6 +1517,29 @@ PipelineStatusEntry = TypedDict("PipelineStatusEntry", {
 # Why a pipeline stopped. Only `requested` is a stop someone asked for; the
 # others end a run its owner may want to start again.
 PipelineStopReason = Literal["requested", "ended", "error", "reload"]
+
+# What this machine can do, asked before calling rather than learned from a
+# refusal.
+#
+# Titled `PlatformProfileResponse`, the name every SDK already gives
+# `platform.profile`'s result: `on_ready` carries the same struct, and one
+# title makes the two one SDK type (emit-sdk lifts it as a shared
+# component) rather than two with the same fields.
+PlatformProfileResponse = TypedDict("PlatformProfileResponse", {
+    # The host process serving host-dependent operations and events.
+    "host": str,
+    # `macos`, `linux` or `windows`.
+    "os": str,
+    # On Linux, the desktop session the window tools drive: `x11`, `sway`,
+    # `gnome` or `other_wayland`. Absent on other systems.
+    "session": NotRequired[str],
+    # Every operation a plugin can call that would be refused here, with
+    # the reason and detail the refusal itself carries. An operation not
+    # listed runs here.
+    "unavailable": list["UnavailableOperation"],
+    # Host events (`_platform.*`) that are never delivered here.
+    "unobservable_events": list[str],
+})
 
 PluginLogLevel = Literal["trace", "info", "warn", "error", "debug"]
 
@@ -7025,22 +7054,6 @@ PipelinesWarmResponse = TypedDict("PipelinesWarmResponse", {
     "warmed": bool,
 })
 
-PlatformProfileResponse = TypedDict("PlatformProfileResponse", {
-    # The host process serving host-dependent operations and events.
-    "host": str,
-    # `macos`, `linux` or `windows`.
-    "os": str,
-    # On Linux, the desktop session the window tools drive: `x11`, `sway`,
-    # `gnome` or `other_wayland`. Absent on other systems.
-    "session": NotRequired[str],
-    # Every operation a plugin can call that would be refused here, with
-    # the reason and detail the refusal itself carries. An operation not
-    # listed runs here.
-    "unavailable": list["UnavailableOperation"],
-    # Host events (`_platform.*`) that are never delivered here.
-    "unobservable_events": list[str],
-})
-
 PluginDataExportRequest = TypedDict("PluginDataExportRequest", {
     # Name to save it under. Defaults to the source file's name. A path
     # separator here is refused rather than resolved — this names a file in
@@ -7646,6 +7659,19 @@ WiringDescribeResponse = TypedDict("WiringDescribeResponse", {
 
 # ===== Platform → Plugin request/response types =====
 
+ListActionTypesResponse = TypedDict("ListActionTypesResponse", {
+    # A plugin that dispatches dynamically registers none and may answer
+    # `null`.
+    # default null
+    "action_types": NotRequired[list[str]],
+})
+
+ListMethodsResponse = TypedDict("ListMethodsResponse", {
+    # `null` or absent means "cannot tell", not "none".
+    # default null
+    "methods": NotRequired[list[str]],
+})
+
 OnActionRequest = TypedDict("OnActionRequest", {
     # Fully qualified action type (e.g., 'voice.dictation', 'placement.snap').
     "action": str,
@@ -7687,9 +7713,10 @@ OnCommandsChangedRequest = TypedDict("OnCommandsChangedRequest", {
     "user_commands": NotRequired[list["CommandSnapshot"]],
 })
 
-OnCommandsChangedResponse = TypedDict("OnCommandsChangedResponse", {
-    # wire int64 (64-bit)
-    "processed_count": int,
+OnReadyRequest = TypedDict("OnReadyRequest", {
+    # What this machine can do: `platform.profile`'s answer, kept by the SDK
+    # so a plugin can ask before it calls.
+    "platform": "PlatformProfileResponse",
 })
 
 OnTranscriptRequest = TypedDict("OnTranscriptRequest", {

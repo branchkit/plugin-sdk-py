@@ -20,7 +20,13 @@ from typing import Any, Callable
 
 from .closed_vocab_gen import ERROR_KIND_RECORDING_DISABLED, ERROR_KIND_UNSUPPORTED
 from .contracts_gen import API_VERSION as _COMPILED_API_VERSION
-from .contracts_gen import HOOK_ON_ACTION, HOOK_RENDER_SETTINGS
+from .contracts_gen import (
+    HOOK_LIST_ACTION_TYPES,
+    HOOK_LIST_METHODS,
+    HOOK_ON_ACTION,
+    HOOK_ON_READY,
+    HOOK_RENDER_SETTINGS,
+)
 
 from .actor import get_current_actor
 from .correlation import get_current_correlation, reset_correlation, set_correlation
@@ -177,7 +183,7 @@ class PluginCore:
         # supports() call. Registered before any plugin listener, so a
         # plugin's own on_ready already sees platform().
         self._platform: dict | None = None
-        self.on("on_ready", self._take_platform)
+        self.on(HOOK_ON_READY, self._take_platform)
 
         # Built-in introspection: the platform calls list_action_types after
         # readiness to validate handlers against the manifest's
@@ -188,8 +194,8 @@ class PluginCore:
         async def _list_methods(params):
             return {"methods": sorted(self._handlers.keys())}
 
-        self._handlers["list_action_types"] = _list_action_types
-        self._handlers["list_methods"] = _list_methods
+        self._handlers[HOOK_LIST_ACTION_TYPES] = _list_action_types
+        self._handlers[HOOK_LIST_METHODS] = _list_methods
 
     @property
     def id(self) -> str:
@@ -344,7 +350,7 @@ class PluginCore:
                 self.on_ready(f)
                 return f
             return deco
-        self.on("on_ready", lambda params: fn())
+        self.on(HOOK_ON_READY, lambda params: fn())
         return fn
 
     def platform(self) -> "dict | None":

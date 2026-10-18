@@ -19,6 +19,7 @@ from __future__ import annotations
 import json
 from typing import Callable
 
+from .contracts_gen import HOOK_ON_READY
 from .log import log
 
 
@@ -114,7 +115,7 @@ class CollectionMirror:
             except Exception as e:
                 log(self_id, f'mirror "{self._name}": refresh failed: {e}')
 
-        self._plugin.on("on_ready", _initial)
+        self._plugin.on(HOOK_ON_READY, _initial)
         self._plugin.subscribe(self._name, _on_update)
 
 
