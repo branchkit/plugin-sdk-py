@@ -5,6 +5,18 @@ git history.
 
 ## Unreleased
 
+### Typed event subscription
+
+- One generated helper per platform event, beside the call wrappers:
+  `plugin.on_app_focused(fn)` or `@plugin.on_app_focused`, with `fn` typed
+  to take `AppFocusedEventParams`. An event with no payload, or a signal
+  (its payload is advisory: re-read the state it announces), takes `fn()`,
+  sync or async. The helpers are a generated `EventsMixin` that `Plugin`
+  mixes in. `on_effect_displaced` stays the hand-written helper for its
+  event.
+- `on` and `on_pattern` are unchanged, for other plugins' events and
+  patterns.
+
 ## 0.6.0 — 2026-10-17
 
 ### Typed wrappers

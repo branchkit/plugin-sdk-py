@@ -173,7 +173,7 @@ does not start.
 |---|---|
 | Handle an action | `@plugin.handle_action("prefix.name")` (alias `@plugin.action`), registrars from `actions_gen.py` |
 | Serve your own method | `@plugin.handle("method")`, `plugin.handle_command` |
-| React to events | `@plugin.on(event)`, `@plugin.on_pattern("ext.acme.**")`, `plugin.current_event_origin()`; emit with `events_emit` |
+| React to events | generated `@plugin.on_<event>` per platform event (`on_app_focused(fn(evt: AppFocusedEventParams))`; a signal takes `fn()`), `@plugin.on(event)` for other plugins' events, `@plugin.on_pattern("ext.acme.**")`, `plugin.current_event_origin()`; emit with `events_emit` |
 | Store state | `get` / `list` / `list_page` / `count` / `put` / `put_many` / `patch` / `delete` / `replace`, `subscribe` |
 | Append-only logs | `append`, `append_keyed`, `list_log`, `get_log_entry`, `delete_log_entry` |
 | Keep a live copy | `plugin.mirror_collection(name)`, `plugin.settings(name)` |

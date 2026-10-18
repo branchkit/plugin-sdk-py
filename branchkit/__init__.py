@@ -50,6 +50,7 @@ from .effects import EffectsMixin
 from .hud import HudMixin
 from .log import log
 from .methods_gen import MethodsMixin
+from .events_gen import EventsMixin
 from .caller import Caller, Client  # noqa: F401 — the wrappers over any caller
 from .mirror import CollectionMirror, MirrorMixin
 from .settings import SettingsMirror, SettingsMixin
@@ -95,6 +96,7 @@ class Plugin(
     MirrorMixin,
     SettingsMixin,
     MethodsMixin,
+    EventsMixin,
     PluginCore,
 ):
     """The plugin: JSON-RPC transport plus the generated method wrappers
