@@ -5,6 +5,20 @@ git history.
 
 ## Unreleased
 
+## 0.10.0 — 2026-10-19
+
+Breaking: plugins no longer send raw messages to the host.
+
+- Removed `control_signal`. Use the operation for the effect: `hud_show` /
+  `hud_hide` for windows, `indicator_set` for the recording indicator,
+  `artifact_download` for the plugin's own artifacts.
+- Removed `control_message` from `OnActionResponse`. A handler that opens
+  or closes a window calls `hud_show` / `hud_hide` itself; return data in
+  `result`. The platform ignores (and logs) a `control_message` from an
+  older SDK.
+- Removed `control_message` from `DispatchResult`, `SelectionPickResult`
+  and `SessionEndCleanupResult`.
+
 ## 0.9.0 — 2026-10-19
 
 New surface; nothing removed.
