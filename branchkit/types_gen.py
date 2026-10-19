@@ -1037,6 +1037,9 @@ HudFragment = TypedDict("HudFragment", {
     "target_id": str,
 })
 
+# What the indicator shows.
+IndicatorState = Literal["idle", "input_text", "input_action", "listening", "standby", "processing", "speaking", "loading"]
+
 # An available keyboard input source.
 InputSource = TypedDict("InputSource", {
     # Input source identifier (e.g. "com.apple.keylayout.US").
@@ -2261,6 +2264,11 @@ ArtifactDeleteRequest = TypedDict("ArtifactDeleteRequest", {
     "ref": str,
 })
 
+ArtifactDownloadRequest = TypedDict("ArtifactDownloadRequest", {
+    # non-empty
+    "ref": str,
+})
+
 BindingsProposeRequest = TypedDict("BindingsProposeRequest", {
     # Settings to propose for the caller's own triggers. Nothing is written
     # until the user answers; then each becomes the user's edit. An empty
@@ -3187,6 +3195,10 @@ HUDShowRequest = TypedDict("HUDShowRequest", {
     # Swift shell.
     # non-empty
     "channel": str,
+})
+
+IndicatorSetRequest = TypedDict("IndicatorSetRequest", {
+    "state": "IndicatorState",
 })
 
 InputClickRequest = TypedDict("InputClickRequest", {

@@ -9,6 +9,7 @@ from .contracts_gen import (
     METHOD_ACTIONS_LIST,
     METHOD_ACTIONS_PUSH,
     METHOD_ARTIFACT_DELETE,
+    METHOD_ARTIFACT_DOWNLOAD,
     METHOD_BINDINGS_PROPOSE,
     METHOD_BINDINGS_REPORT,
     METHOD_BINDINGS_SET,
@@ -58,6 +59,7 @@ from .contracts_gen import (
     METHOD_HUD_REMOVE_CHANNEL,
     METHOD_HUD_SET_SIZE,
     METHOD_HUD_SHOW,
+    METHOD_INDICATOR_SET,
     METHOD_INPUT_CLICK,
     METHOD_INPUT_CLIPBOARD_ACTION,
     METHOD_INPUT_CLIPBOARD_HISTORY,
@@ -741,6 +743,7 @@ if TYPE_CHECKING:
         HttpHeader,
         HttpRequestResponse,
         HudFragment,
+        IndicatorState,
         InputClipboardReadFormatResponse,
         InputClipboardReadResponse,
         InputParseKeyEventResponse,
@@ -1140,6 +1143,16 @@ class MethodsMixin:
             "ref": ref,
         }
         await self.call(METHOD_ARTIFACT_DELETE, params)
+
+    async def artifact_download(self, *, ref: str) -> None:
+        """Download one of the caller's own declared artifacts (ref: <plugin>/<artifact>) on the platform's downloader; progress is published to _platform.model_download
+
+        ref: non-empty
+        """
+        params: dict[str, Any] = {
+            "ref": ref,
+        }
+        await self.call(METHOD_ARTIFACT_DOWNLOAD, params)
 
     async def bindings_propose(self, *, put: list["BindingEdit"] | None = None, remove: list[str] | None = None) -> BindingsProposeResponse:
         """Propose settings for the caller's own device triggers; the user answers in BranchKit's own window, and the settings become theirs
@@ -2014,6 +2027,13 @@ class MethodsMixin:
             "channel": channel,
         }
         await self.call(METHOD_HUD_SHOW, params)
+
+    async def indicator_set(self, *, state: "IndicatorState") -> None:
+        """Show what input is doing on the recording indicator (menu bar or tray icon, and the floating pill): idle, capturing text or an action, listening, asleep, processing, speaking or loading"""
+        params: dict[str, Any] = {
+            "state": state,
+        }
+        await self.call(METHOD_INDICATOR_SET, params)
 
     async def input_click(self, *, button: str | None = None) -> None:
         """Click a mouse button
