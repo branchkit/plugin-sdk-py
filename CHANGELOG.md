@@ -5,6 +5,24 @@ git history.
 
 ## Unreleased
 
+## 0.9.0 — 2026-10-19
+
+New surface; nothing removed.
+
+- `indicator_set(state=...)` shows what input is doing on the recording
+  indicator (the menu-bar or tray icon, and the floating pill).
+  `IndicatorState` names what the input becomes, not any one plugin's modes:
+  `"idle"`, `"input_text"`, `"input_action"`, `"listening"`, `"standby"`,
+  `"processing"`, `"speaking"`, `"loading"`. It needs the `microphone`
+  privilege, and a host that draws no indicator refuses it.
+- `artifact_download(ref="<plugin>/<artifact>")` downloads one of the
+  caller's own declared artifacts on the platform's downloader; progress is
+  published to `_platform.model_download`. A ref naming another plugin's
+  artifact, or a missing downloader, is an error.
+- Prefer these to the raw `control_signal` forms (`shell:icon:...`,
+  `download_model:...`): the platform now refuses a raw icon state, and a
+  later release removes `control_signal`.
+
 ## 0.8.1 — 2026-10-18
 
 Documentation only; no behaviour or type changes.
