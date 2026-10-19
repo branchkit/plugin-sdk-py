@@ -44,7 +44,6 @@ from .contracts_gen import (
     METHOD_COMMANDS_RESOLVE,
     METHOD_COMMANDS_RESOLVE_PHRASE,
     METHOD_COMMANDS_SET_OVERRIDE,
-    METHOD_CONTROL_SIGNAL,
     METHOD_DISCOVERY_CLOSED,
     METHOD_DISPATCH,
     METHOD_EFFECTS_ASSERT,
@@ -1736,18 +1735,6 @@ class MethodsMixin:
             "new_pattern": new_pattern,
         }
         await self.call(METHOD_COMMANDS_SET_OVERRIDE, params)
-
-    async def control_signal(self, *, signal: str) -> None:
-        """Send a control signal to the Swift shell via the control stream
-
-        signal: Raw control-stream signal string (e.g. "open hud", "hide discovery").
-            Forwarded verbatim to the Swift shell via the platform's control stream.
-            non-empty
-        """
-        params: dict[str, Any] = {
-            "signal": signal,
-        }
-        await self.call(METHOD_CONTROL_SIGNAL, params)
 
     async def discovery_closed(self) -> None:
         """Notify that the discovery HUD closed; emits _platform.discovery.closed"""

@@ -791,14 +791,14 @@ class TestHandleAction(unittest.IsolatedAsyncioTestCase):
         @core.handle_action("foo.snap")
         async def snap(req):
             calls["snap"] += 1
-            return {"status": "ok", "control_message": "snapped " + req["params"]["position"]}
+            return {"status": "ok", "result": "snapped " + req["params"]["position"]}
 
         @core.handle_action("foo.focus")
         async def focus(req):
             calls["focus"] += 1
 
         resp = await self._send(core, written, {"action": "foo.snap", "params": {"position": "left"}})
-        self.assertEqual(resp, {"jsonrpc": "2.0", "id": 1, "result": {"status": "ok", "control_message": "snapped left"}})
+        self.assertEqual(resp, {"jsonrpc": "2.0", "id": 1, "result": {"status": "ok", "result": "snapped left"}})
         self.assertEqual(calls, {"snap": 1, "focus": 0})
 
         # A handler returning None answers {"status": "ok"}.
@@ -825,9 +825,9 @@ class TestHandleAction(unittest.IsolatedAsyncioTestCase):
 
     async def test_sync_handler_is_dispatched_too(self):
         core, written = self._core()
-        core.handle_action("foo.snap", lambda req: {"status": "ok", "control_message": "sync"})
+        core.handle_action("foo.snap", lambda req: {"status": "ok", "result": "sync"})
         resp = await self._send(core, written, {"action": "foo.snap"})
-        self.assertEqual(resp["result"], {"status": "ok", "control_message": "sync"})
+        self.assertEqual(resp["result"], {"status": "ok", "result": "sync"})
 
     async def test_active_app_reaches_the_handler(self):
         core, written = self._core()

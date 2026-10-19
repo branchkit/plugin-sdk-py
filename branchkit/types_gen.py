@@ -2927,22 +2927,12 @@ CommandsSetOverrideRequest = TypedDict("CommandsSetOverrideRequest", {
     "new_pattern": str,
 })
 
-ControlSignalRequest = TypedDict("ControlSignalRequest", {
-    # Raw control-stream signal string (e.g. "open hud", "hide discovery").
-    # Forwarded verbatim to the Swift shell via the platform's control stream.
-    # non-empty
-    "signal": str,
-})
-
 DispatchRequest = TypedDict("DispatchRequest", {
     # The action to dispatch.
     "action": "Action",
 })
 
 DispatchResponse = TypedDict("DispatchResponse", {
-    # Control message to forward to the Swift host (if any).
-    # Present on `status == "ok"`; absent on `status == "error"`.
-    "control_message": NotRequired[str],
     # Plugin that handled the action. Present on `status == "ok"`.
     "handler": NotRequired[str],
     # Error or denial message. Omitted on success.
@@ -7364,9 +7354,6 @@ SelectionPickRequest = TypedDict("SelectionPickRequest", {
 })
 
 SelectionPickResponse = TypedDict("SelectionPickResponse", {
-    # Control message to forward to the Swift host
-    # (always `"close hud"` here).
-    "control_message": str,
     # Id of the picked item (from the original `HUDItem.id`).
     "item_id": str,
     "ok": bool,
@@ -7392,9 +7379,6 @@ SelectionSetRequest = TypedDict("SelectionSetRequest", {
 })
 
 SessionEndCleanupResponse = TypedDict("SessionEndCleanupResponse", {
-    # Control message to forward to the Swift host
-    # (e.g. "hide discovery", "hide hud"), if any.
-    "control_message": NotRequired[str],
     "ok": bool,
     # Whether the input plugin should reset its recognition engine after
     # the session ends. Always `true` for `session.end_cleanup`.
@@ -7711,9 +7695,6 @@ OnActionRequest = TypedDict("OnActionRequest", {
 })
 
 OnActionResponse = TypedDict("OnActionResponse", {
-    # Control message to forward to the Swift host (e.g., 'show commands').
-    # default ""
-    "control_message": NotRequired[str],
     # Structured result payload. Opaque to the platform — piped through
     # to the dispatch caller as-is. Plugins use this to return data from
     # action handlers (e.g., computed values, confirmation details).

@@ -43,7 +43,6 @@ METHOD_COMMANDS_RESET_OVERRIDE = "commands.reset_override"  # since 0.1.0
 METHOD_COMMANDS_RESOLVE = "commands.resolve"  # since 0.1.0
 METHOD_COMMANDS_RESOLVE_PHRASE = "commands.resolve_phrase"  # since 0.1.0
 METHOD_COMMANDS_SET_OVERRIDE = "commands.set_override"  # since 0.1.0
-METHOD_CONTROL_SIGNAL = "control.signal"  # since 0.1.0
 METHOD_DISCOVERY_CLOSED = "discovery.closed"  # since 0.1.0
 METHOD_DISPATCH = "dispatch"  # since 0.1.0
 METHOD_EFFECTS_ASSERT = "effects.assert"  # since 0.1.0
