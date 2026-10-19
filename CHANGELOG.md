@@ -5,6 +5,18 @@ git history.
 
 ## Unreleased
 
+## 0.8.1 — 2026-10-18
+
+Documentation only; no behaviour or type changes.
+
+- `ResolveResult.sets_tags` and `clears_tags` are documented: they are the tags the
+  resolve's commit applied, so a write the platform's policy refused, or
+  one a hold ended before, is absent; a preview reports what committing
+  would set and clear.
+- `cancels_bridge` is documented as the platform now reads it: a command of two or
+  more words that opens with a literal word interrupts a held part-way
+  match without it; it matters for one-word cancel words like "over".
+
 ## 0.8.0 — 2026-10-18
 
 ### Transcript payload

@@ -1741,6 +1741,7 @@ ResolveResult = TypedDict("ResolveResult", {
     # the matching `capture.progress` suppression. False by
     # default; only true when the bridge survived.
     "bridge_active": bool,
+    # The tags this resolve cleared, on the same terms as `sets_tags`.
     "clears_tags": list[str],
     # wire uint · min 0
     "consumed_count": int,
@@ -1762,6 +1763,9 @@ ResolveResult = TypedDict("ResolveResult", {
     "scoped_prefixes": list[str],
     # Currently active scoped tags at match time.
     "scoped_tags": list[str],
+    # The tags this resolve set: what its commit applied, not only what the
+    # command asked for, so a write the policy chain refused, or one a hold
+    # ended before, is absent. A preview reports what committing would set.
     "sets_tags": list[str],
     "telemetry": "ResolveTelemetry",
     # The genuinely-tied candidate set, populated only when resolution
@@ -2829,6 +2833,7 @@ CommandsResolveResponse = TypedDict("CommandsResolveResponse", {
     # the matching `capture.progress` suppression. False by
     # default; only true when the bridge survived.
     "bridge_active": NotRequired[bool],
+    # The tags this resolve cleared, on the same terms as `sets_tags`.
     "clears_tags": list[str],
     # wire uint · min 0
     "consumed_count": int,
@@ -2850,6 +2855,9 @@ CommandsResolveResponse = TypedDict("CommandsResolveResponse", {
     "scoped_prefixes": NotRequired[list[str]],
     # Currently active scoped tags at match time.
     "scoped_tags": NotRequired[list[str]],
+    # The tags this resolve set: what its commit applied, not only what the
+    # command asked for, so a write the policy chain refused, or one a hold
+    # ended before, is absent. A preview reports what committing would set.
     "sets_tags": list[str],
     "telemetry": "ResolveTelemetry",
     # The genuinely-tied candidate set, populated only when resolution
