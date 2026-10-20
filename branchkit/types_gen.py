@@ -7004,6 +7004,10 @@ PipelinesGrammarRequest = TypedDict("PipelinesGrammarRequest", {
 })
 
 PipelinesGrammarResponse = TypedDict("PipelinesGrammarResponse", {
+    # Content version of the structured grammar in that payload (only with
+    # `full: true` and the structured grammar on): the same version
+    # `recognition.redecode` reports for items decoded under it.
+    "grammar_version": NotRequired[str],
     # Full seed payload (only with `full: true`).
     "vocabulary_update": NotRequired[Any],
     "words": list[str],
@@ -7270,6 +7274,13 @@ RecognitionRedecodeRequest = TypedDict("RecognitionRedecodeRequest", {
 })
 
 RecognitionRedecodeResponse = TypedDict("RecognitionRedecodeResponse", {
+    # Content version of the structured grammar the items that asked for it
+    # were decoded under (`structured`). The live grammar changes as plugins
+    # push vocabulary, so a caller caching verdicts keys them by this, not by
+    # a grammar it fetched earlier. Equal to `pipelines.grammar`'s
+    # `grammar_version` for the same grammar. Empty when no item was
+    # decoded structured.
+    "grammar_version": NotRequired[str],
     "lines": list["RedecodeLine"],
     # Stable content version of the acoustic model used for this re-decode — a
     # hash of the model dir's `model.onnx`. Lets a per-clip fragility history
