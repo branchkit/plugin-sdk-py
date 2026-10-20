@@ -1655,15 +1655,32 @@ RedecodeItem = TypedDict("RedecodeItem", {
     "bias_strength": NotRequired[float],
     "id": str,
     "noise": NotRequired["RedecodeNoise"],
+    # When set, the item decodes through the live STRUCTURED grammar: the
+    # pattern DAG and union a starting recognition pipeline is seeded with
+    # (the `pipelines.grammar` full export), so a word decodes only where a
+    # command places it, exactly as in the live stage. Off = the flat live
+    # union. The grammar is the platform's; the plugin only opts in. Ignored
+    # when `words` is given. Bias does not apply on this path: structure
+    # supersedes it, as in the live stage.
+    # default false
+    "structured": NotRequired[bool],
     # default []
     "words": NotRequired[list[str]],
 })
 
 RedecodeLine = TypedDict("RedecodeLine", {
+    # Wall-clock time the recognizer spent decoding this item, in
+    # milliseconds (model load excluded). Absent when the item failed.
+    # wire double
+    "decode_ms": NotRequired[float],
     "error": str,
     "id": str,
     # default ""
     "text": str,
+    # Per-word confidence margins of the decoded words, in order: how far each
+    # word's best token led its runner-up. The weakest is the decode's least
+    # certain word. Absent when the recognizer reports none.
+    "word_margins": NotRequired[list[float]],
 })
 
 RedecodeNoise = TypedDict("RedecodeNoise", {
