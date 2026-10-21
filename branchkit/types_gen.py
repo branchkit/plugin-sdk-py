@@ -7828,7 +7828,7 @@ RenderSettingsRequest = TypedDict("RenderSettingsRequest", {
     "list_schemas": NotRequired[dict[str, "SettingsListSchemaInfo"]],
     # Search query for filtering content (empty string when no search active).
     "search": str,
-    # Which settings tab to render (from manifest implements.settings_tabs[].key).
+    # Which page to render (from manifest implements.pages[].key).
     "tab_key": str,
     # Tag schemas from plugin manifests (tag_name → schema info).
     "tag_schemas": NotRequired[dict[str, "SettingsTagSchemaInfo"]],

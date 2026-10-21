@@ -97,8 +97,7 @@ class SettingsMixin:
 
     def page(self, key: str, fn: Callable | None = None):
         """Register the renderer for the page `key` the manifest declares in
-        `implements.settings_tabs` (renamed `implements.pages` in the next
-        release): one of the plugin's own pages, shown in its tab
+        `implements.pages`: one of the plugin's own pages, shown in its tab
         strip in BranchKit. Usable directly (`plugin.page("k", fn)`) or as a
         decorator (`@plugin.page("k")`). The renderer takes the
         render_settings params and returns the page's HTML FRAGMENT — the
@@ -133,13 +132,6 @@ class SettingsMixin:
             self._handlers[HOOK_RENDER_SETTINGS] = self._render_page
         self._pages[key] = fn
         return fn
-
-    def settings_tab(self, key: str, fn: Callable | None = None):
-        """The old name of `page`.
-
-        Deprecated: use `page`. Removed once the plugins built here have
-        moved."""
-        return self.page(key, fn)
 
     def settings_css(self, css: str) -> None:
         """Register the stylesheet returned with every page this plugin
