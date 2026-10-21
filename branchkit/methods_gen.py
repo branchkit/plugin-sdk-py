@@ -6839,12 +6839,20 @@ class MethodsMixin:
         result = await self.call(METHOD_PIPELINES_INJECT, params)
         return result
 
-    async def pipelines_run(self, *, name: str, ephemeral: bool | None = None, param_overrides: dict[str, Any] | None = None) -> PipelinesRunResponse:
+    async def pipelines_run(self, *, name: str, ephemeral: bool | None = None, param_overrides: dict[str, Any] | None = None, record_to: str | None = None) -> PipelinesRunResponse:
         """Start a named pipeline
 
         ephemeral: default false
         name: non-empty
         param_overrides: default {}
+        record_to: Record this run's input audio: a folder, relative to the caller's own
+            data dir, that receives one 16 kHz mono 16-bit WAV per span of audio
+            (audio start to audio stop) the run's first consumer stage is given,
+            and a line per WAV in its `manifest.jsonl`: `{file, started_utc,
+            duration_ms, pipeline}`. Keeping, labelling and deleting the
+            recordings is the caller's. Plugins only (it writes the caller's data
+            dir). Absent = nothing is recorded.
+            default null
         """
         params: dict[str, Any] = {
             "name": name,
@@ -6853,6 +6861,8 @@ class MethodsMixin:
             params["ephemeral"] = ephemeral
         if param_overrides is not None:
             params["param_overrides"] = param_overrides
+        if record_to is not None:
+            params["record_to"] = record_to
         result = await self.call(METHOD_PIPELINES_RUN, params)
         return result
 
