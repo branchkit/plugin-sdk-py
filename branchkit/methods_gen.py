@@ -4663,7 +4663,7 @@ class MethodsMixin:
         await self.call(METHOD_NATIVE_OPEN_SYSTEM_SETTINGS, params)
 
     async def native_open_target(self, *, target: str) -> None:
-        """Open a URL or file path with the default handler. A plugin may open a web address only for a host it declares in requires.network that the user has switched on
+        """Open a URL or file path with the default handler
 
         target: non-empty
         """
