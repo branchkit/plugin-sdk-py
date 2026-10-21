@@ -15,7 +15,7 @@ authors = [{ name = "BranchKit" }]
 dependencies = []
 
 [project.urls]
-Homepage = "https://branchkit.dev"
+Homepage = "https://branchkit.com"
 Repository = "https://github.com/branchkit/plugin-sdk-py"
 
 [tool.setuptools]
