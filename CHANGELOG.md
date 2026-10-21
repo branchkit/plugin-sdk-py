@@ -5,6 +5,10 @@ git history.
 
 ## Unreleased
 
+## 0.13.0 — 2026-10-21
+
+Pages: a plugin's own screens are registered as pages.
+
 - `plugin.page(key, fn)` (or `@plugin.page(key)`) registers a renderer for
   one of the plugin's own pages. `settings_tab` is a deprecated alias and
   will be removed in the next release, when the manifest's
