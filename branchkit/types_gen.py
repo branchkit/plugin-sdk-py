@@ -7261,6 +7261,11 @@ RecognitionBiasSetResponse = TypedDict("RecognitionBiasSetResponse", {
 
 RecognitionRedecodeRequest = TypedDict("RecognitionRedecodeRequest", {
     "items": list["RedecodeItem"],
+    # The language a dictation stage's probe decodes in, e.g. `"en"`, as the
+    # live stage's `--language`. Absent = the stage's default. A command
+    # stage's probe ignores it.
+    # default null
+    "language": NotRequired[str],
     # wire uint32 · default null · min 0
     "max_active": NotRequired[int],
     # Model dir name under app-support `models/` (single component, no

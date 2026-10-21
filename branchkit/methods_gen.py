@@ -7095,9 +7095,13 @@ class MethodsMixin:
         result = await self.call(METHOD_RECOGNITION_BIAS_SET, params)
         return result
 
-    async def recognition_redecode(self, *, items: list["RedecodeItem"], model: str, stage: str, max_active: int | None = None) -> RecognitionRedecodeResponse:
+    async def recognition_redecode(self, *, items: list["RedecodeItem"], model: str, stage: str, language: str | None = None, max_active: int | None = None) -> RecognitionRedecodeResponse:
         """Re-decode the caller's own captured audio through a registered recognizer stage against the LIVE grammar (the fragility ladder) — the platform runs it because the grammar is platform state and plugins cannot exec
 
+        language: The language a dictation stage's probe decodes in, e.g. `"en"`, as the
+            live stage's `--language`. Absent = the stage's default. A command
+            stage's probe ignores it.
+            default null
         max_active: wire uint32 · default null · min 0
         model: Model dir name under app-support `models/` (single component, no
             traversal), e.g. `"sherpa-offline-nemo"`.
@@ -7111,6 +7115,8 @@ class MethodsMixin:
             "model": model,
             "stage": stage,
         }
+        if language is not None:
+            params["language"] = language
         if max_active is not None:
             params["max_active"] = max_active
         result = await self.call(METHOD_RECOGNITION_REDECODE, params)
