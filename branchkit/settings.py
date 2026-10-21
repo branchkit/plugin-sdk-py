@@ -97,7 +97,8 @@ class SettingsMixin:
 
     def page(self, key: str, fn: Callable | None = None):
         """Register the renderer for the page `key` the manifest declares in
-        `implements.pages`: one of the plugin's own pages, shown in its tab
+        `implements.settings_tabs` (renamed `implements.pages` in the next
+        release): one of the plugin's own pages, shown in its tab
         strip in BranchKit. Usable directly (`plugin.page("k", fn)`) or as a
         decorator (`@plugin.page("k")`). The renderer takes the
         render_settings params and returns the page's HTML FRAGMENT — the
