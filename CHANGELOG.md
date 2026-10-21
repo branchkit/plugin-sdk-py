@@ -7,12 +7,15 @@ git history.
 
 ## 0.12.0 — 2026-10-20
 
-Re-decodes can target the dictation stages.
+Re-decodes can target the dictation stages, and a run can record its audio.
 
 - `recognition_redecode(language=...)`: the language a dictation stage's
   probe decodes in, as the live stage's `--language`. A command stage
   ignores it. The dictation stages (WhisperKit, whisper.cpp) can now be
   re-decoded through `recognition.redecode` too.
+- `pipelines_run(record_to=...)`: record a run's input audio into a folder
+  of the caller's own data dir, one WAV per span plus a `manifest.jsonl`
+  line each.
 
 ## 0.11.0 — 2026-10-20
 
