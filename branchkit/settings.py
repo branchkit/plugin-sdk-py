@@ -20,7 +20,7 @@ class SettingsMirror:
         self._name = name
         self._mirror = plugin.mirror_collection(name)
         # The SDK's render_settings hook refreshes every settings mirror
-        # before a tab draws (settings_tab) — the read-through render paths
+        # before a page draws (page) — the read-through render paths
         # used to hand-roll.
         plugin._settings_mirrors.append(self)
         self._val: dict | None = None
@@ -95,11 +95,12 @@ class SettingsMixin:
         before `run()` so the initial fetch lands."""
         return SettingsMirror(self, name)
 
-    def settings_tab(self, key: str, fn: Callable | None = None):
-        """Register the renderer for the manifest-declared settings tab
-        `key`. Usable directly (`plugin.settings_tab("k", fn)`) or as a
-        decorator (`@plugin.settings_tab("k")`). The renderer takes the
-        render_settings params and returns the tab's HTML FRAGMENT — the
+    def page(self, key: str, fn: Callable | None = None):
+        """Register the renderer for the page `key` the manifest declares in
+        `implements.pages`: one of the plugin's own pages, shown in its tab
+        strip in BranchKit. Usable directly (`plugin.page("k", fn)`) or as a
+        decorator (`@plugin.page("k")`). The renderer takes the
+        render_settings params and returns the page's HTML FRAGMENT — the
         platform's frame owns the container it is morphed into — and the
         SDK attaches the stylesheet registered with `settings_css`. Plain
         `def` or `async def`, as with `handle`.
@@ -108,44 +109,51 @@ class SettingsMixin:
         which on every render (1) refreshes every settings mirror created
         with `settings()`, so the render reads state at least as fresh as
         whatever woke it; (2) dispatches on `tab_key` — a key with no
-        renderer is an error, which the platform shows as the tab's error
+        renderer is an error, which the platform shows as the page's error
         state instead of a blank body; (3) returns the fragment with the
         registered stylesheet.
 
         A settings method returns None. The platform's method proxy
         refuses any result — 422 with the `settings-method-result`
-        diagnostic, shown as a banner in the tab and logged to the plugin's
-        log — and re-renders the tab: a method changes state, and the
-        re-render that follows draws it.
+        diagnostic, shown as a banner in the page and logged to the
+        plugin's log — and re-renders the page: a method changes state, and
+        the re-render that follows draws it.
 
         This is the only way to install a render_settings handler:
-        `handle("render_settings", ...)` raises, so every tab goes through
+        `handle("render_settings", ...)` raises, so every page goes through
         this dispatch."""
         if fn is None:
             def deco(f):
-                self.settings_tab(key, f)
+                self.page(key, f)
                 return f
             return deco
-        if self._settings_tabs is None:
-            self._settings_tabs = {}
-            self._handlers[HOOK_RENDER_SETTINGS] = self._render_settings_tab
-        self._settings_tabs[key] = fn
+        if self._pages is None:
+            self._pages = {}
+            self._handlers[HOOK_RENDER_SETTINGS] = self._render_page
+        self._pages[key] = fn
         return fn
 
+    def settings_tab(self, key: str, fn: Callable | None = None):
+        """The old name of `page`.
+
+        Deprecated: use `page`. Removed once the plugins built here have
+        moved."""
+        return self.page(key, fn)
+
     def settings_css(self, css: str) -> None:
-        """Register the stylesheet returned with every tab this plugin
+        """Register the stylesheet returned with every page this plugin
         renders. One sheet per plugin: the platform places it in a
         `<style>` element it owns, outside the morph target."""
         self._settings_css = css
 
-    async def _render_settings_tab(self, params: Any) -> dict:
+    async def _render_page(self, params: Any) -> dict:
         req = params if isinstance(params, dict) else {}
         key = req.get("tab_key", "")
-        fn = (self._settings_tabs or {}).get(key)
+        fn = (self._pages or {}).get(key)
         if fn is None:
-            raise RuntimeError(f'no renderer registered for settings tab "{key}"')
+            raise RuntimeError(f'no renderer registered for page "{key}"')
         # Read through before drawing. A refresh failure is logged, not
-        # fatal: the mirror keeps its last snapshot and the tab still draws.
+        # fatal: the mirror keeps its last snapshot and the page still draws.
         for m in list(self._settings_mirrors):
             try:
                 await m.refresh()

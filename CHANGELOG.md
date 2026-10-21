@@ -5,6 +5,11 @@ git history.
 
 ## Unreleased
 
+- `plugin.page(key, fn)` (or `@plugin.page(key)`) registers a renderer for
+  one of the plugin's own pages. `settings_tab` is a deprecated alias and
+  will be removed in the next release, when the manifest's
+  `implements.settings_tabs` becomes `implements.pages`.
+
 ## 0.12.0 — 2026-10-20
 
 Re-decodes can target the dictation stages, and a run can record its audio.

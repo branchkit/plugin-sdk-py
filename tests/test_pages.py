@@ -22,7 +22,7 @@ def fake_plugin(store: dict) -> branchkit.Plugin:
     return p
 
 
-class TestSettingsTabs(unittest.IsolatedAsyncioTestCase):
+class TestPages(unittest.IsolatedAsyncioTestCase):
     async def render(self, p, tab_key):
         fn = p._handlers["render_settings"]
         return await fn({"tab_key": tab_key, "search": ""})
@@ -33,11 +33,11 @@ class TestSettingsTabs(unittest.IsolatedAsyncioTestCase):
         mirror = p.settings("plugin.test.config")
         p.settings_css(".alpha{}")
 
-        @p.settings_tab("alpha")
+        @p.page("alpha")
         def alpha(req):  # plain def — offloaded like any handler
             return f'<p id="alpha">{(mirror.get() or {}).get("editor", "")}</p>'
 
-        @p.settings_tab("beta")
+        @p.page("beta")
         async def beta(req):
             return f'<p id="beta">{req["tab_key"]}</p>'
 
@@ -54,22 +54,22 @@ class TestSettingsTabs(unittest.IsolatedAsyncioTestCase):
     async def test_renderer_error_propagates(self):
         p = fake_plugin({})
 
-        @p.settings_tab("broken")
+        @p.page("broken")
         def broken(req):
             raise ValueError("cannot draw")
 
         with self.assertRaisesRegex(ValueError, "cannot draw"):
             await self.render(p, "broken")
 
-    # The tab API is the only way in: a hand-written render_settings handler
-    # raises at registration whether or not a tab was registered first.
+    # The page API is the only way in: a hand-written render_settings handler
+    # raises at registration whether or not a page was registered first.
     def test_handle_rejects_render_settings(self):
         a = fake_plugin({})
-        with self.assertRaisesRegex(RuntimeError, "settings_tab"):
+        with self.assertRaisesRegex(RuntimeError, r"page\(key, fn\)"):
             a.handle("render_settings", lambda params: {})
         b = fake_plugin({})
-        b.settings_tab("x", lambda req: "")
-        with self.assertRaisesRegex(RuntimeError, "settings_tab"):
+        b.page("x", lambda req: "")
+        with self.assertRaisesRegex(RuntimeError, r"page\(key, fn\)"):
             b.handle("render_settings", lambda params: {})
 
     # A command answers with no result however its handler is written — the

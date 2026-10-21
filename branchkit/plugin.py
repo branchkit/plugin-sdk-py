@@ -149,10 +149,10 @@ class PluginCore:
         self._pattern_listeners: list[tuple[str, Callable]] = []
         self._pending: dict[int, asyncio.Future] = {}
         self._action_handlers: dict[str, Callable] | None = None
-        # Non-None once settings_tab has installed the SDK's own
+        # Non-None once page has installed the SDK's own
         # render_settings handler; _settings_mirrors are refreshed by that
         # handler before every render (settings.py).
-        self._settings_tabs: dict[str, Callable] | None = None
+        self._pages: dict[str, Callable] | None = None
         self._settings_css = ""
         self._settings_mirrors: list = []
 
@@ -213,8 +213,8 @@ class PluginCore:
         exclusive — both install a handler for the same RPC method.
 
         `render_settings` is not registrable here at all: the SDK owns that
-        hook and installs it through `settings_tab`, one renderer per
-        manifest tab. `handle` raises on it so a plugin cannot bypass the
+        hook and installs it through `page`, one renderer per
+        manifest page. `handle` raises on it so a plugin cannot bypass the
         dispatch."""
 
         if fn is None:
@@ -228,7 +228,7 @@ class PluginCore:
             )
         if method == HOOK_RENDER_SETTINGS:
             raise RuntimeError(
-                "plugin-sdk-py: render_settings is the SDK's hook — register each tab with settings_tab(key, fn)"
+                "plugin-sdk-py: render_settings is the SDK's hook — register each page with page(key, fn)"
             )
         self._handlers[method] = fn
         return fn
