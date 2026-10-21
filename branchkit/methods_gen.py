@@ -4663,7 +4663,7 @@ class MethodsMixin:
         await self.call(METHOD_NATIVE_OPEN_SYSTEM_SETTINGS, params)
 
     async def native_open_target(self, *, target: str) -> None:
-        """Open a URL or file path with the default handler
+        """Open a URL or file path with the default handler. A plugin may open a web address only for a host it declares in requires.network that the user has switched on
 
         target: non-empty
         """
@@ -4673,7 +4673,7 @@ class MethodsMixin:
         await self.call(METHOD_NATIVE_OPEN_TARGET, params)
 
     async def native_open_url(self, *, url: str) -> None:
-        """Open a web (http, https) or email (mailto) link in its default handler; any other scheme is refused
+        """Open a web (http, https) or email (mailto) link in its default handler; any other scheme is refused. A plugin may open a web address only for a host it declares in requires.network that the user has switched on
 
         url: non-empty
         """
@@ -4683,7 +4683,7 @@ class MethodsMixin:
         await self.call(METHOD_NATIVE_OPEN_URL, params)
 
     async def native_open_with_app(self, *, bundle_id: str, target: str) -> None:
-        """Open a URL or path with a specific application
+        """Open a URL or path with a specific application. A plugin may open a web address only for a host it declares in requires.network that the user has switched on
 
         bundle_id: non-empty
         target: non-empty
