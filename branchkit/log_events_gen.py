@@ -48,6 +48,8 @@ LOG_EVENT_PLUGIN_LOADED = "plugin.loaded"
 LOG_EVENT_PLUGIN_NETWORK_CONNECT = "plugin.network_connect"
 LOG_EVENT_PLUGIN_READY = "plugin.ready"
 LOG_EVENT_PLUGIN_RECOVERED = "plugin.recovered"
+LOG_EVENT_PLUGIN_RESTART_BUDGET_EXHAUSTED = "plugin.restart_budget_exhausted"
+LOG_EVENT_PLUGIN_RESTARTED = "plugin.restarted"
 LOG_EVENT_PLUGIN_RPC_FAILED = "plugin.rpc_failed"
 LOG_EVENT_PLUGIN_SANDBOX_APPLIED = "plugin.sandbox_applied"
 LOG_EVENT_PLUGIN_SPAWNED = "plugin.spawned"
@@ -62,6 +64,7 @@ LOG_EVENT_RPC_OUTBOUND_NOTIFY = "rpc.outbound_notify"
 LOG_EVENT_SESSION_CONTROL_MESSAGE = "session.control_message"
 LOG_EVENT_STAGE_DIAGNOSTIC = "stage.diagnostic"
 LOG_EVENT_STAGE_REQUEST_COMPLETED = "stage.request_completed"
+LOG_EVENT_STAGE_RESPAWNED = "stage.respawned"
 LOG_EVENT_STATE_RETENTION_SWEPT = "state.retention_swept"
 LOG_EVENT_STATE_TAG_CLEARED = "state.tag_cleared"
 LOG_EVENT_STATE_TAG_LIFECYCLE_CLEAR = "state.tag_lifecycle_clear"
@@ -127,6 +130,8 @@ LOG_EVENT_REGISTRY: dict[str, LogEventMeta] = {
     "plugin.network_connect": {"name": "plugin.network_connect", "summary": "A plugin attempted an outbound connection through its filtering proxy: allowed, denied (host not declared), or failed. Hostname and byte counts only. Audit-eligible.", "since": "0.1.0", "source": "plugins", "severity": "info", "redaction": "none"},
     "plugin.ready": {"name": "plugin.ready", "summary": "A managed plugin completed its RPC handshake.", "since": "0.1.0", "source": "plugins", "severity": "info", "redaction": "none"},
     "plugin.recovered": {"name": "plugin.recovered", "summary": "A previously-degraded plugin recovered and is responding again.", "since": "0.1.0", "source": "plugins", "severity": "info", "redaction": "none"},
+    "plugin.restart_budget_exhausted": {"name": "plugin.restart_budget_exhausted", "summary": "A plugin used up its restart budget; the supervisor stopped restarting it and marked it errored.", "since": "0.2.0", "source": "plugins", "severity": "error", "redaction": "none"},
+    "plugin.restarted": {"name": "plugin.restarted", "summary": "The supervisor is restarting a plugin: why, the backoff before the new process starts, and its restart count.", "since": "0.2.0", "source": "plugins", "severity": "warn", "redaction": "none"},
     "plugin.rpc_failed": {"name": "plugin.rpc_failed", "summary": "A plugin RPC method returned an error or failed to respond.", "since": "0.1.0", "source": "plugins", "severity": "warn", "redaction": "full"},
     "plugin.sandbox_applied": {"name": "plugin.sandbox_applied", "summary": "Sandbox profile applied (or skipped) for a managed plugin spawn.", "since": "0.1.0", "source": "plugins", "severity": "debug", "redaction": "none"},
     "plugin.spawned": {"name": "plugin.spawned", "summary": "A managed plugin process was spawned.", "since": "0.1.0", "source": "plugins", "severity": "info", "redaction": "none"},
@@ -141,11 +146,12 @@ LOG_EVENT_REGISTRY: dict[str, LogEventMeta] = {
     "session.control_message": {"name": "session.control_message", "summary": "A control message was forwarded to the Swift host (HUD show, mode reset, etc.).", "since": "0.1.0", "source": "dispatch", "severity": "info", "redaction": "full"},
     "stage.diagnostic": {"name": "stage.diagnostic", "summary": "A pipeline stage emitted a diagnostic line (e.g. a [PERF] latency measurement); correlated to the command via tr_ derived from the stage's session id.", "since": "0.2.0", "source": "generic", "severity": "info", "redaction": "full"},
     "stage.request_completed": {"name": "stage.request_completed", "summary": "A `stages.request` round trip completed: which stage, how long, whether it failed or timed out. Correlated to the caller's chain.", "since": "0.2.0", "source": "dispatch", "severity": "info", "redaction": "none"},
+    "stage.respawned": {"name": "stage.respawned", "summary": "The stage pool started a fresh copy of a stage instead of reusing the running one, and why.", "since": "0.2.0", "source": "lifecycle", "severity": "warn", "redaction": "none"},
     "state.retention_swept": {"name": "state.retention_swept", "summary": "Retention sweep removed expired records from a collection.", "since": "0.1.0", "source": "state", "severity": "info", "redaction": "none"},
     "state.tag_cleared": {"name": "state.tag_cleared", "summary": "One or more tags were cleared via a gate-shape collection mutation.", "since": "0.1.0", "source": "state", "severity": "info", "redaction": "none"},
     "state.tag_lifecycle_clear": {"name": "state.tag_lifecycle_clear", "summary": "Lifecycle policy cleared transient tags after a triggering event.", "since": "0.1.0", "source": "state", "severity": "debug", "redaction": "none"},
     "state.tag_set": {"name": "state.tag_set", "summary": "One or more tags were set via a gate-shape collection mutation.", "since": "0.1.0", "source": "state", "severity": "info", "redaction": "none"},
-    "state.ttl_swept": {"name": "state.ttl_swept", "summary": "TTL sweep removed expired records from a collection.", "since": "0.1.0", "source": "state", "severity": "debug", "redaction": "none"},
+    "state.ttl_swept": {"name": "state.ttl_swept", "summary": "TTL sweep removed expired records from a collection.", "since": "0.1.0", "source": "state", "severity": "info", "redaction": "none"},
     "state.write_attempted": {"name": "state.write_attempted", "summary": "A write to a state collection was initiated.", "since": "0.1.0", "source": "state", "severity": "debug", "redaction": "payload_hash"},
     "state.write_denied": {"name": "state.write_denied", "summary": "A write was rejected by auth, grants, validation, or policy.", "since": "0.1.0", "source": "state", "severity": "warn", "redaction": "none"},
     "state.write_succeeded": {"name": "state.write_succeeded", "summary": "A write to a state collection completed.", "since": "0.1.0", "source": "state", "severity": "info", "redaction": "none"},
