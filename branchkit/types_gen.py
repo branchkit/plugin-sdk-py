@@ -1535,7 +1535,7 @@ PlatformProfileResponse = TypedDict("PlatformProfileResponse", {
     # `macos`, `linux` or `windows`.
     "os": str,
     # On Linux, the desktop session the window tools drive: `x11`, `sway`,
-    # `gnome` or `other_wayland`. Absent on other systems.
+    # `hyprland`, `gnome` or `other_wayland`. Absent on other systems.
     "session": NotRequired[str],
     # Every operation a plugin can call that would be refused here, with
     # the reason and detail the refusal itself carries. An operation not

@@ -3019,7 +3019,7 @@ class MethodsMixin:
         return result
 
     async def native_cascade_windows(self, *, bundle_id: str) -> bool:
-        """Cascade all windows for an app. On Linux, not available on sway (sway tiles windows; there is no cascade); nor on GNOME (GNOME exposes no window list; only the focused window is visible)
+        """Cascade all windows for an app. On Linux, not available on sway (sway tiles windows; there is no cascade); nor on GNOME (GNOME exposes no window list; only the focused window is visible); nor on Hyprland (Hyprland tiles windows; there is no cascade)
 
         bundle_id: non-empty
         """
@@ -4023,7 +4023,7 @@ class MethodsMixin:
         return result
 
     async def native_hide_app(self, *, bundle_id: str) -> None:
-        """Hide an app by bundle ID. On Linux, not available on sway (this compositor has no minimize; sway uses the scratchpad); nor on GNOME (GNOME exposes no window IPC to minimize through)
+        """Hide an app by bundle ID. On Linux, not available on sway (this compositor has no minimize; sway uses the scratchpad); nor on GNOME (GNOME exposes no window IPC to minimize through); nor on Hyprland (Hyprland has no minimize; it hides windows on special workspaces instead)
 
         bundle_id: non-empty
         """
@@ -4109,7 +4109,7 @@ class MethodsMixin:
         return result
 
     async def native_is_app_hidden(self, *, bundle_id: str) -> bool:
-        """Check if an application is hidden. On Linux, not available on sway (this compositor has no minimize; sway uses the scratchpad); nor on GNOME (GNOME exposes no window IPC to minimize through)
+        """Check if an application is hidden. On Linux, not available on sway (this compositor has no minimize; sway uses the scratchpad); nor on GNOME (GNOME exposes no window IPC to minimize through); nor on Hyprland (Hyprland has no minimize; it hides windows on special workspaces instead)
 
         bundle_id: non-empty
         """
@@ -4385,7 +4385,7 @@ class MethodsMixin:
         return result
 
     async def native_minimize_window(self, *, window_id: str) -> None:
-        """Minimize a window by ID. On Linux, not available on sway (this compositor has no minimize; sway uses the scratchpad); nor on GNOME (GNOME exposes no window IPC to minimize through)
+        """Minimize a window by ID. On Linux, not available on sway (this compositor has no minimize; sway uses the scratchpad); nor on GNOME (GNOME exposes no window IPC to minimize through); nor on Hyprland (Hyprland has no minimize; it hides windows on special workspaces instead)
 
         window_id: non-empty
         """
@@ -5295,7 +5295,7 @@ class MethodsMixin:
         return bool((result or {}).get("ok", False))
 
     async def native_set_app_hidden(self, *, bundle_id: str, hidden: bool) -> bool:
-        """Hide or unhide an app. On Linux, not available on sway (this compositor has no minimize; sway uses the scratchpad); nor on GNOME (GNOME exposes no window IPC to minimize through)
+        """Hide or unhide an app. On Linux, not available on sway (this compositor has no minimize; sway uses the scratchpad); nor on GNOME (GNOME exposes no window IPC to minimize through); nor on Hyprland (Hyprland has no minimize; it hides windows on special workspaces instead)
 
         bundle_id: non-empty
         """
@@ -6230,7 +6230,7 @@ class MethodsMixin:
         return result
 
     async def native_unhide_app(self, *, bundle_id: str) -> None:
-        """Unhide a hidden application. On Linux, not available on sway (this compositor has no minimize; sway uses the scratchpad); nor on GNOME (GNOME exposes no window IPC to minimize through)
+        """Unhide a hidden application. On Linux, not available on sway (this compositor has no minimize; sway uses the scratchpad); nor on GNOME (GNOME exposes no window IPC to minimize through); nor on Hyprland (Hyprland has no minimize; it hides windows on special workspaces instead)
 
         bundle_id: non-empty
         """
@@ -6240,7 +6240,7 @@ class MethodsMixin:
         await self.call(METHOD_NATIVE_UNHIDE_APP, params)
 
     async def native_unminimize_window(self, *, window_id: str) -> None:
-        """Restore a minimized window by ID. On Linux, not available on sway (this compositor has no minimize; sway uses the scratchpad); nor on GNOME (GNOME exposes no window IPC to minimize through)
+        """Restore a minimized window by ID. On Linux, not available on sway (this compositor has no minimize; sway uses the scratchpad); nor on GNOME (GNOME exposes no window IPC to minimize through); nor on Hyprland (Hyprland has no minimize; it hides windows on special workspaces instead)
 
         window_id: non-empty
         """
