@@ -187,7 +187,7 @@ does not start.
 | Find your files | `branchkit.plugin_dir()`, `branchkit.plugin_data_dir()`, `branchkit.api_version()` |
 | Log | `await plugin.info` / `warn` / `error` / `debug` / `trace(tag, data)` to your plugin's log (debug and trace are off by default) |
 | Outbound HTTP | `urllib.request.urlopen` (routed through the platform's proxy), `branchkit.UpstreamClient` |
-| Raw TCP (MQTT, a local daemon) | `branchkit.dial(host, port)` |
+| Raw TCP (MQTT, a local daemon) | `branchkit.dial(host, port)`; TLS over it with `branchkit.wrap_tls(conn, host)` |
 | Accept local connections | `branchkit.listen_local(plugin)` with `requires.sockets.listen` |
 | Test a plugin | `branchkit.harness.Harness` |
 

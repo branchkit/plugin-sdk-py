@@ -172,10 +172,11 @@ def dial(host: str, port: int, timeout: float | None = None):
     writes; ``None`` means blocking. Blocking either way — from an
     ``async def`` handler, call it through ``asyncio.to_thread``.
 
-    TLS is the caller's: ``ssl.create_default_context().wrap_socket(conn,
-    server_hostname=host)`` — the proxy tunnels bytes opaquely and never
-    terminates TLS, so the allowlist decides which NAME you may dial, not
-    who answers."""
+    TLS is the caller's: ``branchkit.wrap_tls(conn, host)`` — the proxy
+    tunnels bytes opaquely and never terminates TLS, so the allowlist
+    decides which NAME you may dial, not who answers. (Not
+    ``ssl.SSLContext.wrap_socket`` directly: on Windows ``conn`` is a pipe,
+    which ``wrap_socket`` refuses.)"""
     if not host:
         raise ValueError("dial: empty host")
     if not isinstance(port, int) or not 1 <= port <= 65535:
@@ -188,6 +189,26 @@ def dial(host: str, port: int, timeout: float | None = None):
     # malformed endpoint is a ValueError here, not a silent direct dial
     # that dies in the sandbox anyway.
     return _connect_tunnel(parse_proxy_url(v), host, port, timeout)
+
+
+def wrap_tls(conn, server_hostname: str, context: ssl.SSLContext | None = None):
+    """Run TLS over a connection :func:`dial` returned, as the client.
+
+    A real socket (the proxy on Linux and macOS, or a direct dial) comes
+    back as ``context.wrap_socket(conn, server_hostname=...)``, an
+    ``ssl.SSLSocket``. On Windows the proxy is a named pipe and ``conn`` is
+    a socket-like object over it, which ``wrap_socket`` refuses; TLS then
+    runs over the pipe through ``ssl.MemoryBIO`` and the result has the
+    same socket surface ``dial`` documents (``sendall``, ``recv``,
+    ``makefile``, ``settimeout``, ``close``). The handshake completes
+    before it returns, verifying ``server_hostname`` against the
+    certificate under ``context`` (default: ``ssl.create_default_context()``).
+    """
+    ctx = context or ssl.create_default_context()
+    if isinstance(conn, socket.socket):
+        return ctx.wrap_socket(conn, server_hostname=server_hostname)
+    from . import _pipe
+    return _pipe.TlsPipe(conn, server_hostname, ctx)
 
 
 def _connect_tunnel(endpoint: tuple, host: str, port: int, timeout) -> socket.socket:

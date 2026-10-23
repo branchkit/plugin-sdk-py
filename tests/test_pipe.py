@@ -472,5 +472,97 @@ class TestStreamClosedFlag(unittest.TestCase):
         self.assertEqual(t._obj.unwrapped, 1)
 
 
+class _HandshakeSSLObj(_FakeSSLObj):
+    def __init__(self):
+        super().__init__()
+        self.handshakes = 0
+
+    def do_handshake(self):
+        self.handshakes += 1
+
+
+class _RecordingContext:
+    """An SSLContext stand-in recording which wrap the caller took."""
+
+    def __init__(self):
+        self.calls = []
+
+    def wrap_socket(self, sock, server_hostname=None):
+        self.calls.append(("socket", sock, server_hostname))
+        return "wrapped-socket"
+
+    def wrap_bio(self, _inb, _outb, server_hostname=None):
+        self.calls.append(("bio", None, server_hostname))
+        self.obj = _HandshakeSSLObj()
+        return self.obj
+
+
+class TestWrapTls(unittest.TestCase):
+    """`wrap_tls` is how a caller runs TLS over what `dial` returned. On
+    Windows that is a pipe object `wrap_socket` refuses, so the documented
+    route there failed while Go and TS worked."""
+
+    def test_wrap_socket_refuses_the_pipe_object(self):
+        # The defect the helper answers: the stdlib wrap cannot take it.
+        with self.assertRaises((TypeError, AttributeError, OSError)):
+            ssl.create_default_context().wrap_socket(
+                _RecordingTransport(), server_hostname="example.com"
+            )
+
+    def test_pipe_connection_gets_tls_over_memory_bio(self):
+        from branchkit import wrap_tls
+
+        ctx = _RecordingContext()
+        conn = wrap_tls(_RecordingTransport(), "example.com", ctx)
+        self.assertIsInstance(conn, _pipe.TlsPipe)
+        self.assertEqual(ctx.calls, [("bio", None, "example.com")])
+        self.assertEqual(ctx.obj.handshakes, 1, "the handshake runs before it returns")
+
+    def test_real_socket_is_wrapped_as_one(self):
+        from branchkit import wrap_tls
+
+        a, b = socket.socketpair()
+        self.addCleanup(a.close)
+        self.addCleanup(b.close)
+        ctx = _RecordingContext()
+        self.assertEqual(wrap_tls(a, "example.com", ctx), "wrapped-socket")
+        self.assertEqual(ctx.calls, [("socket", a, "example.com")])
+
+
+class TestStderrIsUtf8(unittest.TestCase):
+    """The platform reads stderr as UTF-8. Python encodes its text streams
+    in the locale's encoding (the ANSI code page on Windows), so the SDK's
+    log lines are written as UTF-8 bytes whatever stderr's encoding is."""
+
+    def _capture(self, fn):
+        import io
+        import sys
+
+        raw = io.BytesIO()
+        saved = sys.stderr
+        # What a Windows stderr looks like: cp1252, unable to carry "✓".
+        wrapper = io.TextIOWrapper(raw, encoding="cp1252", errors="strict")
+        sys.stderr = wrapper
+        try:
+            fn()
+        finally:
+            sys.stderr = saved
+        wrapper.flush()
+        wrapper.detach()  # so collecting the wrapper does not close `raw`
+        return raw.getvalue()
+
+    def test_plugin_log_is_utf8(self):
+        from branchkit import log
+
+        out = self._capture(lambda: log("p", "café ✓"))
+        self.assertEqual(out, "[p] café ✓\n".encode("utf-8"))
+
+    def test_stage_log_is_utf8(self):
+        from branchkit.pipeline.stagelog import stage_log
+
+        out = self._capture(lambda: stage_log("info", "naïve ✓"))
+        self.assertEqual(out, "BKLOG1\tinfo\t\tnaïve ✓\n".encode("utf-8"))
+
+
 if __name__ == "__main__":
     unittest.main()

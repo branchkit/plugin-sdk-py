@@ -3,8 +3,9 @@
 Port of ``stagelog.go`` / the logging half of ``stage.ts``.
 """
 
-import sys
 import threading
+
+from ..log import _write_stderr
 
 # The sentinel every structured stage diagnostic begins with. The platform's
 # stage stderr reader splits on it to parse
@@ -44,8 +45,8 @@ def stage_log(level: str, message: str) -> None:
         session = _current_session
     if "\n" in message or "\r" in message:
         message = message.replace("\n", " ").replace("\r", " ")
-    sys.stderr.write(f"{LOG_LINE_PREFIX}{level}\t{session}\t{message}\n")
-    sys.stderr.flush()
+    # As UTF-8 bytes, not in the locale's encoding (cp1252 on Windows).
+    _write_stderr(f"{LOG_LINE_PREFIX}{level}\t{session}\t{message}\n")
 
 
 # The platform's five-level model.

@@ -80,7 +80,7 @@ from .ui import (
     signal_name,
 )
 from .upstream import UpstreamClient, UpstreamResponse
-from .proxy import HostRefusedError, dial
+from .proxy import HostRefusedError, dial, wrap_tls
 from .output import dispatch_action, say_action
 from .closed_vocab_gen import *  # noqa: F401,F403 — error kinds, directives, effects
 from .contracts_gen import *  # noqa: F401,F403 — method/hook/event/tag constants
