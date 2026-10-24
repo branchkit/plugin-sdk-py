@@ -2170,6 +2170,9 @@ WindowInfo = TypedDict("WindowInfo", {
     "pid": NotRequired[int],
     # "observed" = discovered via OS accessibility APIs.
     # "managed" = HUD window created by platform channel infrastructure.
+    # "assumed" = stands for a window the platform cannot see: on GNOME
+    # Wayland, the focused window, whose frame is not readable and is
+    # given as its display's visible bounds. Its geometry is not a fact.
     # default "observed"
     "source": str,
     # Space (virtual desktop) ids this window belongs to. Usually one;
