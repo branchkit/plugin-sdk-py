@@ -5,6 +5,27 @@ git history.
 
 ## Unreleased
 
+## 0.15.0 — 2026-10-25
+
+- New `branchkit.wrap_tls(conn, host, context=None)` runs TLS over a
+  connection `dial()` returned, including the named-pipe object `dial()`
+  returns on Windows, which `ssl`'s `wrap_socket` refuses.
+- `log()` and `stage_log()` write UTF-8 to stderr whatever the locale's
+  encoding (cp1252 on Windows).
+- The package's project URLs name branchkit.com.
+- New log-event constants: `plugin.restarted` (cause, backoff and restart
+  count), `plugin.restart_budget_exhausted`, and `stage.respawned` (a
+  pipeline stage started afresh instead of reused, with the reason).
+  `state.ttl_swept` is now emitted at Info, once per collection a TTL sweep
+  removed records from.
+- A window's frame source can now be `assumed`: the platform cannot see the
+  window (the focused window on GNOME Wayland) and gives its display's
+  visible bounds, so its geometry is not a fact.
+- Generated docs: `commands.resolve`'s `collections` narrows completions to
+  commands stored in the named command-set collections; Hyprland is named
+  among the desktop sessions an operation cannot run on, and the platform
+  profile's `session` field lists `hyprland`.
+
 ## 0.14.0 — 2026-10-21
 
 Pages, part two: the old names are gone.
