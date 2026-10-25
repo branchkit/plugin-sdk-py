@@ -2788,8 +2788,8 @@ CommandsResolveRequest = TypedDict("CommandsResolveRequest", {
     # Active tags for tag-based scoping. If None, uses the state's active_tags.
     # default null
     "active_tags": NotRequired[list[str]],
-    # Narrow completions to commands contributed by these collections'
-    # contributors. None or empty = all.
+    # Narrow completions to commands stored in these command-set
+    # collections. None or empty = all.
     # default null
     "collections": NotRequired[list[str]],
     # Tiebreak hint for a genuine tie. When resolution reduces to 2+ equally-

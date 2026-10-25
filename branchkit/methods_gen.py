@@ -1642,8 +1642,8 @@ class MethodsMixin:
 
         active_tags: Active tags for tag-based scoping. If None, uses the state's active_tags.
             default null
-        collections: Narrow completions to commands contributed by these collections'
-            contributors. None or empty = all.
+        collections: Narrow completions to commands stored in these command-set
+            collections. None or empty = all.
             default null
         prefer_owner: Tiebreak hint for a genuine tie. When resolution reduces to 2+ equally-
             eligible commands the matcher cannot separate, and exactly one of them
