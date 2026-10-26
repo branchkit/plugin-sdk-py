@@ -37,7 +37,8 @@ _HELLOWORLD_MISSING = (
 @unittest.skipUnless(harness_binary_available(), _HARNESS_SKIP)
 class HarnessTests(unittest.TestCase):
     def start(self) -> Harness:
-        if not os.path.exists(HELLOWORLD_BIN):
+        # On Windows go build writes helloworld-plugin.exe.
+        if not (os.path.exists(HELLOWORLD_BIN) or os.path.exists(HELLOWORLD_BIN + ".exe")):
             if harness_required():
                 self.fail(f"BRANCHKIT_REQUIRE_HARNESS is set: {_HELLOWORLD_MISSING}")
             self.skipTest(_HELLOWORLD_MISSING)
