@@ -7106,7 +7106,7 @@ class MethodsMixin:
         return result
 
     async def recognition_redecode(self, *, items: list["RedecodeItem"], model: str, stage: str, language: str | None = None, max_active: int | None = None) -> RecognitionRedecodeResponse:
-        """Re-decode the caller's own captured audio through a registered recognizer stage against the LIVE grammar (the fragility ladder) — the platform runs it because the grammar is platform state and plugins cannot exec
+        """Re-decode the caller's own captured audio through one of its own recognizer stages against the LIVE grammar (the fragility ladder) — the platform runs it because the grammar is platform state and plugins cannot exec
 
         language: The language a dictation stage's probe decodes in, e.g. `"en"`, as the
             live stage's `--language`. Absent = the stage's default. A command
@@ -7117,7 +7117,7 @@ class MethodsMixin:
             traversal), e.g. `"sherpa-offline-nemo"`.
             non-empty
         stage: Registered stage id whose binary's `probe` subcommand runs the re-decode,
-            e.g. `"voice.sherpa_commands"`. Validated against the stage registry.
+            e.g. `"voice.sherpa_commands"`. Must be one of the caller's own stages.
             non-empty
         """
         params: dict[str, Any] = {
