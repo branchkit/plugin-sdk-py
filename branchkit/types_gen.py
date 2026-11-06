@@ -3158,10 +3158,11 @@ HUDCreateChannelRequest = TypedDict("HUDCreateChannelRequest", {
 HUDFocusRequest = TypedDict("HUDFocusRequest", {
     # The channel to give the keyboard: a card channel of the caller's
     # (its typing box, or its first choice, takes the keyboard while the
-    # card is on screen), or a window channel of the caller's (needs the
-    # `dispatch` privilege). A plugin's channel only; empty is accepted
-    # from the host alone, and lets it pick the window most needing an
-    # answer.
+    # card is on screen), or a window channel of the caller's that is
+    # shown and takes input (needs the `dispatch` privilege). Refused
+    # while a permission question waits. A plugin's channel only; empty
+    # is accepted from the host alone, and lets it pick the window most
+    # needing an answer.
     "channel": str,
 })
 
