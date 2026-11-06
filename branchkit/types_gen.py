@@ -7790,6 +7790,14 @@ OnTranscriptRequest = TypedDict("OnTranscriptRequest", {
     "is_final": NotRequired[bool],
     # Pipeline that produced this transcript. A plugin may own several.
     "pipeline": str,
+    # The run of that pipeline that produced it: the same opaque id as the
+    # `run_id` on that run's `_platform.pipeline.started` and
+    # `_platform.pipeline.stopped`, never reused for another run. A plugin
+    # that runs one pipeline more than once at a time (a held run and a
+    # persistent one, say) tells their transcripts apart by it. Empty when
+    # no run produced the transcript (`pipelines.ingest_transcript`).
+    # default ""
+    "run_id": NotRequired[str],
     # Recognized text.
     "text": str,
     # Shared-clock onset of each word, aligned 1:1 with `text`'s words.
@@ -8251,6 +8259,11 @@ PipelineStartedEventParams = TypedDict("PipelineStartedEventParams", {
     # default false
     "ephemeral": NotRequired[bool],
     "pipeline": str,
+    # This run's id: opaque, never reused for another run. The run's
+    # `_platform.pipeline.stopped` and every `on_transcript` it causes carry
+    # the same one.
+    # default ""
+    "run_id": NotRequired[str],
 })
 
 # Payload of the `_platform.pipeline.stopped` event.
@@ -8260,6 +8273,9 @@ PipelineStoppedEventParams = TypedDict("PipelineStoppedEventParams", {
     "error": NotRequired[str],
     "pipeline": str,
     "reason": "PipelineStopReason",
+    # The run that stopped, as its `_platform.pipeline.started` named it.
+    # default ""
+    "run_id": NotRequired[str],
     # `keybind` when the pipeline's own keybind trigger stopped it.
     "trigger": NotRequired[str],
 })
