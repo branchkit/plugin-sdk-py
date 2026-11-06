@@ -182,6 +182,7 @@ does not start.
 | A page of your own | `@plugin.page(key)` + `implements.pages` in the manifest; `post_button` / `signal_button` / `confirm_button` |
 | Show something | `output_state(state=…)` with `say_action` / `dispatch_action`, `hud_push` |
 | Hold a system effect | `assert_effect`, `retract_effect`, `is_effect_active`, `on_effect_displaced` |
+| Clean up before you are stopped | `@plugin.on_stop`: runs with the connection open (switched off, removed, restarted, the app quitting), for up to 5 s; not on a crash, so check again at start |
 | Trace a request | `plugin.current_correlation()` |
 | Label calls made for something you host (a script, an extension) | `with branchkit.acting_for(actor):` |
 | Find your files | `branchkit.plugin_dir()`, `branchkit.plugin_data_dir()`, `branchkit.api_version()` |

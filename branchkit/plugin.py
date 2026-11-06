@@ -25,6 +25,7 @@ from .contracts_gen import (
     HOOK_LIST_METHODS,
     HOOK_ON_ACTION,
     HOOK_ON_READY,
+    HOOK_ON_STOP,
     HOOK_RENDER_SETTINGS,
 )
 
@@ -351,6 +352,44 @@ class PluginCore:
                 return f
             return deco
         self.on(HOOK_ON_READY, lambda params: fn())
+        return fn
+
+    def on_stop(self, fn: Callable | None = None):
+        """Register the plugin's cleanup for when the platform stops it:
+        switched off or removed, restarted to load a new build, a required
+        capability lost, or the app quitting. Registering it is what asks the
+        platform to send on_stop (it reads list_methods); a plugin that does
+        not register it is stopped as before, with no request first. Usable
+        directly or as a decorator (``@plugin.on_stop``); plain ``def`` or
+        ``async def``, no arguments.
+
+        ``fn`` runs while the connection is still open, so it may call the
+        platform (put windows back, flush a record). When it returns, on_stop
+        is answered, and the platform then closes stdin and stops the process
+        as it always does. The platform waits at most 5 s for the answer (2 s
+        when the app is quitting); after that, calls raise "plugin shutting
+        down". An exception is logged by the platform and changes nothing
+        else: the plugin is stopped either way. A crash or a hang is not
+        asked, so state that must survive those still needs a check at the
+        next start.
+
+        Must be called before run()."""
+        if fn is None:
+            def deco(f):
+                self.on_stop(f)
+                return f
+            return deco
+
+        async def stop(params):
+            if inspect.iscoroutinefunction(fn):
+                await fn()
+            else:
+                result = await asyncio.to_thread(fn)
+                if inspect.isawaitable(result):
+                    await result
+            return {}
+
+        self.handle(HOOK_ON_STOP, stop)
         return fn
 
     def platform(self) -> "dict | None":
