@@ -53,6 +53,7 @@ from .contracts_gen import (
     METHOD_EVENTS_EMIT,
     METHOD_HTTP_REQUEST,
     METHOD_HUD_CREATE_CHANNEL,
+    METHOD_HUD_FOCUS,
     METHOD_HUD_HIDE,
     METHOD_HUD_PUSH,
     METHOD_HUD_REMOVE_CHANNEL,
@@ -1942,6 +1943,21 @@ class MethodsMixin:
         if width is not None:
             params["width"] = width
         await self.call(METHOD_HUD_CREATE_CHANNEL, params)
+
+    async def hud_focus(self, *, channel: str) -> None:
+        """Give the keyboard to one of the calling plugin's HUD cards or windows
+
+        channel: The channel to give the keyboard: a card channel of the caller's
+            (its typing box, or its first choice, takes the keyboard while the
+            card is on screen), or a window channel of the caller's (needs the
+            `dispatch` privilege). A plugin's channel only; empty is accepted
+            from the host alone, and lets it pick the window most needing an
+            answer.
+        """
+        params: dict[str, Any] = {
+            "channel": channel,
+        }
+        await self.call(METHOD_HUD_FOCUS, params)
 
     async def hud_hide(self, *, channel: str) -> None:
         """Hide a HUD channel's window
