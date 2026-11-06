@@ -3,8 +3,10 @@
 Versions before this file predate it; their contents are in the repo's
 git history.
 
-## Unreleased
+## 0.17.0 — 2026-11-06
 
+- `methods.hud_focus(channel=...)` (`hud.focus`): give the keyboard to one of the plugin's own HUD cards or windows.
+- `run_id` on the pipeline run's events (started, stopped, transcript, error) and on the `on_transcript` request, so a plugin can tell one run of a pipeline from the next.
 - `plugin.on_stop` (a decorator too; plain `def` or `async def`): the
   plugin's cleanup before the platform stops it (switched off, removed,
   restarted for a new build or a lost capability, the app quitting). It
