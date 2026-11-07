@@ -7089,7 +7089,7 @@ class MethodsMixin:
             (`applied: false`) so the caller can confirm with the user first — a
             calibration apply must never silently clobber a hand-set value.
             default false
-        strength: Strength to apply (> 0; the setting is also switched on).
+        strength: Strength to apply (above 0, at most 32; the setting is also switched on).
             wire double
         """
         params: dict[str, Any] = {
@@ -7110,7 +7110,7 @@ class MethodsMixin:
 
         enabled: Omitted = leave the on/off half unchanged.
             default null
-        strength: Omitted = leave the stored strength unchanged. Negative → 0.
+        strength: Omitted = leave the stored strength unchanged. Negative → 0, above 32 → 32.
             wire double · default null
         """
         params: dict[str, Any] = {

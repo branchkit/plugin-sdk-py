@@ -7245,7 +7245,7 @@ RecognitionBiasApplyRequest = TypedDict("RecognitionBiasApplyRequest", {
     # calibration apply must never silently clobber a hand-set value.
     # default false
     "force": NotRequired[bool],
-    # Strength to apply (> 0; the setting is also switched on).
+    # Strength to apply (above 0, at most 32; the setting is also switched on).
     # wire double
     "strength": float,
 })
@@ -7269,7 +7269,7 @@ RecognitionBiasSetRequest = TypedDict("RecognitionBiasSetRequest", {
     # Omitted = leave the on/off half unchanged.
     # default null
     "enabled": NotRequired[bool],
-    # Omitted = leave the stored strength unchanged. Negative → 0.
+    # Omitted = leave the stored strength unchanged. Negative → 0, above 32 → 32.
     # wire double · default null
     "strength": NotRequired[float],
 })
