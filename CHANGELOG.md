@@ -5,6 +5,8 @@ git history.
 
 ## 0.18.0 — 2026-11-06
 
+- `OutputAttention` (`"polite"` | `"interrupt"`) and `attention` on the output state: the one value the platform computes for how much a document may claim the person's attention, read by every renderer.
+- `recognition.bias.set` / `apply`: the strength is capped at 32 (documented on the request).
 - Selections belong to the plugin that set them. `methods.selection_set`
   opens a window only on a channel the plugin created (another plugin's,
   a platform window, or one that does not exist is refused), and with no
@@ -19,6 +21,8 @@ git history.
   `picked_by` (who answered it).
 
 ## 0.17.0 — 2026-11-06
+
+Not tagged on its own: released together with 0.18.0.
 
 - `methods.hud_focus(channel=...)` (`hud.focus`): give the keyboard to one of the plugin's own HUD cards or windows.
 - `run_id` on the pipeline run's events (started, stopped, transcript, error) and on the `on_transcript` request, so a plugin can tell one run of a pipeline from the next.
