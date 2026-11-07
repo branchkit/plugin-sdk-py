@@ -642,6 +642,7 @@ METHOD_SECRETS_IS_SET = "secrets.is_set"  # since 0.2.0
 METHOD_SECRETS_LIST = "secrets.list"  # since 0.2.0
 METHOD_SECRETS_REQUEST_SLOT = "secrets.request_slot"  # since 0.2.0
 METHOD_SECRETS_SET = "secrets.set"  # since 0.2.0
+METHOD_SELECTION_CLEAR = "selection.clear"  # since 0.2.0
 METHOD_SELECTION_PICK = "selection.pick"  # since 0.1.0
 METHOD_SELECTION_SET = "selection.set"  # since 0.1.0
 METHOD_SESSION_BOUNDARY = "session.boundary"  # since 0.1.0

@@ -495,7 +495,7 @@ class EventsMixin:
         return fn
 
     def on_selection_picked(self, fn: Callable[[SelectionPickedEventParams], Awaitable[None] | None] | None = None) -> Any:
-        """Register `fn` for the _platform.selection.picked event: User selected an item from the selection HUD."""
+        """Register `fn` for the _platform.selection.picked event: An item of a selection was picked: names whose list (plugin_id) and who answered it (picked_by)."""
         if fn is None:
             def deco(f):
                 self.on_selection_picked(f)

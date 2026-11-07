@@ -643,6 +643,7 @@ from .contracts_gen import (
     METHOD_SECRETS_LIST,
     METHOD_SECRETS_REQUEST_SLOT,
     METHOD_SECRETS_SET,
+    METHOD_SELECTION_CLEAR,
     METHOD_SELECTION_PICK,
     METHOD_SELECTION_SET,
     METHOD_SESSION_BOUNDARY,
@@ -1071,6 +1072,7 @@ if TYPE_CHECKING:
         SecretsRequestSlotResponse,
         SecretsSetResponse,
         SecurityFact,
+        SelectionClearResponse,
         SelectionPickResponse,
         SessionEndCleanupResponse,
         SettingsRulesCreateResponse,
@@ -7232,22 +7234,46 @@ class MethodsMixin:
         result = await self.call(METHOD_SECRETS_SET, params)
         return result
 
-    async def selection_pick(self, *, index: int) -> SelectionPickResponse:
-        """Resolve a selection pick by index — clears selection state, emits event, closes HUD
+    async def selection_clear(self, *, owner: str | None = None) -> SelectionClearResponse:
+        """End a selection without a pick and close its window: a plugin ends its own, the host any
+
+        owner: Whose selection to end. Omitted, the caller's own. A plugin may end
+            only its own; the host may end any.
+            default null
+        """
+        params: dict[str, Any] = {
+        }
+        if owner is not None:
+            params["owner"] = owner
+        result = await self.call(METHOD_SELECTION_CLEAR, params)
+        return result
+
+    async def selection_pick(self, *, index: int, owner: str | None = None) -> SelectionPickResponse:
+        """Answer a selection by index: the caller's own, or another plugin's (`owner`) with the dispatch privilege and grant to it — ends the selection, emits _platform.selection.picked, closes its window
 
         index: Zero-based index into the previously-set selection items array.
             wire uint64 (64-bit) · min 0
+        owner: Whose selection to answer: the plugin id that set it. Omitted, the
+            caller's own. A plugin answering another plugin's list needs the
+            `dispatch` privilege and the person's dispatch grant to that plugin,
+            the same record that lets it run that plugin's actions.
+            default null
         """
         params: dict[str, Any] = {
             "index": index,
         }
+        if owner is not None:
+            params["owner"] = owner
         result = await self.call(METHOD_SELECTION_PICK, params)
         return result
 
     async def selection_set(self, *, channel: str | None = None, items: list["HUDItem"] | None = None, title: str | None = None) -> None:
-        """Show the selection HUD with items for the user to pick from
+        """Offer the person a list to pick one item from, shown in a window the calling plugin owns (or none); replaces only the caller's own list
 
-        channel: HUD channel to show the selection in. Defaults to `"main"`.
+        channel: The window to show the selection in: a HUD channel the calling
+            plugin created. Another plugin's channel, a platform window or a
+            name that is not a channel id is refused. Omitted, no window opens:
+            the list can still be picked, by voice or by another plugin.
             default null
         items: The selectable items, in display order.
 
