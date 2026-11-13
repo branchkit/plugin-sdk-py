@@ -4335,7 +4335,7 @@ class MethodsMixin:
         return result
 
     async def native_maximize_window(self, *, window_id: str) -> bool:
-        """Maximize window to fill screen. On Linux, not available on sway (sway tiles rather than maximizing; there is no such window state); nor on GNOME (GNOME exposes no window IPC; use its own tiling keybinds)
+        """Maximize window to fill screen. On Linux, not available on sway (sway tiles rather than maximizing; there is no such window state)
 
         window_id: non-empty
         """
